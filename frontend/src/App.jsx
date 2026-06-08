@@ -11,6 +11,14 @@ import LiveDrawPage from './pages/live-draw/LiveDrawPage';
 import PlayerDashboard from './pages/player-dashboard/PlayerDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CreateTournament from './pages/admin/CreateTournament';
+import SponsorManagement from './pages/admin/SponsorManagement';
+import PricingManagement from './pages/admin/PricingManagement';
+import ClubPortal from './pages/club-portal/ClubPortal';
+import ClubPublicPage from './pages/club-public/ClubPublicPage';
+import MarketplacePage from './pages/marketplace/MarketplacePage';
+import LeaderboardPage from './pages/leaderboard/LeaderboardPage';
+import MembershipPage from './pages/membership/MembershipPage';
+import ClubSubscriptionPage from './pages/subscriptions/ClubSubscriptionPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -34,12 +42,22 @@ function AppRoutes() {
           <Route path="/tournaments" element={<TournamentsPage />} />
           <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
           <Route path="/draws/:tournamentId/live" element={<LiveDrawPage />} />
-          <Route path="/rankings" element={<TournamentsPage />} />
-          <Route path="/clubs" element={<TournamentsPage />} />
+          <Route path="/rankings" element={<LeaderboardPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/clubs/:slug" element={<ClubPublicPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/membership" element={<MembershipPage />} />
+          <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
 
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <PlayerDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/club-portal" element={
+            <ProtectedRoute roles={['ADMIN', 'CLUB_MANAGER']}>
+              <ClubPortal />
             </ProtectedRoute>
           } />
 
@@ -51,6 +69,16 @@ function AppRoutes() {
           <Route path="/admin/tournaments/new" element={
             <ProtectedRoute roles={['ADMIN']}>
               <CreateTournament />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/sponsors" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <SponsorManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/pricing" element={
+            <ProtectedRoute roles={['ADMIN']}>
+              <PricingManagement />
             </ProtectedRoute>
           } />
         </Routes>

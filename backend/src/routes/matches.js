@@ -26,12 +26,11 @@ router.get('/:tournamentId/bracket',
           playerB: { select: { id: true, firstName: true, lastName: true, handicapIndex: true } },
           winner: { select: { id: true, firstName: true, lastName: true } },
           venueClub: { select: { id: true, name: true } },
-          result: { select: { resultText: true, isConfirmed: true, scorecardUrl: true } },
+          result: { select: { resultText: true, isConfirmed: true, scorecardUrl: true, grossScore: true, netScore: true } },
         },
         orderBy: [{ roundNumber: 'asc' }, { matchNumber: 'asc' }],
       });
 
-      // Group by round
       const rounds = {};
       for (const m of matches) {
         if (!rounds[m.roundNumber]) rounds[m.roundNumber] = [];
@@ -54,18 +53,20 @@ router.get('/:tournamentId/bracket',
   }
 );
 
-// Submit match result with scorecard
+// Submit match result with scorecard and optional score data
 router.post('/:matchId/result',
   authenticate,
   upload.single('scorecard'),
   param('matchId').isUUID(),
-  body('winnerId').isUUID(),
-  body('resultText').trim().notEmpty(),
   validate,
   async (req, res) => {
     try {
       const { matchId } = req.params;
-      const { winnerId, resultText } = req.body;
+      const { winnerId, resultText, grossScore, netScore, stablefordPoints } = req.body;
+
+      if (!winnerId || !resultText) {
+        return res.status(400).json({ error: 'winnerId and resultText are required' });
+      }
 
       const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
       if (!player) return res.status(400).json({ error: 'Player profile required' });
@@ -76,38 +77,38 @@ router.post('/:matchId/result',
       });
       if (!match) return res.status(404).json({ error: 'Match not found' });
 
-      // Verify submitter is a participant
       if (match.playerAId !== player.id && match.playerBId !== player.id) {
         return res.status(403).json({ error: 'Only match participants can submit results' });
       }
-
-      // Verify winner is a participant
       if (winnerId !== match.playerAId && winnerId !== match.playerBId) {
         return res.status(400).json({ error: 'Winner must be a match participant' });
       }
-
       if (match.status === 'COMPLETED') {
         return res.status(400).json({ error: 'Match result already confirmed' });
       }
 
-      // Upload scorecard if provided
       let scorecardUrl = null;
       if (req.file) {
         const key = await uploadScorecard(req.file, matchId);
         scorecardUrl = key;
       }
 
-      // Create or update result
       const result = await prisma.matchResult.upsert({
         where: { matchId },
         create: {
           matchId,
           resultText,
+          grossScore: grossScore ? parseInt(grossScore) : null,
+          netScore: netScore ? parseFloat(netScore) : null,
+          stablefordPoints: stablefordPoints ? parseInt(stablefordPoints) : null,
           scorecardUrl,
           submittedById: player.id,
         },
         update: {
           resultText,
+          grossScore: grossScore ? parseInt(grossScore) : undefined,
+          netScore: netScore ? parseFloat(netScore) : undefined,
+          stablefordPoints: stablefordPoints ? parseInt(stablefordPoints) : undefined,
           scorecardUrl: scorecardUrl || undefined,
           submittedById: player.id,
           submittedAt: new Date(),
@@ -122,7 +123,6 @@ router.post('/:matchId/result',
         data: { winnerId, status: 'RESULT_SUBMITTED' },
       });
 
-      // Notify opponent to confirm
       const opponentId = match.playerAId === player.id ? match.playerBId : match.playerAId;
       const opponent = await prisma.player.findUnique({
         where: { id: opponentId },
@@ -140,7 +140,7 @@ router.post('/:matchId/result',
   }
 );
 
-// Confirm match result (opponent sign-off)
+// Confirm match result (opponent sign-off) — awards ranking points
 router.post('/:matchId/confirm',
   authenticate,
   param('matchId').isUUID(),
@@ -153,20 +153,18 @@ router.post('/:matchId/confirm',
 
       const match = await prisma.match.findUnique({
         where: { id: matchId },
-        include: { result: true },
+        include: { result: true, tournament: { include: { stages: true } } },
       });
       if (!match) return res.status(404).json({ error: 'Match not found' });
 
       if (match.playerAId !== player.id && match.playerBId !== player.id) {
         return res.status(403).json({ error: 'Only match participants can confirm results' });
       }
-
       if (!match.result) return res.status(400).json({ error: 'No result submitted yet' });
       if (match.result.submittedById === player.id) {
         return res.status(400).json({ error: 'Cannot confirm your own submission' });
       }
 
-      // Confirm result
       await prisma.matchResult.update({
         where: { id: match.result.id },
         data: { isConfirmed: true, confirmedById: player.id, confirmedAt: new Date() },
@@ -192,9 +190,91 @@ router.post('/:matchId/confirm',
       // Mark loser as eliminated
       const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
       await prisma.tournamentEntry.updateMany({
-        where: { tournamentId: match.tournamentId, playerId: loserId },
+        where: { tournamentId: match.tournamentId, playerId: loserId, stage: match.stage },
         data: { status: 'ELIMINATED' },
       });
+
+      // Award ranking points based on round relative to total rounds
+      const stageConfig = match.tournament.stages.find(s => s.stage === match.stage);
+      if (stageConfig) {
+        const totalRoundsInStage = stageConfig.totalRounds;
+        const isFinal = match.roundNumber === totalRoundsInStage;
+        const isSemiFinal = match.roundNumber === totalRoundsInStage - 1;
+        const isQF = match.roundNumber === totalRoundsInStage - 2;
+
+        const pointsTable = {
+          NATIONAL_FINAL: { final: { w: 100, l: 50 }, semi: 25, qf: 15, other: 5 },
+          REGIONAL: { final: { w: 40, l: 20 }, semi: 10, qf: 5, other: 2 },
+          CLUB_QUALIFIER: { final: { w: 15, l: 8 }, semi: 4, qf: 2, other: 1 },
+        };
+        const pts = pointsTable[match.stage] || pointsTable.CLUB_QUALIFIER;
+
+        if (isFinal && match.winnerId) {
+          await prisma.player.update({
+            where: { id: match.winnerId },
+            data: { rankingPoints: { increment: pts.final.w } },
+          });
+          if (loserId) {
+            await prisma.player.update({
+              where: { id: loserId },
+              data: { rankingPoints: { increment: pts.final.l } },
+            });
+          }
+        } else if (isSemiFinal && loserId) {
+          await prisma.player.update({
+            where: { id: loserId },
+            data: { rankingPoints: { increment: pts.semi } },
+          });
+        } else if (isQF && loserId) {
+          await prisma.player.update({
+            where: { id: loserId },
+            data: { rankingPoints: { increment: pts.qf } },
+          });
+        } else if (loserId) {
+          await prisma.player.update({
+            where: { id: loserId },
+            data: { rankingPoints: { increment: pts.other } },
+          });
+        }
+      }
+
+      // Record score for overall leaderboard if tournament has leaderboard enabled
+      if (match.tournament.enableLeaderboard && match.result.grossScore) {
+        const winner = await prisma.player.findUnique({
+          where: { id: match.winnerId },
+          include: { homeClub: true },
+        });
+        if (winner && winner.homeClub) {
+          const club = winner.homeClub;
+          const slopeRating = club.slopeRating || 113;
+          const courseRating = club.courseRating ? Number(club.courseRating) : 72;
+          const par = club.par || 72;
+          const handicap = winner.handicapIndex ? Number(winner.handicapIndex) : 0;
+
+          // Course handicap = Handicap Index × (Slope Rating / 113)
+          const courseHandicap = Math.round(handicap * (slopeRating / 113));
+          const netScore = match.result.grossScore - courseHandicap;
+          // Adjusted score = net score normalized to standard slope
+          const adjustedScore = netScore + (courseRating - par);
+
+          await prisma.scoreRecord.create({
+            data: {
+              tournamentId: match.tournamentId,
+              playerId: match.winnerId,
+              clubId: club.id,
+              stage: match.stage,
+              grossScore: match.result.grossScore,
+              handicapAtPlay: handicap,
+              slopeRating,
+              courseRating,
+              par,
+              netScore,
+              adjustedScore,
+              playedAt: new Date(),
+            },
+          });
+        }
+      }
 
       res.json({ message: 'Result confirmed, winner advanced' });
     } catch (err) {

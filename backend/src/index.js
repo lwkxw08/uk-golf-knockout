@@ -38,6 +38,9 @@ app.use('/api/matches', require('./routes/matches'));
 app.use('/api/draws', require('./routes/draws'));
 app.use('/api/players', require('./routes/players'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/marketplace', require('./routes/marketplace'));
+app.use('/api/memberships', require('./routes/memberships'));
+app.use('/api/subscriptions', require('./routes/subscriptions'));
 
 // Health check
 app.get('/api/health', (req, res) => {

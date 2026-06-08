@@ -1,45 +1,73 @@
-import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { Trophy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { api } from '../../api/client';
 
 export default function RegisterPage() {
-  const { register } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isClub = searchParams.get('role') === 'club';
 
-  const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', password: '', confirmPassword: '',
-  });
+  const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [clubs, setClubs] = useState([]);
+
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    dateOfBirth: '',
+    handicapIndex: '',
+    whsHandicapId: '',
+    homeClubId: '',
+  });
+
+  useEffect(() => {
+    api.get('/clubs?limit=100').then(data => setClubs(data.clubs || [])).catch(() => {});
+  }, []);
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
 
-  const handleSubmit = async (e) => {
+  const handleStep1 = async (e) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) { setError('Passwords do not match'); return; }
     setError('');
-
-    if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-
     setLoading(true);
     try {
-      const user = await register({
-        firstName: form.firstName,
-        lastName: form.lastName,
+      const data = await api.post('/auth/register', {
         email: form.email,
         password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
         role: isClub ? 'CLUB_MANAGER' : 'PLAYER',
       });
-      navigate(user.role === 'ADMIN' ? '/admin' : '/dashboard');
+      localStorage.setItem('token', data.token);
+      setStep(2);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStep2 = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const profileData = {};
+      if (form.phone) profileData.phone = form.phone;
+      if (form.dateOfBirth) profileData.dateOfBirth = form.dateOfBirth;
+      if (form.handicapIndex) profileData.handicapIndex = form.handicapIndex;
+      if (form.whsHandicapId) profileData.whsHandicapId = form.whsHandicapId;
+      if (form.homeClubId) profileData.homeClubId = form.homeClubId;
+
+      await api.put('/players/me', profileData);
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,59 +76,95 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 bg-gray-50 py-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Trophy className="w-12 h-12 text-green-700 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isClub ? 'Register Your Club' : 'Create Account'}
-          </h1>
-          <p className="text-gray-600 mt-1">Join the UK Golf Knockout Network</p>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8">
+        <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">
+          {isClub ? 'Register Your Club' : 'Create Account'}
+        </h1>
+
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-green-700 text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
+          <div className={`w-16 h-1 rounded ${step >= 2 ? 'bg-green-700' : 'bg-gray-200'}`} />
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-green-700 text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
         </div>
+        <p className="text-center text-sm text-gray-500 mb-6">
+          {step === 1 ? 'Account Details' : 'Complete Your Profile'}
+        </p>
 
-        <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-xl border p-8 space-y-5">
-          {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+        {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-              <input type="text" required value={form.firstName} onChange={update('firstName')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" />
+        {step === 1 && (
+          <form onSubmit={handleStep1} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                <input type="text" required value={form.firstName} onChange={update('firstName')} className={input} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                <input type="text" required value={form.lastName} onChange={update('lastName')} className={input} />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input type="text" required value={form.lastName} onChange={update('lastName')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <input type="email" required value={form.email} onChange={update('email')} className={input} />
             </div>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <input type="password" required minLength={6} value={form.password} onChange={update('password')} className={input} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+              <input type="password" required value={form.confirmPassword} onChange={update('confirmPassword')} className={input} />
+            </div>
+            <button type="submit" disabled={loading} className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-lg font-medium disabled:opacity-50">
+              {loading ? 'Creating account...' : 'Continue'}
+            </button>
+          </form>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" required value={form.email} onChange={update('email')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" />
-          </div>
+        {step === 2 && (
+          <form onSubmit={handleStep2} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+              <input type="date" value={form.dateOfBirth} onChange={update('dateOfBirth')} className={input} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Handicap Index</label>
+              <input type="number" step="0.1" min="-10" max="54" value={form.handicapIndex} onChange={update('handicapIndex')} placeholder="e.g. 18.5" className={input} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">WHS Handicap ID</label>
+              <input type="text" value={form.whsHandicapId} onChange={update('whsHandicapId')} placeholder="7-10 digit WHS ID" className={input} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Home Club</label>
+              <select value={form.homeClubId} onChange={update('homeClubId')} className={input}>
+                <option value="">Select club (optional)</option>
+                {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input type="tel" value={form.phone} onChange={update('phone')} placeholder="+44..." className={input} />
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" disabled={loading} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-3 rounded-lg font-medium disabled:opacity-50">
+                {loading ? 'Saving...' : 'Complete Registration'}
+              </button>
+              <button type="button" onClick={() => navigate('/dashboard')} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium">
+                Skip for Now
+              </button>
+            </div>
+          </form>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input type="password" required value={form.password} onChange={update('password')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-            <input type="password" required value={form.confirmPassword} onChange={update('confirmPassword')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none" />
-          </div>
-
-          <button type="submit" disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50">
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-
-          <p className="text-center text-sm text-gray-600">
-            Already have an account? <Link to="/login" className="text-green-700 font-medium hover:underline">Sign In</Link>
+        {step === 1 && (
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Already have an account? <a href="/login" className="text-green-700 hover:underline font-medium">Log in</a>
           </p>
-        </form>
+        )}
       </div>
     </div>
   );

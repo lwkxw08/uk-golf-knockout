@@ -27,9 +27,15 @@ router.put('/pricing/:id',
   validate,
   async (req, res) => {
     try {
+      const { amountPence, description, effectiveFrom, effectiveTo } = req.body;
+      const data = {};
+      if (amountPence !== undefined) data.amountPence = amountPence;
+      if (description !== undefined) data.description = description;
+      if (effectiveFrom) data.effectiveFrom = new Date(effectiveFrom);
+      if (effectiveTo !== undefined) data.effectiveTo = effectiveTo ? new Date(effectiveTo) : null;
       const pricing = await prisma.platformPricing.update({
         where: { id: req.params.id },
-        data: req.body,
+        data,
       });
       res.json(pricing);
     } catch (err) {
@@ -58,6 +64,21 @@ router.post('/pricing',
     } catch (err) {
       if (err.code === 'P2002') return res.status(409).json({ error: 'Pricing key already exists' });
       res.status(500).json({ error: 'Failed to create pricing' });
+    }
+  }
+);
+
+router.delete('/pricing/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      await prisma.platformPricing.delete({ where: { id: req.params.id } });
+      res.json({ message: 'Pricing deleted' });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to delete pricing' });
     }
   }
 );
@@ -97,7 +118,7 @@ router.post('/regions',
 
 router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
   try {
-    const [clubs, players, tournaments, activeMatches, revenue] = await Promise.all([
+    const [clubs, players, tournaments, activeMatches, revenue, memberships, clubSubs] = await Promise.all([
       prisma.club.count({ where: { isActive: true } }),
       prisma.player.count(),
       prisma.tournament.count(),
@@ -106,6 +127,8 @@ router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
         _sum: { totalAmountPence: true, platformAmountPence: true, clubAmountPence: true },
         where: { status: 'COMPLETED' },
       }),
+      prisma.playerMembership.count({ where: { status: 'ACTIVE' } }),
+      prisma.clubSubscription.count({ where: { status: 'ACTIVE' } }),
     ]);
 
     res.json({
@@ -113,6 +136,8 @@ router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
       players,
       tournaments,
       activeMatches,
+      activeMemberships: memberships,
+      activeClubSubscriptions: clubSubs,
       revenue: {
         total: revenue._sum.totalAmountPence || 0,
         platform: revenue._sum.platformAmountPence || 0,
@@ -179,7 +204,7 @@ router.put('/users/:id/role',
   }
 );
 
-// ─── SPONSORS ───────────────────────────────────────────────────────────────
+// ─── SPONSORS (full CRUD) ───────────────────────────────────────────────────
 
 router.get('/sponsors', authenticate, requireRole('ADMIN'), async (req, res) => {
   try {
@@ -205,6 +230,277 @@ router.post('/sponsors',
       res.status(201).json(sponsor);
     } catch (err) {
       res.status(500).json({ error: 'Failed to create sponsor' });
+    }
+  }
+);
+
+router.put('/sponsors/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const sponsor = await prisma.sponsor.update({
+        where: { id: req.params.id },
+        data: req.body,
+      });
+      res.json(sponsor);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to update sponsor' });
+    }
+  }
+);
+
+router.delete('/sponsors/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      await prisma.sponsor.delete({ where: { id: req.params.id } });
+      res.json({ message: 'Sponsor deleted' });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to delete sponsor' });
+    }
+  }
+);
+
+// ─── STAGE PROGRESSION ──────────────────────────────────────────────────────
+
+const RANKING_POINTS = {
+  NATIONAL_FINAL: { winner: 100, finalist: 50, semifinalist: 25, quarterfinalist: 15 },
+  REGIONAL: { winner: 40, finalist: 20, semifinalist: 10, quarterfinalist: 5 },
+  CLUB_QUALIFIER: { winner: 15, finalist: 8, semifinalist: 4, quarterfinalist: 2 },
+};
+
+router.post('/tournaments/:tournamentId/progress/:stageFrom',
+  authenticate,
+  requireRole('ADMIN'),
+  param('tournamentId').isUUID(),
+  param('stageFrom').isIn(['CLUB_QUALIFIER', 'REGIONAL']),
+  validate,
+  async (req, res) => {
+    try {
+      const { tournamentId, stageFrom } = req.params;
+
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        include: {
+          stages: { orderBy: { stageOrder: 'asc' } },
+        },
+      });
+      if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
+
+      const currentStage = tournament.stages.find(s => s.stage === stageFrom);
+      if (!currentStage) return res.status(400).json({ error: `Stage ${stageFrom} not configured for this tournament` });
+
+      const nextStageType = stageFrom === 'CLUB_QUALIFIER' ? 'REGIONAL' : 'NATIONAL_FINAL';
+      const nextStage = tournament.stages.find(s => s.stage === nextStageType);
+      if (!nextStage) return res.status(400).json({ error: `Next stage ${nextStageType} not configured` });
+
+      const qualifyCount = currentStage.qualifyCount;
+
+      // Find final-round matches in this stage that are completed
+      const completedMatches = await prisma.match.findMany({
+        where: {
+          tournamentId,
+          stage: stageFrom,
+          status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] },
+        },
+        include: {
+          playerA: true,
+          playerB: true,
+        },
+        orderBy: [{ roundNumber: 'desc' }, { matchNumber: 'asc' }],
+      });
+
+      if (completedMatches.length === 0) {
+        return res.status(400).json({ error: 'No completed matches found in this stage' });
+      }
+
+      // Get the highest round number (finals)
+      const maxRound = Math.max(...completedMatches.map(m => m.roundNumber));
+      const finalMatches = completedMatches.filter(m => m.roundNumber === maxRound);
+
+      // Collect qualifiers: winners + runners-up if qualifyCount > 1
+      const qualifiedPlayerIds = new Set();
+      for (const match of finalMatches) {
+        if (match.winnerId) {
+          qualifiedPlayerIds.add(match.winnerId);
+          if (qualifyCount >= 2) {
+            const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
+            if (loserId) qualifiedPlayerIds.add(loserId);
+          }
+        }
+      }
+
+      // If qualifyCount > 2, also pull semi-finalists
+      if (qualifyCount > 2) {
+        const semiFinals = completedMatches.filter(m => m.roundNumber === maxRound - 1);
+        for (const match of semiFinals) {
+          const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
+          if (loserId && qualifiedPlayerIds.size < qualifyCount * finalMatches.length) {
+            qualifiedPlayerIds.add(loserId);
+          }
+        }
+      }
+
+      // Create entries in the next stage for qualified players
+      const promoted = [];
+      for (const playerId of qualifiedPlayerIds) {
+        const existingEntry = await prisma.tournamentEntry.findFirst({
+          where: { tournamentId, playerId, stage: nextStageType },
+        });
+        if (existingEntry) continue;
+
+        const originalEntry = await prisma.tournamentEntry.findFirst({
+          where: { tournamentId, playerId },
+        });
+
+        const entry = await prisma.tournamentEntry.create({
+          data: {
+            tournamentId,
+            playerId,
+            clubId: originalEntry?.clubId || '',
+            stage: nextStageType,
+            status: 'ACTIVE',
+            paymentStatus: 'COMPLETED',
+            handicapAtEntry: originalEntry?.handicapAtEntry,
+          },
+        });
+        promoted.push(entry);
+
+        // Mark original entry as promoted
+        if (originalEntry) {
+          await prisma.tournamentEntry.update({
+            where: { id: originalEntry.id },
+            data: { status: 'PROMOTED' },
+          });
+        }
+      }
+
+      // Award ranking points for this stage
+      const points = RANKING_POINTS[stageFrom] || {};
+      for (const match of finalMatches) {
+        if (match.winnerId) {
+          await prisma.player.update({
+            where: { id: match.winnerId },
+            data: { rankingPoints: { increment: points.winner || 0 } },
+          });
+          const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
+          if (loserId) {
+            await prisma.player.update({
+              where: { id: loserId },
+              data: { rankingPoints: { increment: points.finalist || 0 } },
+            });
+          }
+        }
+      }
+
+      // Award points for semi-finalists
+      const semiFinals = completedMatches.filter(m => m.roundNumber === maxRound - 1);
+      for (const match of semiFinals) {
+        const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
+        if (loserId) {
+          await prisma.player.update({
+            where: { id: loserId },
+            data: { rankingPoints: { increment: points.semifinalist || 0 } },
+          });
+        }
+      }
+
+      res.json({
+        message: `Promoted ${promoted.length} players from ${stageFrom} to ${nextStageType}`,
+        qualifyCount,
+        promotedCount: promoted.length,
+        promoted,
+      });
+    } catch (err) {
+      console.error('Stage progression error:', err);
+      res.status(500).json({ error: 'Failed to progress stage' });
+    }
+  }
+);
+
+// ─── SUBSCRIPTION TIERS (Admin-managed) ─────────────────────────────────────
+
+router.get('/subscription-tiers', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const tiers = await prisma.subscriptionTier.findMany({
+      include: { _count: { select: { clubSubscriptions: true } } },
+      orderBy: { sortOrder: 'asc' },
+    });
+    res.json(tiers);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch subscription tiers' });
+  }
+});
+
+router.post('/subscription-tiers',
+  authenticate,
+  requireRole('ADMIN'),
+  body('name').trim().notEmpty(),
+  body('slug').trim().notEmpty().matches(/^[a-z0-9-]+$/),
+  body('amountPence').isInt({ min: 0 }),
+  validate,
+  async (req, res) => {
+    try {
+      const tier = await prisma.subscriptionTier.create({
+        data: {
+          name: req.body.name,
+          slug: req.body.slug,
+          amountPence: req.body.amountPence,
+          features: req.body.features || [],
+          sortOrder: req.body.sortOrder || 0,
+        },
+      });
+      res.status(201).json(tier);
+    } catch (err) {
+      if (err.code === 'P2002') return res.status(409).json({ error: 'Tier name or slug already exists' });
+      res.status(500).json({ error: 'Failed to create subscription tier' });
+    }
+  }
+);
+
+router.put('/subscription-tiers/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { name, amountPence, features, isActive, sortOrder } = req.body;
+      const data = {};
+      if (name !== undefined) data.name = name;
+      if (amountPence !== undefined) data.amountPence = amountPence;
+      if (features !== undefined) data.features = features;
+      if (isActive !== undefined) data.isActive = isActive;
+      if (sortOrder !== undefined) data.sortOrder = sortOrder;
+
+      const tier = await prisma.subscriptionTier.update({
+        where: { id: req.params.id },
+        data,
+      });
+      res.json(tier);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to update subscription tier' });
+    }
+  }
+);
+
+router.delete('/subscription-tiers/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      await prisma.subscriptionTier.delete({ where: { id: req.params.id } });
+      res.json({ message: 'Tier deleted' });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to delete subscription tier' });
     }
   }
 );

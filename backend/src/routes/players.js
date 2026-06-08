@@ -21,6 +21,11 @@ router.get('/me', authenticate, async (req, res) => {
           },
           orderBy: { createdAt: 'desc' },
         },
+        playerMemberships: {
+          where: { status: 'ACTIVE' },
+          take: 1,
+          orderBy: { currentPeriodEnd: 'desc' },
+        },
       },
     });
     if (!player) return res.status(404).json({ error: 'Player profile not found' });
@@ -94,7 +99,7 @@ router.get('/me/matches', authenticate, async (req, res) => {
         playerA: { select: { id: true, firstName: true, lastName: true } },
         playerB: { select: { id: true, firstName: true, lastName: true } },
         venueClub: { select: { id: true, name: true } },
-        result: { select: { resultText: true, isConfirmed: true } },
+        result: { select: { resultText: true, isConfirmed: true, scorecardUrl: true, submittedById: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -127,6 +132,53 @@ router.get('/rankings', async (req, res) => {
     res.json({ players, total, page: Number(page), totalPages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch rankings' });
+  }
+});
+
+// Public: overall leaderboard (adjusted scores)
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { tournamentId, page = 1, limit = 50 } = req.query;
+    const where = {};
+    if (tournamentId) where.tournamentId = tournamentId;
+
+    const scores = await prisma.scoreRecord.findMany({
+      where,
+      include: {
+        player: {
+          select: { id: true, firstName: true, lastName: true, handicapIndex: true, homeClub: { select: { name: true } } },
+        },
+        club: { select: { name: true } },
+        tournament: { select: { name: true } },
+      },
+      orderBy: { adjustedScore: 'asc' },
+      skip: (page - 1) * limit,
+      take: Number(limit),
+    });
+
+    const total = await prisma.scoreRecord.count({ where });
+
+    // Group by player for best score
+    const bestByPlayer = {};
+    for (const s of scores) {
+      if (!bestByPlayer[s.playerId] || Number(s.adjustedScore) < Number(bestByPlayer[s.playerId].adjustedScore)) {
+        bestByPlayer[s.playerId] = s;
+      }
+    }
+
+    const leaderboard = Object.values(bestByPlayer).sort(
+      (a, b) => Number(a.adjustedScore) - Number(b.adjustedScore)
+    );
+
+    res.json({
+      leaderboard,
+      allScores: scores,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
 

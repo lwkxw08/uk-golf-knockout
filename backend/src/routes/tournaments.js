@@ -45,9 +45,16 @@ router.get('/:id',
         where: { id: req.params.id },
         include: {
           pricing: { where: { isActive: true } },
-          stages: { orderBy: { stageOrder: 'asc' } },
+          stages: {
+            orderBy: { stageOrder: 'asc' },
+            include: {
+              stageRegions: { include: { region: true } },
+              prizes: { orderBy: { position: 'asc' } },
+            },
+          },
           sponsors: { where: { isActive: true } },
           draws: true,
+          prizes: { orderBy: { position: 'asc' } },
           _count: { select: { entries: true, matches: true } },
         },
       });
@@ -59,7 +66,7 @@ router.get('/:id',
   }
 );
 
-// Admin: create tournament
+// Admin: create tournament with dynamic stages, prizes, regions
 router.post('/',
   authenticate,
   requireRole('ADMIN'),
@@ -83,8 +90,9 @@ router.post('/',
         formatType, scoringSystem, teamSize = 1, isKnockout = true,
         handicapAllowancePct = 100, maxHandicap,
         ageCategory = 'OPEN', minAge, maxAge,
+        enableLeaderboard = false,
         registrationOpens, registrationDeadline, startDate, endDate,
-        stages, pricing,
+        stages, pricing, prizes,
       } = req.body;
 
       const tournament = await prisma.tournament.create({
@@ -93,6 +101,7 @@ router.post('/',
           formatType, scoringSystem, teamSize, isKnockout,
           handicapAllowancePct, maxHandicap,
           ageCategory, minAge, maxAge,
+          enableLeaderboard,
           registrationOpens: registrationOpens ? new Date(registrationOpens) : null,
           registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
           startDate: startDate ? new Date(startDate) : null,
@@ -100,22 +109,47 @@ router.post('/',
         },
       });
 
-      // Create stages (club → regional → national)
+      // Create stages dynamically
       if (stages && stages.length > 0) {
         for (const s of stages) {
-          await prisma.tournamentStage_.create({
+          const stageRecord = await prisma.tournamentStage_.create({
             data: {
               tournamentId: tournament.id,
               stage: s.stage,
               stageOrder: s.stageOrder,
               name: s.name,
               totalRounds: s.totalRounds || 1,
+              qualifyCount: s.qualifyCount || 1,
               matchDeadlineDays: s.matchDeadlineDays,
             },
           });
+
+          // Link regions to regional stages
+          if (s.stage === 'REGIONAL' && s.regionIds && s.regionIds.length > 0) {
+            for (const regionId of s.regionIds) {
+              await prisma.tournamentStageRegion.create({
+                data: { stageId: stageRecord.id, regionId },
+              });
+            }
+          }
+
+          // Create stage-level prizes
+          if (s.prizes && s.prizes.length > 0) {
+            for (const p of s.prizes) {
+              await prisma.prize.create({
+                data: {
+                  tournamentId: tournament.id,
+                  stageId: stageRecord.id,
+                  position: p.position,
+                  description: p.description,
+                  valuePence: p.valuePence || null,
+                  prizeType: p.prizeType || 'trophy',
+                },
+              });
+            }
+          }
         }
       } else {
-        // Default: all 3 stages
         const defaultStages = [
           { stage: 'CLUB_QUALIFIER', stageOrder: 1, name: 'Club Qualifier', totalRounds: 4 },
           { stage: 'REGIONAL', stageOrder: 2, name: 'Regional', totalRounds: 3 },
@@ -128,6 +162,21 @@ router.post('/',
         }
       }
 
+      // Tournament-level prizes (e.g. overall leaderboard prize)
+      if (prizes && prizes.length > 0) {
+        for (const p of prizes) {
+          await prisma.prize.create({
+            data: {
+              tournamentId: tournament.id,
+              position: p.position,
+              description: p.description,
+              valuePence: p.valuePence || null,
+              prizeType: p.prizeType || 'trophy',
+            },
+          });
+        }
+      }
+
       // Create pricing
       if (pricing && pricing.length > 0) {
         for (const p of pricing) {
@@ -136,7 +185,6 @@ router.post('/',
           });
         }
       } else {
-        // Default entry fee
         await prisma.tournamentPricing.create({
           data: {
             tournamentId: tournament.id,
@@ -151,7 +199,11 @@ router.post('/',
 
       const created = await prisma.tournament.findUnique({
         where: { id: tournament.id },
-        include: { stages: true, pricing: true },
+        include: {
+          stages: { include: { stageRegions: { include: { region: true } }, prizes: true } },
+          pricing: true,
+          prizes: true,
+        },
       });
 
       res.status(201).json(created);
@@ -171,10 +223,29 @@ router.put('/:id',
   validate,
   async (req, res) => {
     try {
+      const allowedFields = [
+        'name', 'description', 'rulesText', 'status', 'enableLeaderboard',
+        'registrationOpens', 'registrationDeadline', 'startDate', 'endDate',
+        'bannerUrl',
+      ];
+      const data = {};
+      for (const f of allowedFields) {
+        if (req.body[f] !== undefined) {
+          if (['registrationOpens', 'registrationDeadline', 'startDate', 'endDate'].includes(f)) {
+            data[f] = req.body[f] ? new Date(req.body[f]) : null;
+          } else {
+            data[f] = req.body[f];
+          }
+        }
+      }
+
       const tournament = await prisma.tournament.update({
         where: { id: req.params.id },
-        data: req.body,
-        include: { stages: true, pricing: true },
+        data,
+        include: {
+          stages: { include: { stageRegions: { include: { region: true } }, prizes: true } },
+          pricing: true, prizes: true,
+        },
       });
       res.json(tournament);
     } catch (err) {

@@ -75,6 +75,7 @@ enum EntryStatus {
   ELIMINATED
   WITHDRAWN
   DISQUALIFIED
+  PROMOTED
 }
 
 enum PaymentStatus {
@@ -115,6 +116,13 @@ enum DrawStatus {
   COMPLETED
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
 // ─── MODELS ─────────────────────────────────────────────────────────────────
 
 model User {
@@ -147,18 +155,21 @@ model Player {
   rankingPoints   Int       @default(0) @map("ranking_points")
   membershipType  String    @default("free") @map("membership_type")
   membershipExpiry DateTime? @map("membership_expiry")
+  stripeCustomerId String?  @map("stripe_customer_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   homeClub Club?  @relation(fields: [homeClubId], references: [id])
 
-  entries       TournamentEntry[]
-  matchesAsA    Match[]           @relation("PlayerA")
-  matchesAsB    Match[]           @relation("PlayerB")
-  matchesWon    Match[]           @relation("MatchWinner")
-  resultsSubmitted MatchResult[]  @relation("ResultSubmitter")
-  resultsConfirmed MatchResult[]  @relation("ResultConfirmer")
+  entries            TournamentEntry[]
+  matchesAsA         Match[]           @relation("PlayerA")
+  matchesAsB         Match[]           @relation("PlayerB")
+  matchesWon         Match[]           @relation("MatchWinner")
+  resultsSubmitted   MatchResult[]     @relation("ResultSubmitter")
+  resultsConfirmed   MatchResult[]     @relation("ResultConfirmer")
+  scoreRecords       ScoreRecord[]
+  playerMemberships  PlayerMembership[]
 
   @@map("players")
 }
@@ -179,7 +190,11 @@ model Club {
   description String?
   latitude    Decimal? @db.Decimal(10, 7)
   longitude   Decimal? @db.Decimal(10, 7)
+  slopeRating Int?     @map("slope_rating")
+  courseRating Decimal? @map("course_rating") @db.Decimal(4, 1)
+  par         Int?
   isActive    Boolean  @default(true) @map("is_active")
+  stripeCustomerId String? @map("stripe_customer_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -190,6 +205,9 @@ model Club {
   matches  Match[]
   sponsors Sponsor[]
   tournamentClubStages TournamentClubStage[]
+  courseOfferings      CourseOffering[]
+  clubSubscriptions    ClubSubscription[]
+  scoreRecords         ScoreRecord[]
 
   @@map("clubs")
 }
@@ -215,6 +233,7 @@ model Region {
 
   clubs      Club[]
   sponsors   Sponsor[]
+  stageRegions TournamentStageRegion[]
 
   @@map("regions")
 }
@@ -238,6 +257,7 @@ model Tournament {
   ageCategory          AgeCategory      @default(OPEN) @map("age_category")
   minAge               Int?             @map("min_age")
   maxAge               Int?             @map("max_age")
+  enableLeaderboard    Boolean          @default(false) @map("enable_leaderboard")
   registrationOpens    DateTime?        @map("registration_opens")
   registrationDeadline DateTime?        @map("registration_deadline")
   startDate            DateTime?        @map("start_date")
@@ -253,6 +273,8 @@ model Tournament {
   draws      Draw[]
   sponsors   Sponsor[]
   clubStages TournamentClubStage[]
+  prizes     Prize[]
+  scoreRecords ScoreRecord[]
 
   @@map("tournaments")
 }
@@ -264,12 +286,27 @@ model TournamentStage_ {
   stageOrder    Int             @map("stage_order")
   name          String
   totalRounds   Int             @default(1) @map("total_rounds")
+  qualifyCount  Int             @default(1) @map("qualify_count")
   matchDeadlineDays Int?        @map("match_deadline_days")
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stageRegions TournamentStageRegion[]
+  prizes       Prize[]
 
   @@unique([tournamentId, stage])
   @@map("tournament_stages")
+}
+
+model TournamentStageRegion {
+  id       String @id @default(uuid())
+  stageId  String @map("stage_id")
+  regionId String @map("region_id")
+
+  stage  TournamentStage_ @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  region Region           @relation(fields: [regionId], references: [id])
+
+  @@unique([stageId, regionId])
+  @@map("tournament_stage_regions")
 }
 
 model TournamentClubStage {
@@ -284,6 +321,24 @@ model TournamentClubStage {
 
   @@unique([tournamentId, clubId])
   @@map("tournament_club_stages")
+}
+
+// ─── PRIZES ─────────────────────────────────────────────────────────────────
+
+model Prize {
+  id            String          @id @default(uuid())
+  tournamentId  String          @map("tournament_id")
+  stageId       String?         @map("stage_id")
+  position      Int
+  description   String
+  valuePence    Int?            @map("value_pence")
+  prizeType     String          @default("trophy") @map("prize_type")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  tournament Tournament       @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stage      TournamentStage_? @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@map("prizes")
 }
 
 // ─── PRICING (Admin-Configurable) ───────────────────────────────────────────
@@ -397,6 +452,9 @@ model MatchResult {
   id               String   @id @default(uuid())
   matchId          String   @unique @map("match_id")
   resultText       String   @map("result_text")
+  grossScore       Int?     @map("gross_score")
+  netScore         Decimal? @map("net_score") @db.Decimal(5, 1)
+  stablefordPoints Int?     @map("stableford_points")
   scorecardUrl     String?  @map("scorecard_url")
   submittedById    String   @map("submitted_by_id")
   submittedAt      DateTime @default(now()) @map("submitted_at")
@@ -412,6 +470,32 @@ model MatchResult {
   @@map("match_results")
 }
 
+// ─── OVERALL LEADERBOARD (Score vs Handicap) ────────────────────────────────
+
+model ScoreRecord {
+  id              String   @id @default(uuid())
+  tournamentId    String   @map("tournament_id")
+  playerId        String   @map("player_id")
+  clubId          String   @map("club_id")
+  stage           TournamentStage
+  grossScore      Int      @map("gross_score")
+  handicapAtPlay  Decimal  @map("handicap_at_play") @db.Decimal(4, 1)
+  slopeRating     Int      @map("slope_rating")
+  courseRating     Decimal  @map("course_rating") @db.Decimal(4, 1)
+  par             Int
+  netScore        Decimal  @map("net_score") @db.Decimal(5, 1)
+  adjustedScore   Decimal  @map("adjusted_score") @db.Decimal(5, 1)
+  stablefordPoints Int?    @map("stableford_points")
+  playedAt        DateTime @map("played_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id])
+  club       Club       @relation(fields: [clubId], references: [id])
+
+  @@map("score_records")
+}
+
 // ─── SPONSORS & ADVERTISING ─────────────────────────────────────────────────
 
 model Sponsor {
@@ -425,6 +509,8 @@ model Sponsor {
   tournamentId  String?     @map("tournament_id")
   contactName   String?     @map("contact_name")
   contactEmail  String?     @map("contact_email")
+  adImageUrl    String?     @map("ad_image_url")
+  adText        String?     @map("ad_text")
   contractStart DateTime?   @map("contract_start")
   contractEnd   DateTime?   @map("contract_end")
   annualFeePence Int?       @map("annual_fee_pence")
@@ -455,4 +541,86 @@ model RevenueTransaction {
   createdAt           DateTime    @default(now()) @map("created_at")
 
   @@map("revenue_transactions")
+}
+
+// ─── PLAYER MEMBERSHIP (£39/year) ───────────────────────────────────────────
+
+model PlayerMembership {
+  id                 String             @id @default(uuid())
+  playerId           String             @map("player_id")
+  tier               String             @default("standard")
+  amountPence        Int                @map("amount_pence")
+  status             SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@map("player_memberships")
+}
+
+// ─── CLUB SUBSCRIPTIONS (£299-£999/year, admin-managed tiers) ───────────────
+
+model SubscriptionTier {
+  id            String  @id @default(uuid())
+  name          String  @unique
+  slug          String  @unique
+  amountPence   Int     @map("amount_pence")
+  features      Json    @default("[]")
+  isActive      Boolean @default(true) @map("is_active")
+  sortOrder     Int     @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  clubSubscriptions ClubSubscription[]
+
+  @@map("subscription_tiers")
+}
+
+model ClubSubscription {
+  id                 String             @id @default(uuid())
+  clubId             String             @map("club_id")
+  tierId             String             @map("tier_id")
+  amountPence        Int                @map("amount_pence")
+  status             SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  club Club             @relation(fields: [clubId], references: [id])
+  tier SubscriptionTier @relation(fields: [tierId], references: [id])
+
+  @@map("club_subscriptions")
+}
+
+// ─── COURSE MARKETPLACE ─────────────────────────────────────────────────────
+
+model CourseOffering {
+  id            String   @id @default(uuid())
+  clubId        String   @map("club_id")
+  offeringType  String   @map("offering_type")
+  title         String
+  description   String?
+  pricePence    Int?     @map("price_pence")
+  originalPricePence Int? @map("original_price_pence")
+  validFrom     DateTime? @map("valid_from")
+  validTo       DateTime? @map("valid_to")
+  maxRedemptions Int?    @map("max_redemptions")
+  redemptionCount Int    @default(0) @map("redemption_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@map("course_offerings")
 }
