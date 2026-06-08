@@ -1,32 +1,38 @@
-const VITE_API_URL = import.meta.env.VITE_API_URL || '';
-const VITE_API_BASIC_AUTH = import.meta.env.VITE_API_BASIC_AUTH || '';
-const API_BASE = `${VITE_API_URL}/api`;
+const API_BASE = '/api';
 
-async function request(path, options = {}) {
-  const token = localStorage.getItem('token');
-  const headers = { ...options.headers };
+function request(path, options = {}) {
+  return new Promise((resolve, reject) => {
+    const token = localStorage.getItem('token');
+    const method = options.method || 'GET';
+    const xhr = new XMLHttpRequest();
 
-  if (VITE_API_BASIC_AUTH) {
-    headers.Authorization = `Basic ${VITE_API_BASIC_AUTH}`;
-    if (token) headers['X-Auth-Token'] = token;
-  } else {
-    if (token) headers.Authorization = `Bearer ${token}`;
-  }
-  if (!(options.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-  }
+    xhr.open(method, `${API_BASE}${path}`);
 
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    if (token) xhr.setRequestHeader('X-Auth-Token', token);
+    if (!(options.body instanceof FormData)) {
+      xhr.setRequestHeader('Content-Type', 'application/json');
+    }
 
-  if (res.status === 401) {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
-  }
+    xhr.onload = function () {
+      if (xhr.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        return reject(new Error('Unauthorized'));
+      }
+      let data;
+      try { data = JSON.parse(xhr.responseText); } catch { data = {}; }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        reject(new Error(data.error || 'Request failed'));
+      }
+    };
+    xhr.onerror = function () {
+      reject(new Error('Network error'));
+    };
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+    xhr.send(options.body ?? null);
+  });
 }
 
 export const api = {
