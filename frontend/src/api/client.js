@@ -1,10 +1,17 @@
-const API_BASE = '/api';
+const VITE_API_URL = import.meta.env.VITE_API_URL || '';
+const VITE_API_BASIC_AUTH = import.meta.env.VITE_API_BASIC_AUTH || '';
+const API_BASE = `${VITE_API_URL}/api`;
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('token');
   const headers = { ...options.headers };
 
-  if (token) headers.Authorization = `Bearer ${token}`;
+  if (VITE_API_BASIC_AUTH) {
+    headers.Authorization = `Basic ${VITE_API_BASIC_AUTH}`;
+    if (token) headers['X-Auth-Token'] = token;
+  } else {
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }

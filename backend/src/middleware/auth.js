@@ -4,12 +4,20 @@ const prisma = require('../config/prisma');
 
 function authenticate(req, res, next) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  const altHeader = req.headers['x-auth-token'];
+  let token;
+
+  if (altHeader) {
+    token = altHeader;
+  } else if (header && header.startsWith('Bearer ')) {
+    token = header.split(' ')[1];
+  }
+
+  if (!token) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {
-    const token = header.split(' ')[1];
     const decoded = jwt.verify(token, config.jwtSecret);
     req.user = decoded;
     next();

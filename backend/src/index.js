@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const config = require('./config');
 
@@ -17,8 +18,8 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Middleware
-app.use(helmet());
-app.use(cors({ origin: config.clientUrl }));
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('combined'));
 
 // Stripe webhook needs raw body — mount before json parser
@@ -60,6 +61,14 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
   });
+});
+
+// Serve frontend static files in production/preview
+const frontendDist = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDist));
+app.get('{*splat}', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next();
+  res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 // Error handler
