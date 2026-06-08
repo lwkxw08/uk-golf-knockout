@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
+import { Search } from 'lucide-react';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [clubs, setClubs] = useState([]);
+  const [whsLookup, setWhsLookup] = useState({ loading: false, result: null });
 
   const [form, setForm] = useState({
     email: '',
@@ -131,12 +133,45 @@ export default function RegisterPage() {
               <input type="date" value={form.dateOfBirth} onChange={update('dateOfBirth')} className={input} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Handicap Index</label>
-              <input type="number" step="0.1" min="-10" max="54" value={form.handicapIndex} onChange={update('handicapIndex')} placeholder="e.g. 18.5" className={input} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">WHS Handicap ID</label>
+              <div className="flex gap-2">
+                <input type="text" value={form.whsHandicapId} onChange={update('whsHandicapId')} placeholder="7-10 digit WHS ID" className={`${input} flex-1`} />
+                <button
+                  type="button"
+                  disabled={!form.whsHandicapId || form.whsHandicapId.length < 7 || whsLookup.loading}
+                  onClick={async () => {
+                    setWhsLookup({ loading: true, result: null });
+                    try {
+                      const data = await api.get(`/courses/golfer/${form.whsHandicapId}`);
+                      setWhsLookup({ loading: false, result: data });
+                      if (data.available && data.handicapIndex != null) {
+                        setForm(prev => ({ ...prev, handicapIndex: String(data.handicapIndex) }));
+                      }
+                    } catch {
+                      setWhsLookup({ loading: false, result: { available: false, message: 'Lookup failed' } });
+                    }
+                  }}
+                  className="bg-green-700 hover:bg-green-800 text-white px-3 py-2 rounded-lg text-sm disabled:opacity-50 transition flex items-center gap-1"
+                >
+                  {whsLookup.loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <><Search className="w-3 h-3" /> Lookup</>
+                  )}
+                </button>
+              </div>
+              {whsLookup.result && (
+                <div className={`mt-2 text-xs px-3 py-2 rounded ${whsLookup.result.available ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                  {whsLookup.result.available
+                    ? `Found: ${whsLookup.result.firstName} ${whsLookup.result.lastName} — Handicap Index: ${whsLookup.result.handicapIndex}`
+                    : (whsLookup.result.message || 'WHS lookup not available — enter handicap manually')}
+                </div>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">WHS Handicap ID</label>
-              <input type="text" value={form.whsHandicapId} onChange={update('whsHandicapId')} placeholder="7-10 digit WHS ID" className={input} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Handicap Index</label>
+              <input type="number" step="0.1" min="-10" max="54" value={form.handicapIndex} onChange={update('handicapIndex')} placeholder="e.g. 18.5" className={input} />
+              {whsLookup.result?.available && <p className="text-xs text-green-600 mt-1">Auto-filled from WHS lookup</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Home Club</label>

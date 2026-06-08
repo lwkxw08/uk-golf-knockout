@@ -37,6 +37,9 @@ export default function AdminDashboard() {
           <Link to="/admin/tournaments/new" className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
             New Tournament
           </Link>
+          <Link to="/admin/clubs" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+            Clubs
+          </Link>
           <Link to="/admin/sponsors" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
             Sponsors
           </Link>
