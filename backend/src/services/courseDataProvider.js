@@ -52,7 +52,8 @@ const golfCourseApiProvider = {
       { headers: this._headers() },
     );
     if (!res.ok) throw new Error(`GolfCourseAPI getCourse failed: ${res.status}`);
-    const c = await res.json();
+    const data = await res.json();
+    const c = data.course || data;
     const tees = [];
     for (const gender of ['male', 'female']) {
       for (const t of (c.tees?.[gender] || [])) {
