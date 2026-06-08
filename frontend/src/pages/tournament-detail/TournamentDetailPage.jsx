@@ -135,10 +135,10 @@ export default function TournamentDetailPage() {
           )}
 
           {/* Bracket */}
-          {bracket && (
+          {bracket && bracket.totalRounds > 0 && (
             <div className="bg-white border rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4">Bracket — {stageLabels[activeStage] || activeStage}</h2>
-              <KnockoutBracket bracket={bracket} />
+              <KnockoutBracket rounds={bracket.rounds} totalRounds={bracket.totalRounds} roundLabels={bracket.roundLabels} />
             </div>
           )}
         </div>
