@@ -1,14 +1,11 @@
 /**
- * WHS (World Handicap System) API integration.
+ * WHS (World Handicap System) service.
  *
- * The official WHS API (via England Golf / national bodies) requires a formal
- * data agreement. This service abstracts the lookup so the integration point
- * is ready when API access is granted.
- *
- * For now, we provide:
- * - Manual handicap entry with WHS ID validation format
- * - Placeholder for live API lookup
+ * Golfer lookup delegates to courseDataProvider (England Golf API when configured).
+ * Format validation always available regardless of provider.
  */
+
+const courseData = require('./courseDataProvider');
 
 const WHS_ID_REGEX = /^\d{7,10}$/;
 
@@ -17,22 +14,30 @@ function validateWhsId(whsId) {
 }
 
 async function lookupHandicap(whsId) {
-  // TODO: Replace with actual WHS API call when access is granted
-  // The England Golf API endpoint would be something like:
-  // GET https://api.englandgolf.org/v1/handicaps/{whsId}
-  //
-  // For now, return null to indicate lookup unavailable
-  // The frontend will fall back to manual entry
   if (!validateWhsId(whsId)) {
     throw new Error('Invalid WHS Handicap ID format');
   }
 
+  const result = await courseData.lookupGolfer(whsId);
+  if (!result.available) {
+    return {
+      whsId,
+      handicapIndex: null,
+      clubName: null,
+      lookupAvailable: false,
+      message: result.message || 'Live WHS lookup pending API access. Please enter handicap manually.',
+    };
+  }
+
   return {
     whsId,
-    handicapIndex: null,
-    clubName: null,
-    lookupAvailable: false,
-    message: 'Live WHS lookup pending API access. Please enter handicap manually.',
+    handicapIndex: result.handicapIndex,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    clubName: result.homeClub?.name || null,
+    clubRegion: result.homeClub?.region || null,
+    isActive: result.isActive,
+    lookupAvailable: true,
   };
 }
 

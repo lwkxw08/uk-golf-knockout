@@ -20,4 +20,7 @@ module.exports = {
     bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
   },
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  courseDataProvider: process.env.COURSE_DATA_PROVIDER || 'golfcourseapi',
+  golfCourseApiKey: process.env.GOLF_COURSE_API_KEY,
+  englandGolfClientToken: process.env.ENGLAND_GOLF_CLIENT_TOKEN,
 };
