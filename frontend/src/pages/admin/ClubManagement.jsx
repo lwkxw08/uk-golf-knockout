@@ -178,6 +178,10 @@ function ClubModal({ club, regions, onClose, onSaved }) {
     const regionName = COUNTY_REGION_MAP[courseData.county] || null;
     const matchedRegion = regionName ? regions.find(r => r.name === regionName) : null;
 
+    // Extract UK postcode from address string (e.g. "Southview Road, Pinner Hill HA5 3YA, United Kingdom")
+    const postcodeMatch = (courseData.address || '').match(/\b([A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2})\b/i);
+    const postcode = postcodeMatch ? postcodeMatch[1].toUpperCase() : '';
+
     setForm(prev => ({
       ...prev,
       courseApiId: courseData.courseApiId || prev.courseApiId,
@@ -185,6 +189,7 @@ function ClubModal({ club, regions, onClose, onSaved }) {
       address: courseData.address || prev.address,
       city: courseData.city || prev.city,
       county: courseData.county || prev.county,
+      postcode: postcode || prev.postcode,
       latitude: courseData.latitude || prev.latitude,
       longitude: courseData.longitude || prev.longitude,
       slopeRating: courseData.tees?.[0]?.slopeRating || prev.slopeRating,
