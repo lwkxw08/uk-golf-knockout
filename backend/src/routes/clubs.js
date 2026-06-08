@@ -6,6 +6,23 @@ const prisma = require('../config/prisma');
 
 const router = express.Router();
 
+// Club manager: get own managed club (must be before /:slug routes)
+router.get('/my/managed',
+  authenticate,
+  async (req, res) => {
+    try {
+      const mgr = await prisma.clubManager.findUnique({
+        where: { userId: req.user.id },
+        include: { club: { include: { region: true } } },
+      });
+      if (!mgr) return res.status(404).json({ error: 'No managed club found' });
+      res.json(mgr);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch managed club' });
+    }
+  }
+);
+
 // Public: list clubs
 router.get('/', async (req, res) => {
   try {
@@ -137,30 +154,101 @@ router.get('/:clubId/dashboard',
         if (!mgr) return res.status(403).json({ error: 'Access denied' });
       }
 
-      const [club, members, entries, matches, revenue, sponsors] = await Promise.all([
+      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees] = await Promise.all([
         prisma.club.findUnique({ where: { id: clubId }, include: { region: true } }),
-        prisma.player.count({ where: { homeClubId: clubId } }),
+        prisma.player.findMany({
+          where: { homeClubId: clubId },
+          select: { id: true, firstName: true, lastName: true, handicapIndex: true, rankingPoints: true, user: { select: { email: true } }, createdAt: true },
+          orderBy: { lastName: 'asc' },
+        }),
         prisma.tournamentEntry.count({ where: { clubId } }),
         prisma.match.count({ where: { venueClubId: clubId } }),
+        prisma.match.findMany({
+          where: { venueClubId: clubId, status: { in: ['PENDING', 'SCHEDULED'] } },
+          include: {
+            tournament: { select: { name: true } },
+            playerA: { select: { firstName: true, lastName: true, handicapIndex: true } },
+            playerB: { select: { firstName: true, lastName: true, handicapIndex: true } },
+          },
+          orderBy: { scheduledDate: 'asc' },
+          take: 20,
+        }),
+        prisma.match.findMany({
+          where: { venueClubId: clubId, status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] } },
+          include: {
+            tournament: { select: { name: true } },
+            playerA: { select: { firstName: true, lastName: true } },
+            playerB: { select: { firstName: true, lastName: true } },
+            winner: { select: { firstName: true, lastName: true } },
+            result: { select: { resultText: true } },
+          },
+          orderBy: { playedAt: 'desc' },
+          take: 20,
+        }),
         prisma.revenueTransaction.aggregate({
           _sum: { clubAmountPence: true },
           where: { clubId, status: 'COMPLETED' },
         }),
         prisma.sponsor.findMany({ where: { clubId, isActive: true } }),
+        prisma.clubTee.findMany({
+          where: { clubId },
+          include: { holes: { orderBy: { holeNumber: 'asc' } } },
+          orderBy: { teeName: 'asc' },
+        }),
       ]);
 
       res.json({
         club,
         stats: {
-          members,
+          members: membersList.length,
           entries,
-          matches,
+          matches: matchesTotal,
           revenue: revenue._sum.clubAmountPence || 0,
         },
+        members: membersList,
+        fixtures: upcomingFixtures,
+        results: recentResults,
         sponsors,
+        tees,
       });
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch club dashboard' });
+    }
+  }
+);
+
+// Club manager: update club settings
+router.put('/:clubId/settings',
+  authenticate,
+  param('clubId').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { clubId } = req.params;
+      if (req.user.role !== 'ADMIN') {
+        const mgr = await prisma.clubManager.findFirst({ where: { userId: req.user.id, clubId } });
+        if (!mgr) return res.status(403).json({ error: 'Access denied' });
+      }
+
+      const { name, description, phone, email, website, address, city, county, postcode } = req.body;
+      const club = await prisma.club.update({
+        where: { id: clubId },
+        data: {
+          ...(name && { name }),
+          ...(description !== undefined && { description }),
+          ...(phone !== undefined && { phone }),
+          ...(email !== undefined && { email }),
+          ...(website !== undefined && { website }),
+          ...(address !== undefined && { address }),
+          ...(city !== undefined && { city }),
+          ...(county !== undefined && { county }),
+          ...(postcode !== undefined && { postcode }),
+        },
+        include: { region: true },
+      });
+      res.json(club);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to update club settings' });
     }
   }
 );

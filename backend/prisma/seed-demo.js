@@ -108,6 +108,44 @@ async function main() {
     console.log('Created club tee with 18 holes');
   }
 
+  // Update club with more details for demo
+  await prisma.club.update({
+    where: { id: club.id },
+    data: {
+      description: 'Buckinghamshire Golf Club is one of the premier golf clubs in the South East. Founded in 1914, our 18-hole championship course winds through mature woodland and offers a challenging yet enjoyable experience for golfers of all abilities. Home to multiple county championships and regional knockout events.',
+      phone: '01234 567890',
+      email: 'info@buckinghamshire-gc.com',
+      website: 'https://www.buckinghamshire-gc.com',
+      address: '45 Golf Lane, Denham',
+      city: 'Denham',
+      postcode: 'UB9 5PG',
+    },
+  });
+
+  // Create club manager user
+  const mgrUser = await prisma.user.upsert({
+    where: { email: 'manager@buckinghamshire-gc.com' },
+    update: {},
+    create: {
+      email: 'manager@buckinghamshire-gc.com',
+      passwordHash: hash,
+      role: 'CLUB_MANAGER',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.clubManager.upsert({
+    where: { userId: mgrUser.id },
+    update: {},
+    create: {
+      userId: mgrUser.id,
+      clubId: club.id,
+      title: 'Club Secretary',
+    },
+  });
+  console.log('Club manager created: manager@buckinghamshire-gc.com');
+
   // Create 16 demo players
   const playerRecords = [];
   for (const p of DEMO_PLAYERS) {

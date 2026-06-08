@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, Users, Trophy, DollarSign, Megaphone } from 'lucide-react';
+import { Building2, Users, Trophy, DollarSign, Megaphone, Calendar, Settings, MapPin, Phone, Mail, Globe, ClipboardList, ChevronRight, Search } from 'lucide-react';
 
 export default function ClubPortal() {
   const { user } = useAuth();
@@ -10,24 +10,76 @@ export default function ClubPortal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [clubs, setClubs] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [memberSearch, setMemberSearch] = useState('');
+  const [settingsForm, setSettingsForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
 
   useEffect(() => {
-    // If admin, show all clubs; if manager, show assigned club
     if (user?.role === 'ADMIN') {
       api.get('/clubs?limit=100').then(data => {
         setClubs(data.clubs || []);
         setLoading(false);
       }).catch(() => setLoading(false));
+    } else if (user?.role === 'CLUB_MANAGER') {
+      api.get('/clubs/my/managed').then(mgr => {
+        if (mgr.club) {
+          return api.get(`/clubs/${mgr.club.id}/dashboard`).then(d => {
+            setDashboard(d);
+            setSettingsForm({
+              name: d.club.name || '',
+              description: d.club.description || '',
+              phone: d.club.phone || '',
+              email: d.club.email || '',
+              website: d.club.website || '',
+              address: d.club.address || '',
+              city: d.club.city || '',
+              county: d.club.county || '',
+              postcode: d.club.postcode || '',
+            });
+          });
+        }
+        setError('No club assigned');
+      }).catch(err => setError(err.message)).finally(() => setLoading(false));
     } else {
-      // Try to find user's managed club
       api.get('/players/me').then(player => {
         if (player.homeClubId) {
-          return api.get(`/clubs/${player.homeClubId}/dashboard`).then(setDashboard);
+          return api.get(`/clubs/${player.homeClubId}/dashboard`).then(d => {
+            setDashboard(d);
+            setSettingsForm({
+              name: d.club.name || '',
+              description: d.club.description || '',
+              phone: d.club.phone || '',
+              email: d.club.email || '',
+              website: d.club.website || '',
+              address: d.club.address || '',
+              city: d.club.city || '',
+              county: d.club.county || '',
+              postcode: d.club.postcode || '',
+            });
+          });
         }
         setError('No club assigned');
       }).catch(err => setError(err.message)).finally(() => setLoading(false));
     }
   }, [user]);
+
+  const handleSaveSettings = async () => {
+    if (!dashboard || !settingsForm) return;
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      await api.put(`/clubs/${dashboard.club.id}/settings`, settingsForm);
+      setSaveMsg('Settings saved successfully');
+      const d = await api.get(`/clubs/${dashboard.club.id}/dashboard`);
+      setDashboard(d);
+    } catch (err) {
+      setSaveMsg('Failed to save: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
@@ -64,53 +116,326 @@ export default function ClubPortal() {
     );
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: Building2 },
+    { id: 'members', label: 'Members', icon: Users },
+    { id: 'fixtures', label: 'Fixtures', icon: Calendar },
+    { id: 'results', label: 'Results', icon: Trophy },
+    { id: 'sponsors', label: 'Sponsors', icon: Megaphone },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  const filteredMembers = (dashboard.members || []).filter(m => {
+    if (!memberSearch) return true;
+    const q = memberSearch.toLowerCase();
+    return `${m.firstName} ${m.lastName}`.toLowerCase().includes(q) || m.user?.email?.toLowerCase().includes(q);
+  });
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-8">
-        <h1 className="text-2xl font-bold flex items-center gap-3"><Building2 className="w-7 h-7" /> {dashboard.club.name}</h1>
-        <p className="text-green-200 mt-1">{dashboard.club.region?.name || ''} &bull; Club Portal</p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-3"><Building2 className="w-7 h-7" /> {dashboard.club.name}</h1>
+            <p className="text-green-200 mt-1">{dashboard.club.region?.name || ''} &bull; Club Portal</p>
+          </div>
+          <Link to={`/clubs/${dashboard.club.slug}`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
+            View Public Page <ChevronRight className="w-4 h-4 inline" />
+          </Link>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-4 gap-4 mb-8">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard icon={Users} label="Members" value={dashboard.stats.members} />
         <StatCard icon={Trophy} label="Entries" value={dashboard.stats.entries} />
-        <StatCard icon={Trophy} label="Matches" value={dashboard.stats.matches} />
+        <StatCard icon={ClipboardList} label="Matches" value={dashboard.stats.matches} />
         <StatCard icon={DollarSign} label="Revenue" value={`£${(dashboard.stats.revenue / 100).toFixed(0)}`} />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      {/* Tabs */}
+      <div className="border-b mb-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                activeTab === t.id ? 'border-green-700 text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
+              <t.icon className="w-4 h-4" /> {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Club Info */}
+          <div className="bg-white border rounded-xl p-6">
+            <h2 className="font-semibold text-lg mb-4">Club Information</h2>
+            {dashboard.club.description && <p className="text-gray-700 text-sm mb-4">{dashboard.club.description}</p>}
+            <div className="space-y-2 text-sm">
+              {dashboard.club.address && <p className="flex items-center gap-2 text-gray-600"><MapPin className="w-4 h-4 text-gray-400" /> {dashboard.club.address}{dashboard.club.postcode ? `, ${dashboard.club.postcode}` : ''}</p>}
+              {dashboard.club.phone && <p className="flex items-center gap-2 text-gray-600"><Phone className="w-4 h-4 text-gray-400" /> {dashboard.club.phone}</p>}
+              {dashboard.club.email && <p className="flex items-center gap-2 text-gray-600"><Mail className="w-4 h-4 text-gray-400" /> {dashboard.club.email}</p>}
+              {dashboard.club.website && <p className="flex items-center gap-2 text-gray-600"><Globe className="w-4 h-4 text-gray-400" /> <a href={dashboard.club.website} target="_blank" rel="noreferrer" className="text-green-600 hover:underline">{dashboard.club.website}</a></p>}
+            </div>
+            {dashboard.club.slopeRating && (
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Slope</p>
+                  <p className="font-bold text-lg">{dashboard.club.slopeRating}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Course Rating</p>
+                  <p className="font-bold text-lg">{dashboard.club.courseRating ? Number(dashboard.club.courseRating).toFixed(1) : '-'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Par</p>
+                  <p className="font-bold text-lg">{dashboard.club.par || '-'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Activity */}
+          <div className="space-y-6">
+            <div className="bg-white border rounded-xl p-6">
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
+              {(dashboard.fixtures || []).length > 0 ? (
+                <div className="space-y-2">
+                  {dashboard.fixtures.slice(0, 5).map(f => (
+                    <div key={f.id} className="flex items-center justify-between border rounded-lg p-3 text-sm">
+                      <div>
+                        <p className="font-medium">{f.playerA?.firstName} {f.playerA?.lastName} vs {f.playerB?.firstName || 'TBD'} {f.playerB?.lastName || ''}</p>
+                        <p className="text-xs text-gray-500">{f.tournament?.name}</p>
+                      </div>
+                      {f.scheduledDate && <span className="text-xs text-gray-400">{new Date(f.scheduledDate).toLocaleDateString('en-GB')}</span>}
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500 text-sm">No upcoming fixtures</p>}
+            </div>
+
+            <div className="bg-white border rounded-xl p-6">
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
+              {(dashboard.results || []).length > 0 ? (
+                <div className="space-y-2">
+                  {dashboard.results.slice(0, 5).map(r => (
+                    <div key={r.id} className="flex items-center justify-between border rounded-lg p-3 text-sm">
+                      <div>
+                        <p className="font-medium">{r.winner?.firstName} {r.winner?.lastName} <span className="text-green-600">won</span></p>
+                        <p className="text-xs text-gray-500">{r.playerA?.firstName} {r.playerA?.lastName} vs {r.playerB?.firstName} {r.playerB?.lastName}</p>
+                      </div>
+                      <span className="text-sm font-medium text-gray-600">{r.result?.resultText}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-gray-500 text-sm">No results yet</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'members' && (
         <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Megaphone className="w-5 h-5 text-green-700" /> Sponsors</h2>
-          {dashboard.sponsors.length > 0 ? (
-            <div className="space-y-2">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Members ({filteredMembers.length})</h2>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="text" placeholder="Search members..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
+                className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-gray-500">
+                <th className="pb-3 font-medium">Name</th>
+                <th className="pb-3 font-medium">Email</th>
+                <th className="pb-3 font-medium">Handicap</th>
+                <th className="pb-3 font-medium">Ranking Points</th>
+                <th className="pb-3 font-medium">Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMembers.map(m => (
+                <tr key={m.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="py-3 font-medium">{m.firstName} {m.lastName}</td>
+                  <td className="py-3 text-gray-600">{m.user?.email || '-'}</td>
+                  <td className="py-3">{m.handicapIndex ? Number(m.handicapIndex).toFixed(1) : '-'}</td>
+                  <td className="py-3"><span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">{m.rankingPoints}</span></td>
+                  <td className="py-3 text-gray-400">{new Date(m.createdAt).toLocaleDateString('en-GB')}</td>
+                </tr>
+              ))}
+              {filteredMembers.length === 0 && (
+                <tr><td colSpan="5" className="py-8 text-center text-gray-500">No members found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeTab === 'fixtures' && (
+        <div className="bg-white border rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4">Upcoming Fixtures</h2>
+          {(dashboard.fixtures || []).length > 0 ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-gray-500">
+                  <th className="pb-3 font-medium">Tournament</th>
+                  <th className="pb-3 font-medium">Player A</th>
+                  <th className="pb-3 font-medium">Player B</th>
+                  <th className="pb-3 font-medium">Date</th>
+                  <th className="pb-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.fixtures.map(f => (
+                  <tr key={f.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="py-3 font-medium">{f.tournament?.name}</td>
+                    <td className="py-3">{f.playerA?.firstName} {f.playerA?.lastName} {f.playerA?.handicapIndex ? `(${Number(f.playerA.handicapIndex).toFixed(1)})` : ''}</td>
+                    <td className="py-3">{f.playerB ? `${f.playerB.firstName} ${f.playerB.lastName} ${f.playerB.handicapIndex ? `(${Number(f.playerB.handicapIndex).toFixed(1)})` : ''}` : 'TBD'}</td>
+                    <td className="py-3 text-gray-600">{f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}</td>
+                    <td className="py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        f.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                      }`}>{f.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : <p className="text-gray-500 text-sm py-8 text-center">No upcoming fixtures</p>}
+        </div>
+      )}
+
+      {activeTab === 'results' && (
+        <div className="bg-white border rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4">Match Results</h2>
+          {(dashboard.results || []).length > 0 ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-gray-500">
+                  <th className="pb-3 font-medium">Tournament</th>
+                  <th className="pb-3 font-medium">Player A</th>
+                  <th className="pb-3 font-medium">Player B</th>
+                  <th className="pb-3 font-medium">Winner</th>
+                  <th className="pb-3 font-medium">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.results.map(r => (
+                  <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="py-3 font-medium">{r.tournament?.name}</td>
+                    <td className="py-3">{r.playerA?.firstName} {r.playerA?.lastName}</td>
+                    <td className="py-3">{r.playerB?.firstName} {r.playerB?.lastName}</td>
+                    <td className="py-3 text-green-700 font-medium">{r.winner?.firstName} {r.winner?.lastName}</td>
+                    <td className="py-3"><span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">{r.result?.resultText}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : <p className="text-gray-500 text-sm py-8 text-center">No results yet</p>}
+        </div>
+      )}
+
+      {activeTab === 'sponsors' && (
+        <div className="bg-white border rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4">Club Sponsors</h2>
+          {(dashboard.sponsors || []).length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-4">
               {dashboard.sponsors.map(s => (
-                <div key={s.id} className="flex items-center justify-between border rounded-lg p-3">
-                  <div>
-                    <p className="font-medium">{s.name}</p>
-                    <p className="text-xs text-gray-500 capitalize">{s.tier}</p>
+                <div key={s.id} className="border rounded-xl p-5 flex items-start gap-4">
+                  {s.logoUrl ? (
+                    <img src={s.logoUrl} alt={s.name} className="w-16 h-16 rounded-lg object-contain bg-gray-50 p-2" />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Megaphone className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{s.name}</h3>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded capitalize">{s.tier?.toLowerCase()} sponsor</span>
+                    {s.description && <p className="text-sm text-gray-600 mt-2">{s.description}</p>}
+                    {s.websiteUrl && <a href={s.websiteUrl} target="_blank" rel="noreferrer" className="text-green-600 text-sm hover:underline mt-1 block">Visit website →</a>}
                   </div>
-                  {s.websiteUrl && <a href={s.websiteUrl} target="_blank" rel="noreferrer" className="text-green-600 text-sm hover:underline">Visit</a>}
                 </div>
               ))}
             </div>
-          ) : <p className="text-gray-500 text-sm">No sponsors yet</p>}
+          ) : (
+            <div className="text-center py-8">
+              <Megaphone className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No sponsors yet</p>
+              <p className="text-sm text-gray-400 mt-1">Sponsors can be added from the admin panel</p>
+            </div>
+          )}
         </div>
+      )}
 
+      {activeTab === 'settings' && settingsForm && (
         <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4">Quick Actions</h2>
-          <div className="space-y-2">
-            <Link to={`/clubs/${dashboard.club.slug}`} className="block w-full text-left px-4 py-3 border rounded-lg hover:bg-gray-50 transition font-medium text-sm">
-              View Public Club Page &rarr;
-            </Link>
-            <Link to="/marketplace" className="block w-full text-left px-4 py-3 border rounded-lg hover:bg-gray-50 transition font-medium text-sm">
-              Manage Course Offerings &rarr;
-            </Link>
-            <Link to="/subscriptions" className="block w-full text-left px-4 py-3 border rounded-lg hover:bg-gray-50 transition font-medium text-sm">
-              Manage Subscription &rarr;
-            </Link>
+          <h2 className="font-semibold text-lg mb-4">Club Settings</h2>
+          {saveMsg && (
+            <div className={`mb-4 px-4 py-2 rounded text-sm ${saveMsg.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {saveMsg}
+            </div>
+          )}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Club Name</label>
+              <input type="text" value={settingsForm.name} onChange={e => setSettingsForm({ ...settingsForm, name: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" value={settingsForm.email} onChange={e => setSettingsForm({ ...settingsForm, email: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input type="tel" value={settingsForm.phone} onChange={e => setSettingsForm({ ...settingsForm, phone: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <input type="url" value={settingsForm.website} onChange={e => setSettingsForm({ ...settingsForm, website: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <input type="text" value={settingsForm.address} onChange={e => setSettingsForm({ ...settingsForm, address: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <input type="text" value={settingsForm.city} onChange={e => setSettingsForm({ ...settingsForm, city: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">County</label>
+              <input type="text" value={settingsForm.county} onChange={e => setSettingsForm({ ...settingsForm, county: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
+              <input type="text" value={settingsForm.postcode} onChange={e => setSettingsForm({ ...settingsForm, postcode: e.target.value })}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea rows="4" value={settingsForm.description} onChange={e => setSettingsForm({ ...settingsForm, description: e.target.value })}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+          </div>
+          <div className="mt-6 flex gap-3">
+            <button onClick={handleSaveSettings} disabled={saving}
+              className="bg-green-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-800 transition disabled:opacity-50">
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
