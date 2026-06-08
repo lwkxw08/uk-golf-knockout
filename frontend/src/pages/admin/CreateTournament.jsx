@@ -52,6 +52,15 @@ export default function CreateTournament() {
     minAge: '',
     maxAge: '',
     enableLeaderboard: false,
+    useCustomStableford: false,
+    stablefordConfig: {
+      doubleBogeyOrWorse: 0,
+      bogey: 1,
+      par: 2,
+      birdie: 3,
+      eagle: 4,
+      albatross: 5,
+    },
     registrationOpens: '',
     registrationDeadline: '',
     startDate: '',
@@ -166,6 +175,10 @@ export default function CreateTournament() {
       delete payload.entryFeePence;
       delete payload.clubSharePct;
       delete payload.platformSharePct;
+      delete payload.useCustomStableford;
+      if (!form.useCustomStableford) {
+        delete payload.stablefordConfig;
+      }
 
       await api.post('/tournaments', payload);
       navigate('/admin');
@@ -282,6 +295,54 @@ export default function CreateTournament() {
                 <span className="text-sm font-medium text-gray-700">Overall Leaderboard</span>
               </label>
             </div>
+          </div>
+
+          {/* Custom Stableford Points */}
+          <div className="mt-4 border-t pt-4">
+            <label className="flex items-center gap-2 cursor-pointer mb-3">
+              <input
+                type="checkbox"
+                checked={form.useCustomStableford}
+                onChange={(e) => setForm(prev => ({ ...prev, useCustomStableford: e.target.checked }))}
+                className="w-4 h-4 text-green-600 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">Custom Stableford Points</span>
+              <span className="text-xs text-gray-400">(default: standard stableford)</span>
+            </label>
+            {form.useCustomStableford && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-xs text-amber-700 mb-3">Customise points awarded per hole relative to par (after handicap adjustment)</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { key: 'albatross', label: 'Albatross (3 under)', default: 5 },
+                    { key: 'eagle', label: 'Eagle (2 under)', default: 4 },
+                    { key: 'birdie', label: 'Birdie (1 under)', default: 3 },
+                    { key: 'par', label: 'Par', default: 2 },
+                    { key: 'bogey', label: 'Bogey (1 over)', default: 1 },
+                    { key: 'doubleBogeyOrWorse', label: 'Double Bogey+', default: 0 },
+                  ].map(item => (
+                    <div key={item.key}>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">{item.label}</label>
+                      <input
+                        type="number"
+                        min="-10"
+                        max="20"
+                        value={form.stablefordConfig[item.key]}
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          stablefordConfig: { ...prev.stablefordConfig, [item.key]: Number(e.target.value) },
+                        }))}
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Standard: Albatross 5, Eagle 4, Birdie 3, Par 2, Bogey 1, Double Bogey+ 0.
+                  Modified Stableford example: Eagle +5, Birdie +2, Par 0, Bogey -1, Double Bogey -3.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

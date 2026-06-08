@@ -176,6 +176,7 @@ model Player {
   resultsConfirmed   MatchResult[]     @relation("ResultConfirmer")
   scoreRecords       ScoreRecord[]
   playerMemberships  PlayerMembership[]
+  holeScores         MatchHoleScore[]
 
   @@map("players")
 }
@@ -319,6 +320,7 @@ model Tournament {
   minAge               Int?             @map("min_age")
   maxAge               Int?             @map("max_age")
   enableLeaderboard    Boolean          @default(false) @map("enable_leaderboard")
+  stablefordConfig     Json?            @map("stableford_config")
   registrationOpens    DateTime?        @map("registration_opens")
   registrationDeadline DateTime?        @map("registration_deadline")
   startDate            DateTime?        @map("start_date")
@@ -509,6 +511,7 @@ model Match {
   nextMatch  Match?      @relation("MatchProgression", fields: [nextMatchId], references: [id])
   prevMatches Match[]    @relation("MatchProgression")
   result     MatchResult?
+  holeScores MatchHoleScore[]
 
   @@map("matches")
 }
@@ -533,6 +536,24 @@ model MatchResult {
   confirmedBy Player? @relation("ResultConfirmer", fields: [confirmedById], references: [id])
 
   @@map("match_results")
+}
+
+// ─── HOLE-BY-HOLE SCORING ───────────────────────────────────────────────────
+
+model MatchHoleScore {
+  id         String @id @default(uuid())
+  matchId    String @map("match_id")
+  playerId   String @map("player_id")
+  holeNumber Int    @map("hole_number")
+  score      Int
+  putts      Int?
+  fairwayHit Boolean? @map("fairway_hit")
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, playerId, holeNumber])
+  @@map("match_hole_scores")
 }
 
 // ─── OVERALL LEADERBOARD (Score vs Handicap) ────────────────────────────────

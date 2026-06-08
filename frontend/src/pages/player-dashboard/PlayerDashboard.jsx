@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList } from 'lucide-react';
+import DigitalScorecard from '../../components/scoring/DigitalScorecard';
 
 export default function PlayerDashboard() {
   const { user } = useAuth();
@@ -11,6 +12,8 @@ export default function PlayerDashboard() {
   const [loading, setLoading] = useState(true);
   const [submitModal, setSubmitModal] = useState(null);
   const [disputeModal, setDisputeModal] = useState(null);
+  const [scorecardModal, setScorecardModal] = useState(null);
+  const [scheduleModal, setScheduleModal] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -121,10 +124,20 @@ export default function PlayerDashboard() {
                         )}
                         {match.venueClub && <p className="text-xs text-gray-400">at {match.venueClub.name}</p>}
                       </div>
-                      <button onClick={() => setSubmitModal(match)}
-                        className="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                        Submit Result
-                      </button>
+                      <div className="flex flex-col gap-1">
+                        <button onClick={() => setScorecardModal(match)}
+                          className="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
+                          <ClipboardList className="w-3 h-3" /> Enter Scores
+                        </button>
+                        <button onClick={() => setSubmitModal(match)}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg text-xs">
+                          Upload Card
+                        </button>
+                        <button onClick={() => setScheduleModal(match)}
+                          className="text-blue-600 hover:underline text-xs">
+                          Schedule
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -217,6 +230,31 @@ export default function PlayerDashboard() {
         setDisputeModal(null);
         api.get('/players/me/matches').then(setMatches).catch(console.error);
       }} />}
+
+      {/* Digital Scorecard Modal */}
+      {scorecardModal && (
+        <DigitalScorecard
+          match={scorecardModal}
+          player={player}
+          onClose={() => setScorecardModal(null)}
+          onCompleted={() => {
+            setScorecardModal(null);
+            api.get('/players/me/matches').then(setMatches).catch(console.error);
+          }}
+        />
+      )}
+
+      {/* Schedule Match Modal */}
+      {scheduleModal && (
+        <ScheduleModal
+          match={scheduleModal}
+          onClose={() => setScheduleModal(null)}
+          onScheduled={() => {
+            setScheduleModal(null);
+            api.get('/players/me/matches').then(setMatches).catch(console.error);
+          }}
+        />
+      )}
     </div>
   );
 
@@ -310,6 +348,64 @@ function SubmitResultModal({ match, player, onClose, onSubmitted }) {
         </form>
 
         <p className="text-xs text-gray-400 mt-3 text-center">Your opponent must confirm this result before it's final.</p>
+      </div>
+    </div>
+  );
+}
+
+function ScheduleModal({ match, onClose, onScheduled }) {
+  const [date, setDate] = useState('');
+  const [venueClubId, setVenueClubId] = useState(match.venueClubId || '');
+  const [clubs, setClubs] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.get('/clubs?limit=100').then(c => setClubs(c.clubs || c)).catch(() => {});
+  }, []);
+
+  const opponent = match.playerAId === match.playerB?.id ? match.playerA : match.playerB;
+  const opponentName = opponent ? `${opponent.firstName} ${opponent.lastName}` : 'Opponent';
+
+  const handleSchedule = async (e) => {
+    e.preventDefault();
+    if (!date) return;
+    setSubmitting(true);
+    try {
+      const body = { scheduledDate: new Date(date).toISOString() };
+      if (venueClubId) body.venueClubId = venueClubId;
+      await api.post(`/matches/${match.id}/schedule`, body);
+      onScheduled();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <h3 className="text-lg font-bold mb-2">Schedule Match</h3>
+        <p className="text-sm text-gray-600 mb-4">{match.tournament?.name} — vs {opponentName}</p>
+        <form onSubmit={handleSchedule} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+            <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border rounded-lg px-3 py-2" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Venue (optional)</label>
+            <select value={venueClubId} onChange={(e) => setVenueClubId(e.target.value)} className="w-full border rounded-lg px-3 py-2">
+              <option value="">Select venue...</option>
+              {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="flex gap-3">
+            <button type="submit" disabled={submitting} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-lg font-medium disabled:opacity-50">
+              {submitting ? 'Scheduling...' : 'Schedule Match'}
+            </button>
+            <button type="button" onClick={onClose} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-lg font-medium">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   );

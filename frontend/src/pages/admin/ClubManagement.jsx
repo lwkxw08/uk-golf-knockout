@@ -383,13 +383,31 @@ function ClubModal({ club, regions, onClose, onSaved }) {
                     </tbody>
                   </table>
 
-                  {/* Inline Scorecard */}
+                  {/* Inline Scorecard with editable stroke index */}
                   {showScorecard !== null && tees[showScorecard]?.holes?.length > 0 && (
                     <div className="mt-3 bg-white rounded-lg border border-green-200 p-3 overflow-x-auto">
                       <p className="text-xs font-medium text-green-800 mb-2">
                         {tees[showScorecard].teeName} Tees — Scorecard
                       </p>
-                      <ScorecardTable holes={tees[showScorecard].holes} />
+                      <ScorecardTable
+                        holes={tees[showScorecard].holes}
+                        editable
+                        onHoleChange={(holeNumber, field, value) => {
+                          setTees(prev => prev.map((t, ti) => {
+                            if (ti !== showScorecard) return t;
+                            return {
+                              ...t,
+                              holes: t.holes.map(h =>
+                                h.holeNumber === holeNumber ? { ...h, [field]: value } : h
+                              ),
+                            };
+                          }));
+                        }}
+                      />
+                      <p className="text-xs text-amber-600 mt-2">
+                        ⚠ Stroke Index not available from GolfCourseAPI — please enter manually for each hole.
+                        Will auto-populate from England Golf API when connected.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -449,14 +467,34 @@ function ClubModal({ club, regions, onClose, onSaved }) {
   );
 }
 
-function ScorecardTable({ holes }) {
+function ScorecardTable({ holes, editable = false, onHoleChange }) {
   const front = holes.filter(h => h.holeNumber <= 9);
   const back = holes.filter(h => h.holeNumber > 9 && h.holeNumber <= 18);
   const sum = (arr, key) => arr.reduce((s, h) => s + (h[key] || 0), 0);
+  const hasMissingSI = holes.some(h => !h.strokeIndex);
 
   const headerCell = 'px-1.5 py-1 text-center font-bold text-green-800 bg-green-100';
   const dataCell = 'px-1.5 py-1 text-center';
   const totalCell = 'px-1.5 py-1 text-center font-bold bg-green-50';
+
+  const renderSICell = (h) => {
+    if (editable) {
+      return (
+        <td key={h.holeNumber} className={`${dataCell} ${!h.strokeIndex ? 'bg-amber-50' : ''}`}>
+          <input
+            type="number"
+            min="1"
+            max="18"
+            value={h.strokeIndex || ''}
+            onChange={(e) => onHoleChange?.(h.holeNumber, 'strokeIndex', e.target.value ? Number(e.target.value) : null)}
+            className="w-8 text-center text-xs border rounded px-0.5 py-0.5 focus:ring-1 focus:ring-green-400 outline-none"
+            placeholder="—"
+          />
+        </td>
+      );
+    }
+    return <td key={h.holeNumber} className={dataCell}>{h.strokeIndex || '—'}</td>;
+  };
 
   return (
     <table className="w-full text-xs border-collapse">
@@ -487,11 +525,13 @@ function ScorecardTable({ holes }) {
           <td className={totalCell}>{sum(back, 'yards')}</td>
           <td className={totalCell}>{sum(front, 'yards') + sum(back, 'yards')}</td>
         </tr>
-        <tr className="border-t border-green-200">
-          <td className={`${dataCell} font-medium`}>S.I.</td>
-          {front.map(h => <td key={h.holeNumber} className={dataCell}>{h.strokeIndex || '—'}</td>)}
+        <tr className={`border-t ${hasMissingSI && editable ? 'border-amber-300 bg-amber-50/50' : 'border-green-200'}`}>
+          <td className={`${dataCell} font-medium ${hasMissingSI && editable ? 'text-amber-700' : ''}`}>
+            S.I.{hasMissingSI && editable && ' *'}
+          </td>
+          {front.map(renderSICell)}
           <td className={totalCell}></td>
-          {back.map(h => <td key={h.holeNumber} className={dataCell}>{h.strokeIndex || '—'}</td>)}
+          {back.map(renderSICell)}
           <td className={totalCell}></td>
           <td className={totalCell}></td>
         </tr>

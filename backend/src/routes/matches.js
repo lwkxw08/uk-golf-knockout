@@ -344,4 +344,47 @@ router.get('/:matchId/scorecard',
   }
 );
 
+// Schedule a match — propose a date
+router.post('/:matchId/schedule',
+  authenticate,
+  param('matchId').isUUID(),
+  body('scheduledDate').isISO8601(),
+  body('venueClubId').optional().isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { matchId } = req.params;
+      const { scheduledDate, venueClubId } = req.body;
+      const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
+      if (!player) return res.status(400).json({ error: 'Player profile required' });
+
+      const match = await prisma.match.findUnique({ where: { id: matchId } });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+      if (match.playerAId !== player.id && match.playerBId !== player.id) {
+        return res.status(403).json({ error: 'Only participants can schedule' });
+      }
+
+      const data = {
+        scheduledDate: new Date(scheduledDate),
+        status: 'SCHEDULED',
+      };
+      if (venueClubId) data.venueClubId = venueClubId;
+
+      const updated = await prisma.match.update({
+        where: { id: matchId },
+        data,
+        include: {
+          playerA: { select: { id: true, firstName: true, lastName: true } },
+          playerB: { select: { id: true, firstName: true, lastName: true } },
+          venueClub: { select: { id: true, name: true } },
+        },
+      });
+
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to schedule match' });
+    }
+  }
+);
+
 module.exports = router;
