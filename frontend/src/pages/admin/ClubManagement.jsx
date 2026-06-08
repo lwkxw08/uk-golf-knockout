@@ -1,13 +1,49 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
-import { MapPin, Plus, Pencil, X } from 'lucide-react';
+import { MapPin, Plus, Pencil, X, ChevronDown, ChevronUp } from 'lucide-react';
 import CourseSearch from '../../components/ui/CourseSearch';
+
+// Map API county/state codes to region names for auto-matching
+const COUNTY_REGION_MAP = {
+  // South East
+  SRY: 'South East', KEN: 'South East', SXE: 'South East', SXW: 'South East',
+  HAM: 'South East', BRK: 'South East', OXF: 'South East', BKM: 'South East',
+  HRT: 'South East', BDF: 'South East', ESS: 'South East', LND: 'South East',
+  // South West
+  DEV: 'South West', SOM: 'South West', DOR: 'South West', WIL: 'South West',
+  GLS: 'South West', CON: 'South West', AVN: 'South West',
+  // Midlands
+  WMD: 'Midlands', STS: 'Midlands', WAR: 'Midlands', WOR: 'Midlands',
+  SHR: 'Midlands', NTH: 'Midlands', LEC: 'Midlands', DRB: 'Midlands',
+  NTT: 'Midlands', HEF: 'Midlands', RUT: 'Midlands', LIN: 'Midlands',
+  // North West
+  LAN: 'North West', CHS: 'North West', CMA: 'North West', MER: 'North West', GTM: 'North West',
+  // North East
+  DUR: 'North East', NBL: 'North East', TYW: 'North East', CLV: 'North East',
+  NYK: 'North East', WYK: 'North East', SYK: 'North East', HMB: 'North East', ERY: 'North East',
+  // East Anglia
+  NFK: 'East Anglia', SFK: 'East Anglia', CAM: 'East Anglia',
+  // Scotland
+  SCT: 'Scotland', ABD: 'Scotland', ANG: 'Scotland', ARL: 'Scotland',
+  AYR: 'Scotland', BAN: 'Scotland', BEW: 'Scotland', BUT: 'Scotland',
+  CAI: 'Scotland', CLK: 'Scotland', DFS: 'Scotland', DNB: 'Scotland',
+  ELN: 'Scotland', FIF: 'Scotland', INV: 'Scotland', KKD: 'Scotland',
+  KRS: 'Scotland', LKS: 'Scotland', MLN: 'Scotland', MOY: 'Scotland',
+  NAI: 'Scotland', OKI: 'Scotland', PEE: 'Scotland', PER: 'Scotland',
+  RFW: 'Scotland', ROC: 'Scotland', ROX: 'Scotland', SEL: 'Scotland',
+  SHI: 'Scotland', STI: 'Scotland', SUT: 'Scotland', WIG: 'Scotland', WLN: 'Scotland', ZET: 'Scotland',
+  // Wales
+  WLS: 'Wales', AGY: 'Wales', CGN: 'Wales', CMN: 'Wales',
+  DEN: 'Wales', FLN: 'Wales', GLA: 'Wales', GWN: 'Wales',
+  MER: 'Wales', MGM: 'Wales', MON: 'Wales', MTG: 'Wales',
+  PEM: 'Wales', POW: 'Wales', RAD: 'Wales',
+};
 
 export default function ClubManagement() {
   const [clubs, setClubs] = useState([]);
   const [regions, setRegions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // null | 'create' | club object
+  const [modal, setModal] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -100,6 +136,8 @@ function ClubModal({ club, regions, onClose, onSaved }) {
   const [form, setForm] = useState({
     name: club?.name || '',
     slug: club?.slug || '',
+    courseApiId: club?.courseApiId || '',
+    courseProvider: club?.courseProvider || '',
     address: club?.address || '',
     city: club?.city || '',
     county: club?.county || '',
@@ -116,6 +154,9 @@ function ClubModal({ club, regions, onClose, onSaved }) {
     longitude: club?.longitude || '',
     isActive: club?.isActive ?? true,
   });
+  const [tees, setTees] = useState([]);
+  const [showTees, setShowTees] = useState(false);
+  const [showScorecard, setShowScorecard] = useState(null); // tee index
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -133,8 +174,14 @@ function ClubModal({ club, regions, onClose, onSaved }) {
   };
 
   const handleCourseSelect = (courseData) => {
+    // Try to auto-match region from county code
+    const regionName = COUNTY_REGION_MAP[courseData.county] || null;
+    const matchedRegion = regionName ? regions.find(r => r.name === regionName) : null;
+
     setForm(prev => ({
       ...prev,
+      courseApiId: courseData.courseApiId || prev.courseApiId,
+      courseProvider: courseData.provider || prev.courseProvider,
       address: courseData.address || prev.address,
       city: courseData.city || prev.city,
       county: courseData.county || prev.county,
@@ -145,7 +192,32 @@ function ClubModal({ club, regions, onClose, onSaved }) {
       par: courseData.tees?.[0]?.par || prev.par,
       name: prev.name || courseData.clubName,
       slug: prev.slug || String(courseData.clubName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      regionId: matchedRegion?.id || prev.regionId,
     }));
+
+    // Store tee data to send to backend
+    if (courseData.tees && courseData.tees.length > 0) {
+      setTees(courseData.tees.map(t => ({
+        teeId: t.teeId,
+        teeName: t.teeName,
+        gender: t.gender || 'male',
+        slopeRating: t.slopeRating,
+        courseRating: t.courseRating,
+        bogeyRating: t.bogeyRating,
+        par: t.par,
+        totalYards: t.totalYards,
+        totalMeters: t.totalMeters,
+        numberOfHoles: t.numberOfHoles || 18,
+        holes: (t.holes || []).map(h => ({
+          holeNumber: h.holeNumber,
+          par: h.par,
+          yards: h.yardage || h.yards || null,
+          meters: h.meters || null,
+          strokeIndex: h.handicap || h.strokeIndex || null,
+        })),
+      })));
+      setShowTees(true);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -160,6 +232,8 @@ function ClubModal({ club, regions, onClose, onSaved }) {
         par: form.par ? Number(form.par) : null,
         latitude: form.latitude ? Number(form.latitude) : null,
         longitude: form.longitude ? Number(form.longitude) : null,
+        regionId: form.regionId || null,
+        tees: tees.length > 0 ? tees : undefined,
       };
       if (isEdit) {
         await api.put(`/clubs/${club.id}`, payload);
@@ -179,7 +253,7 @@ function ClubModal({ club, regions, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold">{isEdit ? 'Edit Club' : 'Add New Club'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
@@ -254,7 +328,74 @@ function ClubModal({ club, regions, onClose, onSaved }) {
             <textarea value={form.description} onChange={update('description')} rows={2} className={input} />
           </div>
 
-          {/* Course rating data */}
+          {/* Tee Data Section */}
+          {tees.length > 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <button
+                type="button"
+                onClick={() => setShowTees(!showTees)}
+                className="w-full flex justify-between items-center text-sm font-medium text-green-800"
+              >
+                <span>{tees.length} Tee{tees.length !== 1 ? 's' : ''} from Course Database</span>
+                {showTees ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              {showTees && (
+                <div className="mt-3">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-green-700 border-b border-green-200">
+                        <th className="pb-1.5 pr-2">Tee</th>
+                        <th className="pb-1.5 pr-2">Gender</th>
+                        <th className="pb-1.5 pr-2">Slope</th>
+                        <th className="pb-1.5 pr-2">CR</th>
+                        <th className="pb-1.5 pr-2">Par</th>
+                        <th className="pb-1.5 pr-2">Yards</th>
+                        <th className="pb-1.5">Scorecard</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tees.map((tee, i) => (
+                        <tr key={i} className="border-b border-green-100 last:border-0">
+                          <td className="py-1.5 pr-2 font-medium">{tee.teeName}</td>
+                          <td className="py-1.5 pr-2 capitalize">{tee.gender}</td>
+                          <td className="py-1.5 pr-2">{tee.slopeRating}</td>
+                          <td className="py-1.5 pr-2">{tee.courseRating}</td>
+                          <td className="py-1.5 pr-2">{tee.par}</td>
+                          <td className="py-1.5 pr-2">{tee.totalYards?.toLocaleString()}</td>
+                          <td className="py-1.5">
+                            {tee.holes?.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setShowScorecard(showScorecard === i ? null : i)}
+                                className="text-green-700 hover:underline"
+                              >
+                                {showScorecard === i ? 'Hide' : 'View'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Inline Scorecard */}
+                  {showScorecard !== null && tees[showScorecard]?.holes?.length > 0 && (
+                    <div className="mt-3 bg-white rounded-lg border border-green-200 p-3 overflow-x-auto">
+                      <p className="text-xs font-medium text-green-800 mb-2">
+                        {tees[showScorecard].teeName} Tees — Scorecard
+                      </p>
+                      <ScorecardTable holes={tees[showScorecard].holes} />
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="text-xs text-green-600 mt-2">
+                Tee data will be saved with the club and available for tournament setup.
+              </p>
+            </div>
+          )}
+
+          {/* Course rating data (manual override) */}
           <div className="bg-gray-50 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <MapPin className="w-4 h-4" /> Course Data
@@ -300,5 +441,56 @@ function ClubModal({ club, regions, onClose, onSaved }) {
         </form>
       </div>
     </div>
+  );
+}
+
+function ScorecardTable({ holes }) {
+  const front = holes.filter(h => h.holeNumber <= 9);
+  const back = holes.filter(h => h.holeNumber > 9 && h.holeNumber <= 18);
+  const sum = (arr, key) => arr.reduce((s, h) => s + (h[key] || 0), 0);
+
+  const headerCell = 'px-1.5 py-1 text-center font-bold text-green-800 bg-green-100';
+  const dataCell = 'px-1.5 py-1 text-center';
+  const totalCell = 'px-1.5 py-1 text-center font-bold bg-green-50';
+
+  return (
+    <table className="w-full text-xs border-collapse">
+      <thead>
+        <tr className="bg-green-50">
+          <th className={headerCell}>Hole</th>
+          {front.map(h => <th key={h.holeNumber} className={headerCell}>{h.holeNumber}</th>)}
+          <th className={headerCell}>Out</th>
+          {back.map(h => <th key={h.holeNumber} className={headerCell}>{h.holeNumber}</th>)}
+          <th className={headerCell}>In</th>
+          <th className={headerCell}>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="border-t border-green-200">
+          <td className={`${dataCell} font-medium`}>Par</td>
+          {front.map(h => <td key={h.holeNumber} className={dataCell}>{h.par}</td>)}
+          <td className={totalCell}>{sum(front, 'par')}</td>
+          {back.map(h => <td key={h.holeNumber} className={dataCell}>{h.par}</td>)}
+          <td className={totalCell}>{sum(back, 'par')}</td>
+          <td className={totalCell}>{sum(front, 'par') + sum(back, 'par')}</td>
+        </tr>
+        <tr className="border-t border-green-200">
+          <td className={`${dataCell} font-medium`}>Yards</td>
+          {front.map(h => <td key={h.holeNumber} className={dataCell}>{h.yards}</td>)}
+          <td className={totalCell}>{sum(front, 'yards')}</td>
+          {back.map(h => <td key={h.holeNumber} className={dataCell}>{h.yards}</td>)}
+          <td className={totalCell}>{sum(back, 'yards')}</td>
+          <td className={totalCell}>{sum(front, 'yards') + sum(back, 'yards')}</td>
+        </tr>
+        <tr className="border-t border-green-200">
+          <td className={`${dataCell} font-medium`}>S.I.</td>
+          {front.map(h => <td key={h.holeNumber} className={dataCell}>{h.strokeIndex || '—'}</td>)}
+          <td className={totalCell}></td>
+          {back.map(h => <td key={h.holeNumber} className={dataCell}>{h.strokeIndex || '—'}</td>)}
+          <td className={totalCell}></td>
+          <td className={totalCell}></td>
+        </tr>
+      </tbody>
+    </table>
   );
 }

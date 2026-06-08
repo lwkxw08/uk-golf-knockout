@@ -31,6 +31,26 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Public: get club tees + scorecard (hole-by-hole) — must be before /:slug
+router.get('/:slug/scorecard', async (req, res) => {
+  try {
+    const club = await prisma.club.findUnique({
+      where: { slug: req.params.slug },
+      select: {
+        id: true, name: true, slug: true, courseApiId: true,
+        tees: {
+          include: { holes: { orderBy: { holeNumber: 'asc' } } },
+          orderBy: { teeName: 'asc' },
+        },
+      },
+    });
+    if (!club) return res.status(404).json({ error: 'Club not found' });
+    res.json(club);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch scorecard' });
+  }
+});
+
 // Public: get club by slug with full details
 router.get('/:slug', async (req, res) => {
   try {
@@ -145,6 +165,63 @@ router.get('/:clubId/dashboard',
   }
 );
 
+// Helper: upsert tees and holes for a club
+async function saveTees(clubId, tees) {
+  if (!tees || !Array.isArray(tees)) return;
+  for (const tee of tees) {
+    const teeRecord = await prisma.clubTee.upsert({
+      where: { clubId_teeName: { clubId, teeName: tee.teeName } },
+      create: {
+        clubId,
+        teeApiId: tee.teeId || null,
+        teeName: tee.teeName,
+        gender: tee.gender || 'Male',
+        slopeRating: tee.slopeRating || null,
+        courseRating: tee.courseRating || null,
+        bogeyRating: tee.bogeyRating || null,
+        par: tee.par || null,
+        totalYards: tee.totalYards || null,
+        totalMeters: tee.totalMeters || null,
+        numberOfHoles: tee.numberOfHoles || 18,
+      },
+      update: {
+        teeApiId: tee.teeId || undefined,
+        gender: tee.gender || undefined,
+        slopeRating: tee.slopeRating || undefined,
+        courseRating: tee.courseRating || undefined,
+        bogeyRating: tee.bogeyRating || undefined,
+        par: tee.par || undefined,
+        totalYards: tee.totalYards || undefined,
+        totalMeters: tee.totalMeters || undefined,
+        numberOfHoles: tee.numberOfHoles || undefined,
+      },
+    });
+
+    // Save holes if provided
+    if (tee.holes && Array.isArray(tee.holes)) {
+      for (const hole of tee.holes) {
+        await prisma.clubTeeHole.upsert({
+          where: { clubTeeId_holeNumber: { clubTeeId: teeRecord.id, holeNumber: hole.holeNumber } },
+          create: {
+            clubTeeId: teeRecord.id,
+            holeNumber: hole.holeNumber,
+            par: hole.par,
+            yards: hole.yards || null,
+            meters: hole.meters || null,
+            strokeIndex: hole.strokeIndex || null,
+          },
+          update: {
+            par: hole.par,
+            yards: hole.yards || undefined,
+            meters: hole.meters || undefined,
+            strokeIndex: hole.strokeIndex || undefined,
+          },
+        });
+      }
+    }
+  }
+}
+
 // Admin: create club
 router.post('/',
   authenticate,
@@ -154,10 +231,17 @@ router.post('/',
   validate,
   async (req, res) => {
     try {
-      const club = await prisma.club.create({ data: req.body });
-      res.status(201).json(club);
+      const { tees, ...clubData } = req.body;
+      const club = await prisma.club.create({ data: clubData });
+      await saveTees(club.id, tees);
+      const full = await prisma.club.findUnique({
+        where: { id: club.id },
+        include: { tees: { include: { holes: { orderBy: { holeNumber: 'asc' } } }, orderBy: { teeName: 'asc' } } },
+      });
+      res.status(201).json(full);
     } catch (err) {
       if (err.code === 'P2002') return res.status(409).json({ error: 'Slug already exists' });
+      console.error('Club create error:', err);
       res.status(500).json({ error: 'Failed to create club' });
     }
   }
@@ -172,9 +256,16 @@ router.put('/:clubId',
   async (req, res) => {
     try {
       const { clubId } = req.params;
-      const club = await prisma.club.update({ where: { id: clubId }, data: req.body });
-      res.json(club);
+      const { tees, ...clubData } = req.body;
+      const club = await prisma.club.update({ where: { id: clubId }, data: clubData });
+      if (tees) await saveTees(clubId, tees);
+      const full = await prisma.club.findUnique({
+        where: { id: clubId },
+        include: { tees: { include: { holes: { orderBy: { holeNumber: 'asc' } } }, orderBy: { teeName: 'asc' } } },
+      });
+      res.json(full);
     } catch (err) {
+      console.error('Club update error:', err);
       res.status(500).json({ error: 'Failed to update club' });
     }
   }

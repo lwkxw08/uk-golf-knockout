@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { Building2, Users, Calendar, Trophy, MapPin, ExternalLink, ShoppingBag } from 'lucide-react';
 
@@ -25,6 +25,9 @@ export default function ClubPublicPage() {
           <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {club._count?.players || 0} members</span>
           {club.city && <span>{club.city}{club.county ? `, ${club.county}` : ''}</span>}
         </div>
+        <Link to={`/clubs/${slug}/scorecard`} className="mt-4 inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
+          View Course Scorecard
+        </Link>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">

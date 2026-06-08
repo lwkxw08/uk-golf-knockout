@@ -57,6 +57,12 @@ enum AgeCategory {
   SENIOR
 }
 
+enum GenderCategory {
+  MEN
+  WOMEN
+  MIXED
+}
+
 enum MatchStatus {
   PENDING
   SCHEDULED
@@ -178,6 +184,8 @@ model Club {
   id          String  @id @default(uuid())
   name        String
   slug        String  @unique
+  courseApiId  String? @map("course_api_id")
+  courseProvider String? @map("course_provider")
   address     String?
   city        String?
   county      String?
@@ -204,12 +212,64 @@ model Club {
   entries  TournamentEntry[]
   matches  Match[]
   sponsors Sponsor[]
+  tees     ClubTee[]
   tournamentClubStages TournamentClubStage[]
   courseOfferings      CourseOffering[]
   clubSubscriptions    ClubSubscription[]
   scoreRecords         ScoreRecord[]
 
   @@map("clubs")
+}
+
+model ClubTee {
+  id            String  @id @default(uuid())
+  clubId        String  @map("club_id")
+  teeApiId      String? @map("tee_api_id")
+  teeName       String  @map("tee_name")
+  gender        String  @default("Male")
+  slopeRating   Int?    @map("slope_rating")
+  courseRating   Decimal? @map("course_rating") @db.Decimal(4, 1)
+  bogeyRating   Decimal? @map("bogey_rating") @db.Decimal(4, 1)
+  par           Int?
+  totalYards    Int?    @map("total_yards")
+  totalMeters   Int?    @map("total_meters")
+  numberOfHoles Int     @default(18) @map("number_of_holes")
+
+  club  Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  holes ClubTeeHole[]
+  tournamentTees TournamentTee[]
+
+  @@unique([clubId, teeName])
+  @@map("club_tees")
+}
+
+model ClubTeeHole {
+  id          String @id @default(uuid())
+  clubTeeId   String @map("club_tee_id")
+  holeNumber  Int    @map("hole_number")
+  par         Int
+  yards       Int?
+  meters      Int?
+  strokeIndex Int?   @map("stroke_index")
+
+  clubTee ClubTee @relation(fields: [clubTeeId], references: [id], onDelete: Cascade)
+
+  @@unique([clubTeeId, holeNumber])
+  @@map("club_tee_holes")
+}
+
+model TournamentTee {
+  id           String @id @default(uuid())
+  tournamentId String @map("tournament_id")
+  clubTeeId    String @map("club_tee_id")
+  gender       String @default("Male")
+  isDefault    Boolean @default(false) @map("is_default")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  clubTee    ClubTee    @relation(fields: [clubTeeId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, clubTeeId])
+  @@map("tournament_tees")
 }
 
 model ClubManager {
@@ -255,6 +315,7 @@ model Tournament {
   handicapAllowancePct Int              @default(100) @map("handicap_allowance_pct")
   maxHandicap          Decimal?         @map("max_handicap") @db.Decimal(4, 1)
   ageCategory          AgeCategory      @default(OPEN) @map("age_category")
+  genderCategory       GenderCategory   @default(MIXED) @map("gender_category")
   minAge               Int?             @map("min_age")
   maxAge               Int?             @map("max_age")
   enableLeaderboard    Boolean          @default(false) @map("enable_leaderboard")
@@ -275,6 +336,7 @@ model Tournament {
   clubStages TournamentClubStage[]
   prizes     Prize[]
   scoreRecords ScoreRecord[]
+  tournamentTees TournamentTee[]
 
   @@map("tournaments")
 }

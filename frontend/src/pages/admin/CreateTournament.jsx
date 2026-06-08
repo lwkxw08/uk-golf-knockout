@@ -48,6 +48,7 @@ export default function CreateTournament() {
     handicapAllowancePct: 100,
     maxHandicap: '',
     ageCategory: 'OPEN',
+    genderCategory: 'MIXED',
     minAge: '',
     maxAge: '',
     enableLeaderboard: false,
@@ -210,6 +211,14 @@ export default function CreateTournament() {
                 <option value="OPEN">Open (All Ages)</option>
                 <option value="JUNIOR">Junior Only</option>
                 <option value="SENIOR">Senior Only</option>
+              </select>
+            </div>
+            <div>
+              <label className={label}>Gender</label>
+              <select value={form.genderCategory} onChange={update('genderCategory')} className={input}>
+                <option value="MIXED">Mixed</option>
+                <option value="MEN">Men Only</option>
+                <option value="WOMEN">Women Only</option>
               </select>
             </div>
             {form.ageCategory === 'JUNIOR' && (
