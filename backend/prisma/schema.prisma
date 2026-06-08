@@ -280,20 +280,23 @@ model Tournament {
 }
 
 model TournamentStage_ {
-  id            String          @id @default(uuid())
-  tournamentId  String          @map("tournament_id")
-  stage         TournamentStage
-  stageOrder    Int             @map("stage_order")
-  name          String
-  totalRounds   Int             @default(1) @map("total_rounds")
-  qualifyCount  Int             @default(1) @map("qualify_count")
-  matchDeadlineDays Int?        @map("match_deadline_days")
+  id                String          @id @default(uuid())
+  tournamentId      String          @map("tournament_id")
+  stage             TournamentStage
+  stageOrder        Int             @map("stage_order")
+  name              String
+  maxParticipants   Int?            @map("max_participants")
+  totalRounds       Int             @default(1) @map("total_rounds")
+  qualifyCount      Int             @default(1) @map("qualify_count")
+  matchDeadlineDays Int?            @map("match_deadline_days")
+  feedsIntoStageId  String?         @map("feeds_into_stage_id")
 
-  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournament   Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  feedsInto    TournamentStage_? @relation("StageProgression", fields: [feedsIntoStageId], references: [id])
+  fedBy        TournamentStage_[] @relation("StageProgression")
   stageRegions TournamentStageRegion[]
   prizes       Prize[]
 
-  @@unique([tournamentId, stage])
   @@map("tournament_stages")
 }
 

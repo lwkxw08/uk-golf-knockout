@@ -275,15 +275,16 @@ const RANKING_POINTS = {
   CLUB_QUALIFIER: { winner: 15, finalist: 8, semifinalist: 4, quarterfinalist: 2 },
 };
 
-router.post('/tournaments/:tournamentId/progress/:stageFrom',
+// Progress a stage — uses feedsIntoStageId to find the next stage
+// Accepts either stage UUID or legacy stage type name (CLUB_QUALIFIER, REGIONAL)
+router.post('/tournaments/:tournamentId/progress/:stageIdOrType',
   authenticate,
   requireRole('ADMIN'),
   param('tournamentId').isUUID(),
-  param('stageFrom').isIn(['CLUB_QUALIFIER', 'REGIONAL']),
   validate,
   async (req, res) => {
     try {
-      const { tournamentId, stageFrom } = req.params;
+      const { tournamentId, stageIdOrType } = req.params;
 
       const tournament = await prisma.tournament.findUnique({
         where: { id: tournamentId },
@@ -293,26 +294,35 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
       });
       if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
 
-      const currentStage = tournament.stages.find(s => s.stage === stageFrom);
-      if (!currentStage) return res.status(400).json({ error: `Stage ${stageFrom} not configured for this tournament` });
+      // Find current stage by ID or by type (backwards compat)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stageIdOrType);
+      const currentStage = isUUID
+        ? tournament.stages.find(s => s.id === stageIdOrType)
+        : tournament.stages.find(s => s.stage === stageIdOrType);
+      if (!currentStage) return res.status(400).json({ error: `Stage not found` });
 
-      const nextStageType = stageFrom === 'CLUB_QUALIFIER' ? 'REGIONAL' : 'NATIONAL_FINAL';
-      const nextStage = tournament.stages.find(s => s.stage === nextStageType);
-      if (!nextStage) return res.status(400).json({ error: `Next stage ${nextStageType} not configured` });
+      // Find next stage via feedsIntoStageId link
+      let nextStage;
+      if (currentStage.feedsIntoStageId) {
+        nextStage = tournament.stages.find(s => s.id === currentStage.feedsIntoStageId);
+      } else {
+        // Legacy fallback: derive from stage type
+        const nextType = currentStage.stage === 'CLUB_QUALIFIER' ? 'REGIONAL' : 'NATIONAL_FINAL';
+        nextStage = tournament.stages.find(s => s.stage === nextType);
+      }
+      if (!nextStage) return res.status(400).json({ error: 'No next stage configured — this stage has no progression target' });
 
       const qualifyCount = currentStage.qualifyCount;
+      const stageFrom = currentStage.stage;
 
-      // Find final-round matches in this stage that are completed
+      // Find completed matches in this stage
       const completedMatches = await prisma.match.findMany({
         where: {
           tournamentId,
           stage: stageFrom,
           status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] },
         },
-        include: {
-          playerA: true,
-          playerB: true,
-        },
+        include: { playerA: true, playerB: true },
         orderBy: [{ roundNumber: 'desc' }, { matchNumber: 'asc' }],
       });
 
@@ -320,11 +330,10 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         return res.status(400).json({ error: 'No completed matches found in this stage' });
       }
 
-      // Get the highest round number (finals)
       const maxRound = Math.max(...completedMatches.map(m => m.roundNumber));
       const finalMatches = completedMatches.filter(m => m.roundNumber === maxRound);
 
-      // Collect qualifiers: winners + runners-up if qualifyCount > 1
+      // Collect qualifiers
       const qualifiedPlayerIds = new Set();
       for (const match of finalMatches) {
         if (match.winnerId) {
@@ -336,7 +345,6 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         }
       }
 
-      // If qualifyCount > 2, also pull semi-finalists
       if (qualifyCount > 2) {
         const semiFinals = completedMatches.filter(m => m.roundNumber === maxRound - 1);
         for (const match of semiFinals) {
@@ -347,11 +355,11 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         }
       }
 
-      // Create entries in the next stage for qualified players
+      // Create entries in next stage
       const promoted = [];
       for (const playerId of qualifiedPlayerIds) {
         const existingEntry = await prisma.tournamentEntry.findFirst({
-          where: { tournamentId, playerId, stage: nextStageType },
+          where: { tournamentId, playerId, stage: nextStage.stage },
         });
         if (existingEntry) continue;
 
@@ -364,7 +372,7 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
             tournamentId,
             playerId,
             clubId: originalEntry?.clubId || '',
-            stage: nextStageType,
+            stage: nextStage.stage,
             status: 'ACTIVE',
             paymentStatus: 'COMPLETED',
             handicapAtEntry: originalEntry?.handicapAtEntry,
@@ -372,7 +380,6 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         });
         promoted.push(entry);
 
-        // Mark original entry as promoted
         if (originalEntry) {
           await prisma.tournamentEntry.update({
             where: { id: originalEntry.id },
@@ -381,7 +388,7 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         }
       }
 
-      // Award ranking points for this stage
+      // Award ranking points
       const points = RANKING_POINTS[stageFrom] || {};
       for (const match of finalMatches) {
         if (match.winnerId) {
@@ -399,7 +406,6 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
         }
       }
 
-      // Award points for semi-finalists
       const semiFinals = completedMatches.filter(m => m.roundNumber === maxRound - 1);
       for (const match of semiFinals) {
         const loserId = match.winnerId === match.playerAId ? match.playerBId : match.playerAId;
@@ -412,7 +418,7 @@ router.post('/tournaments/:tournamentId/progress/:stageFrom',
       }
 
       res.json({
-        message: `Promoted ${promoted.length} players from ${stageFrom} to ${nextStageType}`,
+        message: `Promoted ${promoted.length} players from "${currentStage.name}" to "${nextStage.name}"`,
         qualifyCount,
         promotedCount: promoted.length,
         promoted,

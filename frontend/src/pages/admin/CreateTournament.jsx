@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { Trophy, Plus, X, ChevronRight } from 'lucide-react';
@@ -80,23 +80,34 @@ export default function CreateTournament() {
     }
   };
 
-  const addStage = () => {
-    const usedStages = stages.map(s => s.stage);
-    const next = STAGE_TYPES.find(t => !usedStages.includes(t.value));
-    if (!next) return;
+  const tempIdCounter = useRef(1);
+  const genTempId = () => `stage-${tempIdCounter.current++}`;
+
+  const addStage = (type = 'CLUB_QUALIFIER') => {
+    const lbl = STAGE_TYPES.find(t => t.value === type)?.label || type;
+    const count = stages.filter(s => s.stage === type).length;
+    const name = count > 0 ? `${lbl} ${count + 1}` : lbl;
     setStages([...stages, {
-      stage: next.value,
-      name: next.label,
+      tempId: genTempId(),
+      stage: type,
+      name,
       stageOrder: stages.length + 1,
-      totalRounds: 4,
-      qualifyCount: 1,
+      maxParticipants: type === 'CLUB_QUALIFIER' ? 32 : type === 'REGIONAL' ? 16 : 8,
+      qualifyCount: type === 'NATIONAL_FINAL' ? 0 : 1,
+      matchDeadlineDays: null,
+      feedsIntoTempId: '',
       regionIds: [],
       prizes: [],
     }]);
   };
 
   const removeStage = (idx) => {
-    setStages(stages.filter((_, i) => i !== idx).map((s, i) => ({ ...s, stageOrder: i + 1 })));
+    const removedId = stages[idx].tempId;
+    setStages(stages.filter((_, i) => i !== idx).map((s, i) => ({
+      ...s,
+      stageOrder: i + 1,
+      feedsIntoTempId: s.feedsIntoTempId === removedId ? '' : s.feedsIntoTempId,
+    })));
   };
 
   const updateStage = (idx, field, val) => {
@@ -108,6 +119,8 @@ export default function CreateTournament() {
     const updated = current.includes(regionId) ? current.filter(id => id !== regionId) : [...current, regionId];
     updateStage(stageIdx, 'regionIds', updated);
   };
+
+  const calcRounds = (maxP) => maxP && maxP > 1 ? Math.ceil(Math.log2(maxP)) : 1;
 
   const addStagePrize = (stageIdx) => {
     const s = stages[stageIdx];
@@ -263,34 +276,60 @@ export default function CreateTournament() {
           </div>
         </div>
 
-        {/* Tournament Stages (Dynamic) */}
+        {/* Tournament Stages (Tree Structure) */}
         <div className="bg-white border rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <div>
               <h2 className="text-lg font-semibold">Tournament Stages</h2>
-              <p className="text-sm text-gray-500 mt-1">Configure which stages this tournament includes and how players progress</p>
+              <p className="text-sm text-gray-500 mt-1">Build your tournament pathway. Each stage feeds winners into the next stage.</p>
             </div>
-            <button type="button" onClick={addStage} disabled={stages.length >= 3}
-              className="flex items-center gap-1 bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-40">
-              <Plus className="w-4 h-4" /> Add Stage
+          </div>
+
+          {/* Add stage buttons */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button type="button" onClick={() => addStage('CLUB_QUALIFIER')}
+              className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+              <Plus className="w-3 h-3" /> Club Qualifier
+            </button>
+            <button type="button" onClick={() => addStage('REGIONAL')}
+              className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+              <Plus className="w-3 h-3" /> Regional Round
+            </button>
+            <button type="button" onClick={() => addStage('NATIONAL_FINAL')}
+              className="flex items-center gap-1 bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+              <Plus className="w-3 h-3" /> National Final
             </button>
           </div>
 
           {stages.length === 0 && (
             <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center text-gray-500">
               <p className="font-medium">No stages configured</p>
-              <p className="text-sm mt-1">Default stages (Club &rarr; Regional &rarr; National) will be used. Add stages to customise.</p>
+              <p className="text-sm mt-1">Default stages (Club &rarr; Regional &rarr; National) will be used. Add stages above to customise your tournament pathway.</p>
             </div>
           )}
 
           <div className="space-y-4">
-            {stages.map((stage, idx) => (
-              <div key={idx} className="border rounded-lg p-5 bg-gray-50">
+            {stages.map((stage, idx) => {
+              const bgColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-50' : stage.stage === 'REGIONAL' ? 'bg-amber-50' : 'bg-green-50';
+              const borderColor = stage.stage === 'CLUB_QUALIFIER' ? 'border-blue-200' : stage.stage === 'REGIONAL' ? 'border-amber-200' : 'border-green-200';
+              const badgeColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-600' : stage.stage === 'REGIONAL' ? 'bg-amber-600' : 'bg-green-700';
+              const rounds = calcRounds(stage.maxParticipants);
+              // Stages this one can feed into (higher-order stages only)
+              const feedTargets = stages.filter(s => s.tempId !== stage.tempId && (
+                (stage.stage === 'CLUB_QUALIFIER' && (s.stage === 'REGIONAL' || s.stage === 'NATIONAL_FINAL')) ||
+                (stage.stage === 'REGIONAL' && s.stage === 'NATIONAL_FINAL')
+              ));
+
+              return (
+              <div key={stage.tempId || idx} className={`border ${borderColor} rounded-lg p-5 ${bgColor}`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <span className="bg-green-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">{idx + 1}</span>
-                    <h3 className="font-semibold">{stage.name}</h3>
-                    {idx < stages.length - 1 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+                    <span className={`${badgeColor} text-white px-2 py-0.5 rounded text-xs font-bold`}>
+                      {stage.stage === 'CLUB_QUALIFIER' ? 'CLUB' : stage.stage === 'REGIONAL' ? 'REGIONAL' : 'FINAL'}
+                    </span>
+                    <input type="text" value={stage.name}
+                      onChange={(e) => updateStage(idx, 'name', e.target.value)}
+                      className="font-semibold bg-transparent border-b border-transparent hover:border-gray-300 focus:border-green-500 outline-none px-1" />
                   </div>
                   <button type="button" onClick={() => removeStage(idx)} className="text-red-500 hover:text-red-700">
                     <X className="w-5 h-5" />
@@ -299,40 +338,51 @@ export default function CreateTournament() {
 
                 <div className="grid md:grid-cols-4 gap-3 mb-4">
                   <div>
-                    <label className={label}>Stage Type</label>
-                    <select value={stage.stage} onChange={(e) => {
-                      const v = e.target.value;
-                      const lbl = STAGE_TYPES.find(t => t.value === v)?.label || v;
-                      updateStage(idx, 'stage', v);
-                      updateStage(idx, 'name', lbl);
-                    }} className={input}>
-                      {STAGE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
+                    <label className={label}>Max Participants</label>
+                    <input type="number" min="2" value={stage.maxParticipants || ''} onChange={(e) => updateStage(idx, 'maxParticipants', e.target.value ? Number(e.target.value) : null)} className={input} placeholder="e.g. 32" />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {stage.maxParticipants > 1 ? `${rounds} knockout round${rounds !== 1 ? 's' : ''} (R1${rounds > 1 ? ' → ' : ''}${rounds > 3 ? 'QF → ' : ''}${rounds > 2 ? 'SF → ' : ''}${rounds > 1 ? 'Final' : ''})` : 'Sets bracket size'}
+                    </p>
                   </div>
-                  <div>
-                    <label className={label}>Total Rounds</label>
-                    <input type="number" min="1" value={stage.totalRounds} onChange={(e) => updateStage(idx, 'totalRounds', Number(e.target.value))} className={input} />
-                  </div>
-                  <div>
-                    <label className={label}>Places Qualify</label>
-                    <input type="number" min="1" max="8" value={stage.qualifyCount} onChange={(e) => updateStage(idx, 'qualifyCount', Number(e.target.value))} className={input} />
-                    <p className="text-xs text-gray-500 mt-1">How many progress to next stage</p>
-                  </div>
+
+                  {stage.stage !== 'NATIONAL_FINAL' ? (
+                    <div>
+                      <label className={label}>Places Qualify</label>
+                      <input type="number" min="1" max="8" value={stage.qualifyCount} onChange={(e) => updateStage(idx, 'qualifyCount', Number(e.target.value))} className={input} />
+                      <p className="text-xs text-gray-500 mt-1">How many progress to next stage</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className={label}>Champion + Runner-up</label>
+                      <div className="bg-white border rounded-lg px-3 py-2 text-sm text-gray-500">Final stage — determines winner</div>
+                    </div>
+                  )}
+
+                  {stage.stage !== 'NATIONAL_FINAL' && feedTargets.length > 0 && (
+                    <div>
+                      <label className={label}>Feeds Winners Into</label>
+                      <select value={stage.feedsIntoTempId || ''} onChange={(e) => updateStage(idx, 'feedsIntoTempId', e.target.value)} className={input}>
+                        <option value="">Select target stage...</option>
+                        {feedTargets.map(t => <option key={t.tempId} value={t.tempId}>{t.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+
                   <div>
                     <label className={label}>Match Deadline (days)</label>
                     <input type="number" min="1" value={stage.matchDeadlineDays || ''} onChange={(e) => updateStage(idx, 'matchDeadlineDays', e.target.value ? Number(e.target.value) : null)} className={input} />
                   </div>
                 </div>
 
-                {/* Region selection for Regional stage */}
+                {/* Region selection for Regional stages */}
                 {stage.stage === 'REGIONAL' && regions.length > 0 && (
                   <div className="mb-4">
-                    <label className={label}>Select Regions for this Stage</label>
+                    <label className={label}>Region for this Round</label>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {regions.map(r => (
                         <button key={r.id} type="button" onClick={() => toggleRegion(idx, r.id)}
                           className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
-                            stage.regionIds.includes(r.id) ? 'bg-green-100 border-green-500 text-green-700' : 'bg-white border-gray-300 text-gray-600 hover:border-green-400'
+                            stage.regionIds.includes(r.id) ? 'bg-amber-100 border-amber-500 text-amber-700' : 'bg-white border-gray-300 text-gray-600 hover:border-amber-400'
                           }`}>
                           {r.name} ({r._count?.clubs || 0} clubs)
                         </button>
@@ -368,8 +418,32 @@ export default function CreateTournament() {
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+
+          {/* Visual pathway summary */}
+          {stages.length > 1 && (
+            <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+              <p className="text-xs font-medium text-gray-500 mb-2">Tournament Pathway</p>
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                {stages.map((s, i) => {
+                  const target = s.feedsIntoTempId ? stages.find(t => t.tempId === s.feedsIntoTempId) : null;
+                  return (
+                    <span key={s.tempId || i} className="flex items-center gap-1">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        s.stage === 'CLUB_QUALIFIER' ? 'bg-blue-100 text-blue-700' :
+                        s.stage === 'REGIONAL' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                      }`}>{s.name}{s.maxParticipants ? ` (${s.maxParticipants})` : ''}</span>
+                      {target && <ChevronRight className="w-3 h-3 text-gray-400" />}
+                      {target && <span className="text-xs text-gray-500">{target.name}</span>}
+                      {i < stages.length - 1 && <span className="text-gray-300 mx-1">|</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Overall Prizes (e.g. leaderboard prize) */}

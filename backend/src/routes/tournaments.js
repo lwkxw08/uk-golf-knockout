@@ -50,6 +50,8 @@ router.get('/:id',
             include: {
               stageRegions: { include: { region: true } },
               prizes: { orderBy: { position: 'asc' } },
+              feedsInto: { select: { id: true, name: true, stage: true } },
+              fedBy: { select: { id: true, name: true, stage: true } },
             },
           },
           sponsors: { where: { isActive: true } },
@@ -109,23 +111,36 @@ router.post('/',
         },
       });
 
-      // Create stages dynamically
+      // Create stages dynamically — supports tree structure
+      // Each stage has a tempId (frontend-assigned) and feedsIntoTempId
+      // We create stages in order, then resolve feedsIntoStageId links
       if (stages && stages.length > 0) {
+        const tempIdToRealId = {};
+
+        // First pass: create all stage records
         for (const s of stages) {
+          // Auto-calculate knockout rounds from maxParticipants if provided
+          let totalRounds = s.totalRounds || 1;
+          if (s.maxParticipants && s.maxParticipants > 1) {
+            totalRounds = Math.ceil(Math.log2(s.maxParticipants));
+          }
+
           const stageRecord = await prisma.tournamentStage_.create({
             data: {
               tournamentId: tournament.id,
               stage: s.stage,
               stageOrder: s.stageOrder,
               name: s.name,
-              totalRounds: s.totalRounds || 1,
-              qualifyCount: s.qualifyCount || 1,
+              maxParticipants: s.maxParticipants || null,
+              totalRounds,
+              qualifyCount: s.stage === 'NATIONAL_FINAL' ? 0 : (s.qualifyCount || 1),
               matchDeadlineDays: s.matchDeadlineDays,
             },
           });
+          if (s.tempId) tempIdToRealId[s.tempId] = stageRecord.id;
 
-          // Link regions to regional stages
-          if (s.stage === 'REGIONAL' && s.regionIds && s.regionIds.length > 0) {
+          // Link regions
+          if (s.regionIds && s.regionIds.length > 0) {
             for (const regionId of s.regionIds) {
               await prisma.tournamentStageRegion.create({
                 data: { stageId: stageRecord.id, regionId },
@@ -133,7 +148,7 @@ router.post('/',
             }
           }
 
-          // Create stage-level prizes
+          // Stage prizes
           if (s.prizes && s.prizes.length > 0) {
             for (const p of s.prizes) {
               await prisma.prize.create({
@@ -149,17 +164,27 @@ router.post('/',
             }
           }
         }
-      } else {
-        const defaultStages = [
-          { stage: 'CLUB_QUALIFIER', stageOrder: 1, name: 'Club Qualifier', totalRounds: 4 },
-          { stage: 'REGIONAL', stageOrder: 2, name: 'Regional', totalRounds: 3 },
-          { stage: 'NATIONAL_FINAL', stageOrder: 3, name: 'National Final', totalRounds: 4 },
-        ];
-        for (const s of defaultStages) {
-          await prisma.tournamentStage_.create({
-            data: { tournamentId: tournament.id, ...s },
-          });
+
+        // Second pass: resolve feedsIntoStageId links
+        for (const s of stages) {
+          if (s.feedsIntoTempId && s.tempId && tempIdToRealId[s.tempId] && tempIdToRealId[s.feedsIntoTempId]) {
+            await prisma.tournamentStage_.update({
+              where: { id: tempIdToRealId[s.tempId] },
+              data: { feedsIntoStageId: tempIdToRealId[s.feedsIntoTempId] },
+            });
+          }
         }
+      } else {
+        // Default: Club → Regional → National chain
+        const national = await prisma.tournamentStage_.create({
+          data: { tournamentId: tournament.id, stage: 'NATIONAL_FINAL', stageOrder: 3, name: 'National Final', totalRounds: 4, qualifyCount: 0 },
+        });
+        const regional = await prisma.tournamentStage_.create({
+          data: { tournamentId: tournament.id, stage: 'REGIONAL', stageOrder: 2, name: 'Regional', totalRounds: 3, feedsIntoStageId: national.id },
+        });
+        await prisma.tournamentStage_.create({
+          data: { tournamentId: tournament.id, stage: 'CLUB_QUALIFIER', stageOrder: 1, name: 'Club Qualifier', totalRounds: 4, feedsIntoStageId: regional.id },
+        });
       }
 
       // Tournament-level prizes (e.g. overall leaderboard prize)
