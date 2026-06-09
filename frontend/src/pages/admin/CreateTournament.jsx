@@ -25,7 +25,8 @@ const SCORING_OPTIONS = [
 
 const STAGE_TYPES = [
   { value: 'CLUB_QUALIFIER', label: 'Club Qualifier' },
-  { value: 'REGIONAL', label: 'Regional' },
+  { value: 'REGIONAL', label: 'Regional (Knockout)' },
+  { value: 'REGIONAL_LEAGUE', label: 'Regional League' },
   { value: 'NATIONAL_FINAL', label: 'National Final' },
 ];
 
@@ -102,12 +103,16 @@ export default function CreateTournament() {
       stage: type,
       name,
       stageOrder: stages.length + 1,
-      maxParticipants: type === 'CLUB_QUALIFIER' ? 32 : type === 'REGIONAL' ? 16 : 8,
-      qualifyCount: type === 'NATIONAL_FINAL' ? 0 : 1,
+      maxParticipants: type === 'CLUB_QUALIFIER' ? 32 : type === 'REGIONAL_LEAGUE' ? 20 : type === 'REGIONAL' ? 16 : 8,
+      qualifyCount: type === 'NATIONAL_FINAL' ? 0 : type === 'REGIONAL_LEAGUE' ? 4 : 1,
       matchDeadlineDays: null,
       feedsIntoTempId: '',
       regionIds: [],
       prizes: [],
+      isLeague: type === 'REGIONAL_LEAGUE',
+      leagueMatchCount: type === 'REGIONAL_LEAGUE' ? 6 : null,
+      homeMatchCount: type === 'REGIONAL_LEAGUE' ? 3 : null,
+      awayMatchCount: type === 'REGIONAL_LEAGUE' ? 3 : null,
     }]);
   };
 
@@ -363,7 +368,11 @@ export default function CreateTournament() {
             </button>
             <button type="button" onClick={() => addStage('REGIONAL')}
               className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
-              <Plus className="w-3 h-3" /> Regional Round
+              <Plus className="w-3 h-3" /> Regional (Knockout)
+            </button>
+            <button type="button" onClick={() => addStage('REGIONAL_LEAGUE')}
+              className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
+              <Plus className="w-3 h-3" /> Regional League
             </button>
             <button type="button" onClick={() => addStage('NATIONAL_FINAL')}
               className="flex items-center gap-1 bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
@@ -380,14 +389,14 @@ export default function CreateTournament() {
 
           <div className="space-y-4">
             {stages.map((stage, idx) => {
-              const bgColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-50' : stage.stage === 'REGIONAL' ? 'bg-amber-50' : 'bg-green-50';
-              const borderColor = stage.stage === 'CLUB_QUALIFIER' ? 'border-blue-200' : stage.stage === 'REGIONAL' ? 'border-amber-200' : 'border-green-200';
-              const badgeColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-600' : stage.stage === 'REGIONAL' ? 'bg-amber-600' : 'bg-green-700';
+              const bgColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-50' : stage.stage === 'REGIONAL_LEAGUE' ? 'bg-emerald-50' : stage.stage === 'REGIONAL' ? 'bg-amber-50' : 'bg-green-50';
+              const borderColor = stage.stage === 'CLUB_QUALIFIER' ? 'border-blue-200' : stage.stage === 'REGIONAL_LEAGUE' ? 'border-emerald-200' : stage.stage === 'REGIONAL' ? 'border-amber-200' : 'border-green-200';
+              const badgeColor = stage.stage === 'CLUB_QUALIFIER' ? 'bg-blue-600' : stage.stage === 'REGIONAL_LEAGUE' ? 'bg-emerald-600' : stage.stage === 'REGIONAL' ? 'bg-amber-600' : 'bg-green-700';
               const rounds = calcRounds(stage.maxParticipants);
               // Stages this one can feed into (higher-order stages only)
               const feedTargets = stages.filter(s => s.tempId !== stage.tempId && (
-                (stage.stage === 'CLUB_QUALIFIER' && (s.stage === 'REGIONAL' || s.stage === 'NATIONAL_FINAL')) ||
-                (stage.stage === 'REGIONAL' && s.stage === 'NATIONAL_FINAL')
+                (stage.stage === 'CLUB_QUALIFIER' && (s.stage === 'REGIONAL' || s.stage === 'REGIONAL_LEAGUE' || s.stage === 'NATIONAL_FINAL')) ||
+                ((stage.stage === 'REGIONAL' || stage.stage === 'REGIONAL_LEAGUE') && s.stage === 'NATIONAL_FINAL')
               ));
 
               return (
@@ -395,7 +404,7 @@ export default function CreateTournament() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className={`${badgeColor} text-white px-2 py-0.5 rounded text-xs font-bold`}>
-                      {stage.stage === 'CLUB_QUALIFIER' ? 'CLUB' : stage.stage === 'REGIONAL' ? 'REGIONAL' : 'FINAL'}
+                      {stage.stage === 'CLUB_QUALIFIER' ? 'CLUB' : stage.stage === 'REGIONAL_LEAGUE' ? 'LEAGUE' : stage.stage === 'REGIONAL' ? 'REGIONAL' : 'FINAL'}
                     </span>
                     <input type="text" value={stage.name}
                       onChange={(e) => updateStage(idx, 'name', e.target.value)}
@@ -411,7 +420,9 @@ export default function CreateTournament() {
                     <label className={label}>Max Participants</label>
                     <input type="number" min="2" value={stage.maxParticipants || ''} onChange={(e) => updateStage(idx, 'maxParticipants', e.target.value ? Number(e.target.value) : null)} className={input} placeholder="e.g. 32" />
                     <p className="text-xs text-gray-500 mt-1">
-                      {stage.maxParticipants > 1 ? `${rounds} knockout round${rounds !== 1 ? 's' : ''} (R1${rounds > 1 ? ' → ' : ''}${rounds > 3 ? 'QF → ' : ''}${rounds > 2 ? 'SF → ' : ''}${rounds > 1 ? 'Final' : ''})` : 'Sets bracket size'}
+                      {stage.isLeague
+                        ? `${stage.leagueMatchCount || 6} league matches per player`
+                        : stage.maxParticipants > 1 ? `${rounds} knockout round${rounds !== 1 ? 's' : ''} (R1${rounds > 1 ? ' → ' : ''}${rounds > 3 ? 'QF → ' : ''}${rounds > 2 ? 'SF → ' : ''}${rounds > 1 ? 'Final' : ''})` : 'Sets bracket size'}
                     </p>
                   </div>
 
@@ -444,8 +455,30 @@ export default function CreateTournament() {
                   </div>
                 </div>
 
+                {/* League-specific config */}
+                {stage.isLeague && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-emerald-200">
+                    <h4 className="text-sm font-semibold text-emerald-700 mb-3">League Configuration</h4>
+                    <div className="grid md:grid-cols-3 gap-3">
+                      <div>
+                        <label className={label}>Total Matches</label>
+                        <input type="number" min="2" max="20" value={stage.leagueMatchCount || 6} onChange={(e) => updateStage(idx, 'leagueMatchCount', Number(e.target.value))} className={input} />
+                      </div>
+                      <div>
+                        <label className={label}>Home Matches</label>
+                        <input type="number" min="1" value={stage.homeMatchCount || 3} onChange={(e) => updateStage(idx, 'homeMatchCount', Number(e.target.value))} className={input} />
+                      </div>
+                      <div>
+                        <label className={label}>Away Matches</label>
+                        <input type="number" min="1" value={stage.awayMatchCount || 3} onChange={(e) => updateStage(idx, 'awayMatchCount', Number(e.target.value))} className={input} />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Players are randomly drawn each game week. No repeat opponents, no same-club matchups, balanced home/away.</p>
+                  </div>
+                )}
+
                 {/* Region selection for Regional stages */}
-                {stage.stage === 'REGIONAL' && regions.length > 0 && (
+                {(stage.stage === 'REGIONAL' || stage.stage === 'REGIONAL_LEAGUE') && regions.length > 0 && (
                   <div className="mb-4">
                     <label className={label}>Region for this Round</label>
                     <div className="flex flex-wrap gap-2 mt-1">
@@ -503,6 +536,7 @@ export default function CreateTournament() {
                     <span key={s.tempId || i} className="flex items-center gap-1">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                         s.stage === 'CLUB_QUALIFIER' ? 'bg-blue-100 text-blue-700' :
+                        s.stage === 'REGIONAL_LEAGUE' ? 'bg-emerald-100 text-emerald-700' :
                         s.stage === 'REGIONAL' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
                       }`}>{s.name}{s.maxParticipants ? ` (${s.maxParticipants})` : ''}</span>
                       {target && <ChevronRight className="w-3 h-3 text-gray-400" />}

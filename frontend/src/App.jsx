@@ -21,6 +21,7 @@ import LeaderboardPage from './pages/leaderboard/LeaderboardPage';
 import MembershipPage from './pages/membership/MembershipPage';
 import ClubSubscriptionPage from './pages/subscriptions/ClubSubscriptionPage';
 import ScorecardPage from './pages/scorecard/ScorecardPage';
+import LeagueTablePage from './pages/league-table/LeagueTablePage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -48,6 +49,7 @@ function AppRoutes() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/clubs/:slug" element={<ClubPublicPage />} />
           <Route path="/clubs/:slug/scorecard" element={<ScorecardPage />} />
+          <Route path="/league/:tournamentId" element={<LeagueTablePage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/membership" element={<MembershipPage />} />
           <Route path="/subscriptions" element={<ClubSubscriptionPage />} />

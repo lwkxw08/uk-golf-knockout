@@ -48,6 +48,7 @@ enum ScoringSystem {
 enum TournamentStage {
   CLUB_QUALIFIER
   REGIONAL
+  REGIONAL_LEAGUE
   NATIONAL_FINAL
 }
 
@@ -82,6 +83,8 @@ enum EntryStatus {
   WITHDRAWN
   DISQUALIFIED
   PROMOTED
+  LEAGUE_ACTIVE
+  LEAGUE_COMPLETED
 }
 
 enum PaymentStatus {
@@ -177,6 +180,7 @@ model Player {
   scoreRecords       ScoreRecord[]
   playerMemberships  PlayerMembership[]
   holeScores         MatchHoleScore[]
+  leagueStandings    LeagueStanding[]
 
   @@map("players")
 }
@@ -218,6 +222,7 @@ model Club {
   courseOfferings      CourseOffering[]
   clubSubscriptions    ClubSubscription[]
   scoreRecords         ScoreRecord[]
+  clubSeasonPoints     ClubSeasonPoints[]
 
   @@map("clubs")
 }
@@ -295,6 +300,7 @@ model Region {
   clubs      Club[]
   sponsors   Sponsor[]
   stageRegions TournamentStageRegion[]
+  clubSeasonPoints ClubSeasonPoints[]
 
   @@map("regions")
 }
@@ -329,6 +335,10 @@ model Tournament {
   createdAt            DateTime         @default(now()) @map("created_at")
   updatedAt            DateTime         @updatedAt @map("updated_at")
 
+  // League configuration (stored as JSON)
+  leagueScoringConfig Json? @map("league_scoring_config")
+  leagueMatchCount    Int?  @map("league_match_count")
+
   pricing    TournamentPricing[]
   entries    TournamentEntry[]
   stages     TournamentStage_[]
@@ -339,6 +349,7 @@ model Tournament {
   prizes     Prize[]
   scoreRecords ScoreRecord[]
   tournamentTees TournamentTee[]
+  leagueStandings LeagueStanding[]
 
   @@map("tournaments")
 }
@@ -355,11 +366,19 @@ model TournamentStage_ {
   matchDeadlineDays Int?            @map("match_deadline_days")
   feedsIntoStageId  String?         @map("feeds_into_stage_id")
 
+  // League-specific stage config
+  isLeague         Boolean @default(false) @map("is_league")
+  leagueMatchCount Int?    @map("league_match_count")
+  homeMatchCount   Int?    @map("home_match_count")
+  awayMatchCount   Int?    @map("away_match_count")
+  matchDeadlineDaysPerWeek Int? @map("match_deadline_days_per_week")
+
   tournament   Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   feedsInto    TournamentStage_? @relation("StageProgression", fields: [feedsIntoStageId], references: [id])
   fedBy        TournamentStage_[] @relation("StageProgression")
   stageRegions TournamentStageRegion[]
   prizes       Prize[]
+  leagueStandings LeagueStanding[]
 
   @@map("tournament_stages")
 }
@@ -502,6 +521,16 @@ model Match {
   nextMatchId   String?         @map("next_match_id")
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  // League-specific fields
+  gameWeek           Int?      @map("game_week")
+  isHomeForPlayerA   Boolean?  @map("is_home_for_player_a")
+  holesUpMargin      Int?      @map("holes_up_margin")
+  holesRemainingMargin Int?    @map("holes_remaining_margin")
+  leaguePointsA      Int?      @map("league_points_a")
+  leaguePointsB      Int?      @map("league_points_b")
+  leagueBonusDetailA Json?     @map("league_bonus_detail_a")
+  leagueBonusDetailB Json?     @map("league_bonus_detail_b")
 
   tournament Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   playerA    Player?     @relation("PlayerA", fields: [playerAId], references: [id])
@@ -686,6 +715,64 @@ model ClubSubscription {
   tier SubscriptionTier @relation(fields: [tierId], references: [id])
 
   @@map("club_subscriptions")
+}
+
+// ─── LEAGUE STANDINGS ────────────────────────────────────────────────────────
+
+model LeagueStanding {
+  id              String @id @default(uuid())
+  tournamentId    String @map("tournament_id")
+  stageId         String @map("stage_id")
+  playerId        String @map("player_id")
+  clubId          String @map("club_id")
+  played          Int    @default(0)
+  wins            Int    @default(0)
+  draws           Int    @default(0)
+  losses          Int    @default(0)
+  leaguePoints    Int    @default(0) @map("league_points")
+  bonusPoints     Int    @default(0) @map("bonus_points")
+  totalPoints     Int    @default(0) @map("total_points")
+  holesWon        Int    @default(0) @map("holes_won")
+  holesLost       Int    @default(0) @map("holes_lost")
+  holesDifferential Int  @default(0) @map("holes_differential")
+  awayWins        Int    @default(0) @map("away_wins")
+  homeWins        Int    @default(0) @map("home_wins")
+  matchesReached18 Int   @default(0) @map("matches_reached_18")
+  position        Int?
+  qualified       Boolean @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tournament Tournament       @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stage      TournamentStage_ @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  player     Player           @relation(fields: [playerId], references: [id])
+
+  @@unique([tournamentId, stageId, playerId])
+  @@map("league_standings")
+}
+
+// ─── CLUB POINTS CHAMPIONSHIP ───────────────────────────────────────────────
+
+model ClubSeasonPoints {
+  id              String @id @default(uuid())
+  season          String
+  clubId          String @map("club_id")
+  regionId        String? @map("region_id")
+  totalPoints     Int    @default(0) @map("total_points")
+  playerCount     Int    @default(0) @map("player_count")
+  matchesPlayed   Int    @default(0) @map("matches_played")
+  matchesWon      Int    @default(0) @map("matches_won")
+  leagueQualifiers Int   @default(0) @map("league_qualifiers")
+  nationalQualifiers Int @default(0) @map("national_qualifiers")
+  position        Int?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  club   Club    @relation(fields: [clubId], references: [id])
+  region Region? @relation(fields: [regionId], references: [id])
+
+  @@unique([season, clubId])
+  @@map("club_season_points")
 }
 
 // ─── COURSE MARKETPLACE ─────────────────────────────────────────────────────

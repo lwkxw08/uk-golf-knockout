@@ -63,18 +63,24 @@ export default function TournamentsPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.tournaments.map((t) => (
-            <Link key={t.id} to={`/tournaments/${t.id}`}
+          {data.tournaments.map((t) => {
+            const isLeague = t.leagueMatchCount > 0;
+            const linkTo = isLeague ? `/league/${t.id}` : `/tournaments/${t.id}`;
+            return (
+            <Link key={t.id} to={linkTo}
               className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 block">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-semibold text-lg text-gray-900">{t.name}</h3>
-                <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[t.status] || ''}`}>
-                  {t.status.replace(/_/g, ' ')}
-                </span>
+                <div className="flex gap-1">
+                  {isLeague && <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">League</span>}
+                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[t.status] || ''}`}>
+                    {t.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
               </div>
 
               <p className="text-sm text-green-700 font-medium mb-3">
-                {FORMAT_LABELS[t.formatType] || t.formatType}
+                {isLeague ? 'Regional League — Matchplay' : (FORMAT_LABELS[t.formatType] || t.formatType)}
               </p>
 
               {t.ageCategory !== 'OPEN' && (
@@ -101,7 +107,8 @@ export default function TournamentsPage() {
                 </div>
               )}
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
