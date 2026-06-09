@@ -21,6 +21,7 @@ router.get('/', async (req, res) => {
         include: {
           _count: { select: { entries: true } },
           pricing: { where: { isActive: true, feeType: 'ENTRY_FEE' }, take: 1 },
+          stages: { select: { id: true, name: true, isLeague: true } },
         },
         skip: (page - 1) * limit,
         take: Number(limit),

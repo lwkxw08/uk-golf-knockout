@@ -336,8 +336,9 @@ model Tournament {
   updatedAt            DateTime         @updatedAt @map("updated_at")
 
   // League configuration (stored as JSON)
-  leagueScoringConfig Json? @map("league_scoring_config")
-  leagueMatchCount    Int?  @map("league_match_count")
+  leagueScoringConfig Json?   @map("league_scoring_config")
+  leagueMatchCount    Int?    @map("league_match_count")
+  leagueDrawStageId   String? @map("league_draw_stage_id")
 
   pricing    TournamentPricing[]
   entries    TournamentEntry[]

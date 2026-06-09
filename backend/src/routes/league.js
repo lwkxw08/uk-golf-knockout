@@ -487,4 +487,408 @@ router.get('/club-points/:season',
   }
 );
 
+// ─── SCHEDULE LIVE LEAGUE DRAW ──────────────────────────────────────────────
+
+router.post('/:tournamentId/schedule-draw',
+  authenticate,
+  requireRole('ADMIN'),
+  param('tournamentId').isUUID(),
+  body('stageId').isUUID(),
+  body('scheduledAt').isISO8601(),
+  validate,
+  async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const { stageId, scheduledAt } = req.body;
+
+      const stage = await prisma.tournamentStage_.findUnique({ where: { id: stageId } });
+      if (!stage || !stage.isLeague) {
+        return res.status(400).json({ error: 'Stage is not a league stage' });
+      }
+
+      const draw = await prisma.draw.create({
+        data: {
+          tournamentId,
+          stage: 'REGIONAL_LEAGUE',
+          roundNumber: 0,
+          scheduledAt: new Date(scheduledAt),
+        },
+      });
+
+      // Store stageId in tournament metadata for draw reference
+      await prisma.tournament.update({
+        where: { id: tournamentId },
+        data: { leagueDrawStageId: stageId },
+      });
+
+      res.status(201).json(draw);
+    } catch (err) {
+      console.error('Schedule draw error:', err);
+      res.status(500).json({ error: 'Failed to schedule draw' });
+    }
+  }
+);
+
+// ─── GET LEAGUE DRAW STATUS ─────────────────────────────────────────────────
+
+router.get('/:tournamentId/draw-status',
+  param('tournamentId').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+
+      const draw = await prisma.draw.findFirst({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE' },
+        orderBy: { scheduledAt: 'desc' },
+      });
+
+      if (!draw) return res.json({ status: 'NOT_SCHEDULED', draw: null });
+
+      // Check how many game weeks have been revealed
+      const revealedWeeks = await prisma.match.findMany({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
+        select: { gameWeek: true },
+        distinct: ['gameWeek'],
+      });
+
+      res.json({
+        status: draw.status,
+        draw,
+        revealedWeeks: revealedWeeks.map(w => w.gameWeek).sort((a, b) => a - b),
+      });
+    } catch (err) {
+      console.error('Draw status error:', err);
+      res.status(500).json({ error: 'Failed to fetch draw status' });
+    }
+  }
+);
+
+// ─── EXECUTE LIVE LEAGUE DRAW (with Socket.io) ─────────────────────────────
+
+router.post('/:tournamentId/execute-live-draw',
+  authenticate,
+  requireRole('ADMIN'),
+  param('tournamentId').isUUID(),
+  body('stageId').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const { stageId } = req.body;
+
+      const stage = await prisma.tournamentStage_.findUnique({
+        where: { id: stageId },
+        include: { tournament: true },
+      });
+      if (!stage || !stage.isLeague) {
+        return res.status(400).json({ error: 'Stage is not a league stage' });
+      }
+
+      // Get entries
+      const entries = await prisma.tournamentEntry.findMany({
+        where: {
+          tournamentId,
+          status: { in: ['ACTIVE', 'LEAGUE_ACTIVE'] },
+          stage: 'REGIONAL_LEAGUE',
+        },
+        include: {
+          player: {
+            include: { homeClub: { select: { id: true, name: true } } },
+          },
+        },
+      });
+
+      const players = entries.map(e => ({
+        id: e.playerId,
+        homeClubId: e.player.homeClubId || e.clubId,
+        firstName: e.player.firstName,
+        lastName: e.player.lastName,
+        handicapIndex: e.player.handicapIndex,
+        clubName: e.player.homeClub?.name,
+      }));
+
+      if (players.length < 7) {
+        return res.status(400).json({ error: `Need at least 7 players. Got ${players.length}.` });
+      }
+
+      const matchCount = stage.leagueMatchCount || 6;
+      const homeCount = stage.homeMatchCount || 3;
+
+      // Update draw status to IN_PROGRESS
+      const draw = await prisma.draw.findFirst({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', status: 'SCHEDULED' },
+        orderBy: { scheduledAt: 'asc' },
+      });
+      if (draw) {
+        await prisma.draw.update({
+          where: { id: draw.id },
+          data: { status: 'IN_PROGRESS', startedAt: new Date() },
+        });
+      }
+
+      const io = req.app.get('io');
+
+      // Emit draw starting event
+      if (io) {
+        io.to(`draw-${tournamentId}`).emit('league-draw:starting', {
+          tournamentId,
+          playerCount: players.length,
+          totalWeeks: matchCount,
+        });
+      }
+
+      // Generate all fixtures at once
+      const fixtures = generateLeagueFixtures(players, matchCount, homeCount);
+
+      // Group by game week
+      const fixturesByWeek = {};
+      for (const f of fixtures) {
+        if (!fixturesByWeek[f.gameWeek]) fixturesByWeek[f.gameWeek] = [];
+        fixturesByWeek[f.gameWeek].push(f);
+      }
+
+      // Reveal week by week with delays for dramatic effect
+      let matchNumber = 1;
+      const allCreatedMatches = [];
+
+      for (let week = 1; week <= matchCount; week++) {
+        const weekFixtures = fixturesByWeek[week] || [];
+
+        // Emit week announcement
+        if (io) {
+          io.to(`draw-${tournamentId}`).emit('league-draw:week-announce', {
+            gameWeek: week,
+            totalWeeks: matchCount,
+            matchCount: weekFixtures.length,
+          });
+          await new Promise(r => setTimeout(r, 2000));
+        }
+
+        // Create matches and reveal each one
+        for (const f of weekFixtures) {
+          const playerA = players.find(p => p.id === f.playerAId);
+          const playerB = players.find(p => p.id === f.playerBId);
+
+          const match = await prisma.match.create({
+            data: {
+              tournamentId,
+              stage: 'REGIONAL_LEAGUE',
+              roundNumber: week,
+              matchNumber: matchNumber++,
+              playerAId: f.playerAId,
+              playerBId: f.playerBId,
+              venueClubId: f.venueClubId,
+              gameWeek: week,
+              isHomeForPlayerA: f.isHomeForPlayerA,
+              status: 'SCHEDULED',
+            },
+          });
+          allCreatedMatches.push(match);
+
+          // Emit each fixture reveal
+          if (io) {
+            io.to(`draw-${tournamentId}`).emit('league-draw:fixture', {
+              gameWeek: week,
+              matchId: match.id,
+              home: {
+                id: playerA?.id,
+                name: `${playerA?.firstName} ${playerA?.lastName}`,
+                handicap: playerA?.handicapIndex,
+                club: playerA?.clubName,
+              },
+              away: {
+                id: playerB?.id,
+                name: `${playerB?.firstName} ${playerB?.lastName}`,
+                handicap: playerB?.handicapIndex,
+                club: playerB?.clubName,
+              },
+              venue: playerA?.clubName,
+            });
+            // Stagger reveals
+            await new Promise(r => setTimeout(r, 1200));
+          }
+        }
+
+        // Emit week complete
+        if (io) {
+          io.to(`draw-${tournamentId}`).emit('league-draw:week-complete', {
+            gameWeek: week,
+            totalWeeks: matchCount,
+          });
+          await new Promise(r => setTimeout(r, 1500));
+        }
+      }
+
+      // Create league standings for all players
+      for (const p of players) {
+        const entry = entries.find(e => e.playerId === p.id);
+        await prisma.leagueStanding.upsert({
+          where: {
+            tournamentId_stageId_playerId: { tournamentId, stageId, playerId: p.id },
+          },
+          create: {
+            tournamentId, stageId, playerId: p.id,
+            clubId: entry?.clubId || p.homeClubId,
+          },
+          update: {},
+        });
+      }
+
+      // Update draw status to COMPLETED
+      if (draw) {
+        await prisma.draw.update({
+          where: { id: draw.id },
+          data: { status: 'COMPLETED', completedAt: new Date() },
+        });
+      }
+
+      // Emit draw complete
+      if (io) {
+        io.to(`draw-${tournamentId}`).emit('league-draw:complete', {
+          tournamentId,
+          totalMatches: allCreatedMatches.length,
+          totalWeeks: matchCount,
+        });
+      }
+
+      res.json({
+        message: `Live draw completed — ${allCreatedMatches.length} matches across ${matchCount} game weeks`,
+        matchCount: allCreatedMatches.length,
+        playerCount: players.length,
+      });
+    } catch (err) {
+      console.error('Live draw error:', err);
+      res.status(500).json({ error: err.message || 'Failed to execute live draw' });
+    }
+  }
+);
+
+// ─── REGENERATE GAME WEEK (Admin) ───────────────────────────────────────────
+
+router.post('/:tournamentId/regenerate-week',
+  authenticate,
+  requireRole('ADMIN'),
+  param('tournamentId').isUUID(),
+  body('gameWeek').isInt({ min: 1, max: 6 }),
+  body('stageId').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { tournamentId } = req.params;
+      const { gameWeek, stageId } = req.body;
+
+      // Check no matches in this week have been played
+      const playedMatches = await prisma.match.count({
+        where: {
+          tournamentId, gameWeek, stage: 'REGIONAL_LEAGUE',
+          status: { in: ['COMPLETED', 'RESULT_CONFIRMED', 'RESULT_SUBMITTED'] },
+        },
+      });
+      if (playedMatches > 0) {
+        return res.status(400).json({ error: `Cannot regenerate game week ${gameWeek} — ${playedMatches} match(es) already have results` });
+      }
+
+      // Delete existing matches for this week
+      await prisma.match.deleteMany({
+        where: { tournamentId, gameWeek, stage: 'REGIONAL_LEAGUE' },
+      });
+
+      // Get current fixture state (other weeks' opponents)
+      const existingMatches = await prisma.match.findMany({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: gameWeek } },
+        select: { playerAId: true, playerBId: true, isHomeForPlayerA: true, gameWeek: true },
+      });
+
+      // Get all players in the league
+      const standings = await prisma.leagueStanding.findMany({
+        where: { tournamentId, stageId },
+        include: { player: { select: { id: true, homeClubId: true } } },
+      });
+
+      const players = standings.map(s => ({
+        id: s.playerId,
+        homeClubId: s.player.homeClubId || s.clubId,
+      }));
+
+      // Build constraints from existing matches
+      const opponents = {};
+      const homePlayed = {};
+      const awayPlayed = {};
+      const weekMatches = {};
+
+      for (const p of players) {
+        opponents[p.id] = new Set();
+        homePlayed[p.id] = 0;
+        awayPlayed[p.id] = 0;
+        weekMatches[p.id] = new Set();
+      }
+
+      for (const m of existingMatches) {
+        if (m.playerAId && m.playerBId) {
+          opponents[m.playerAId]?.add(m.playerBId);
+          opponents[m.playerBId]?.add(m.playerAId);
+          if (m.isHomeForPlayerA) {
+            homePlayed[m.playerAId] = (homePlayed[m.playerAId] || 0) + 1;
+            awayPlayed[m.playerBId] = (awayPlayed[m.playerBId] || 0) + 1;
+          } else {
+            awayPlayed[m.playerAId] = (awayPlayed[m.playerAId] || 0) + 1;
+            homePlayed[m.playerBId] = (homePlayed[m.playerBId] || 0) + 1;
+          }
+          weekMatches[m.playerAId]?.add(m.gameWeek);
+          weekMatches[m.playerBId]?.add(m.gameWeek);
+        }
+      }
+
+      // Generate just this week's fixtures respecting existing constraints
+      const { generateGameWeekConstrained } = require('../services/leagueService');
+      const weekFixtures = generateGameWeekConstrained(
+        players, gameWeek, opponents, homePlayed, awayPlayed,
+        weekMatches, 3, 3
+      );
+
+      if (!weekFixtures || weekFixtures.length === 0) {
+        return res.status(400).json({ error: 'Could not generate valid fixtures for this week with current constraints' });
+      }
+
+      // Get max match number
+      const maxMatch = await prisma.match.aggregate({
+        _max: { matchNumber: true },
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE' },
+      });
+      let matchNumber = (maxMatch._max.matchNumber || 0) + 1;
+
+      const createdMatches = [];
+      for (const f of weekFixtures) {
+        const match = await prisma.match.create({
+          data: {
+            tournamentId, stage: 'REGIONAL_LEAGUE',
+            roundNumber: gameWeek, matchNumber: matchNumber++,
+            playerAId: f.playerAId, playerBId: f.playerBId,
+            venueClubId: f.venueClubId, gameWeek,
+            isHomeForPlayerA: f.isHomeForPlayerA, status: 'SCHEDULED',
+          },
+        });
+        createdMatches.push(match);
+      }
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`draw-${tournamentId}`).emit('league-draw:week-regenerated', {
+          gameWeek,
+          matchCount: createdMatches.length,
+        });
+      }
+
+      res.json({
+        message: `Regenerated ${createdMatches.length} fixtures for game week ${gameWeek}`,
+        matchCount: createdMatches.length,
+      });
+    } catch (err) {
+      console.error('Regenerate week error:', err);
+      res.status(500).json({ error: err.message || 'Failed to regenerate game week' });
+    }
+  }
+);
+
 module.exports = router;

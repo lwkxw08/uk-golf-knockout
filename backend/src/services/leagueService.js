@@ -604,9 +604,75 @@ async function updateClubSeasonPoints(season) {
   }
 }
 
+/**
+ * Generate fixtures for a single game week with pre-existing constraints.
+ * Used for regenerating individual weeks.
+ */
+function generateGameWeekConstrained(players, week, opponents, homePlayed, awayPlayed, weekMatches, homeCount, awayCount) {
+  const sameClub = {};
+  for (const p of players) {
+    if (!sameClub[p.homeClubId]) sameClub[p.homeClubId] = [];
+    sameClub[p.homeClubId].push(p.id);
+  }
+  const playerMap = {};
+  for (const p of players) playerMap[p.id] = p;
+
+  const matchCount = homeCount + awayCount;
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const eligible = players.filter(p =>
+      !weekMatches[p.id].has(week) &&
+      opponents[p.id].size < matchCount
+    );
+    const shuffled = [...eligible].sort(() => Math.random() - 0.5);
+    const paired = new Set();
+    const weekFixtures = [];
+
+    for (let i = 0; i < shuffled.length; i++) {
+      const pA = shuffled[i];
+      if (paired.has(pA.id)) continue;
+
+      const candidates = shuffled.filter(pB => {
+        if (pB.id === pA.id) return false;
+        if (paired.has(pB.id)) return false;
+        if (opponents[pA.id].has(pB.id)) return false;
+        if (pA.homeClubId === pB.homeClubId) return false;
+        return true;
+      });
+
+      if (candidates.length === 0) continue;
+
+      const scored = candidates.map(c => ({
+        player: c,
+        score: (matchCount - opponents[c.id].size) * 10,
+      })).sort((a, b) => b.score - a.score);
+
+      const topN = Math.min(3, scored.length);
+      const pick = scored[Math.floor(Math.random() * topN)].player;
+      const { home, away } = assignHomeAway(pA, pick, homePlayed, awayPlayed, homeCount, awayCount);
+
+      weekFixtures.push({
+        gameWeek: week,
+        playerAId: home.id,
+        playerBId: away.id,
+        isHomeForPlayerA: true,
+        venueClubId: home.homeClubId,
+      });
+
+      paired.add(home.id);
+      paired.add(away.id);
+    }
+
+    if (weekFixtures.length > 0) return weekFixtures;
+  }
+
+  return null;
+}
+
 module.exports = {
   DEFAULT_LEAGUE_SCORING,
   generateLeagueFixtures,
+  generateGameWeekConstrained,
   calculateLeaguePoints,
   calculateHolesDifferential,
   recalculateStandings,
