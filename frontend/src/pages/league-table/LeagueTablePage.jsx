@@ -128,10 +128,10 @@ function LeagueTable({ standings, matchCount }) {
               <th className="px-3 py-3 text-center font-semibold text-gray-600">W</th>
               <th className="px-3 py-3 text-center font-semibold text-gray-600">D</th>
               <th className="px-3 py-3 text-center font-semibold text-gray-600">L</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600">Bonus</th>
               <th className="px-3 py-3 text-center font-semibold text-emerald-700 bg-emerald-50">Pts</th>
               <th className="px-3 py-3 text-center font-semibold text-gray-600">+/-</th>
               <th className="px-3 py-3 text-center font-semibold text-gray-600">Away W</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">Bonus</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -161,6 +161,7 @@ function LeagueTable({ standings, matchCount }) {
                   <td className="px-3 py-3 text-center font-medium text-gray-900">{s.wins}</td>
                   <td className="px-3 py-3 text-center text-gray-600">{s.draws}</td>
                   <td className="px-3 py-3 text-center text-gray-600">{s.losses}</td>
+                  <td className="px-3 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
                   <td className="px-3 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
                   <td className="px-3 py-3 text-center">
                     <span className={`font-medium ${s.holesDifferential > 0 ? 'text-emerald-600' : s.holesDifferential < 0 ? 'text-red-500' : 'text-gray-500'}`}>
@@ -168,7 +169,6 @@ function LeagueTable({ standings, matchCount }) {
                     </span>
                   </td>
                   <td className="px-3 py-3 text-center text-gray-600">{s.awayWins}</td>
-                  <td className="px-3 py-3 text-center text-gray-500">{s.bonusPoints}</td>
                 </tr>
               );
             })}

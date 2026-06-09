@@ -397,6 +397,16 @@ async function main() {
     sA.totalPoints += m.leaguePointsA || 0;
     sB.totalPoints += m.leaguePointsB || 0;
 
+    // Track bonus points from match detail
+    const ptsA = m.leaguePointsA || 0;
+    const ptsB = m.leaguePointsB || 0;
+    const baseA = isHalved ? 5 : (m.winnerId === m.playerAId ? 10 : 0);
+    const baseB = isHalved ? 5 : (m.winnerId === m.playerBId ? 10 : 0);
+    sA.bonusPoints += (ptsA - baseA);
+    sB.bonusPoints += (ptsB - baseB);
+    sA.leaguePoints += baseA;
+    sB.leaguePoints += baseB;
+
     if (m.winnerId === m.playerAId) {
       sA.holesWon += margin;
       sB.holesLost += margin;
