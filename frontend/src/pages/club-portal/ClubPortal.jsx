@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, Users, Trophy, DollarSign, Megaphone, Calendar, Settings, MapPin, Phone, Mail, Globe, ClipboardList, ChevronRight, Search, Award, TrendingUp } from 'lucide-react';
+import { Building2, Users, Trophy, DollarSign, Megaphone, Calendar, Settings, MapPin, Phone, Mail, Globe, ClipboardList, ChevronRight, Search, Award, TrendingUp, ShoppingBag, Plus, Pencil, Trash2, Tag, X } from 'lucide-react';
 
 export default function ClubPortal() {
   const { user } = useAuth();
@@ -15,6 +15,9 @@ export default function ClubPortal() {
   const [settingsForm, setSettingsForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [offerForm, setOfferForm] = useState(null);
+  const [offerSaving, setOfferSaving] = useState(false);
+  const [offerMsg, setOfferMsg] = useState('');
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
@@ -81,6 +84,78 @@ export default function ClubPortal() {
     }
   };
 
+  const OFFER_TYPES = [
+    { value: 'visitor_green_fee', label: 'Visitor Green Fee' },
+    { value: 'society_package', label: 'Society Package' },
+    { value: 'membership_offer', label: 'Membership Offer' },
+    { value: 'lesson_package', label: 'Lesson Package' },
+  ];
+
+  const newOfferTemplate = {
+    offeringType: 'visitor_green_fee',
+    title: '',
+    description: '',
+    pricePence: '',
+    originalPricePence: '',
+    validFrom: '',
+    validTo: '',
+    maxRedemptions: '',
+  };
+
+  const handleSaveOffer = async () => {
+    if (!offerForm || !dashboard) return;
+    setOfferSaving(true);
+    setOfferMsg('');
+    try {
+      const payload = {
+        clubId: dashboard.club.id,
+        offeringType: offerForm.offeringType,
+        title: offerForm.title,
+        description: offerForm.description || null,
+        pricePence: offerForm.pricePence ? Math.round(Number(offerForm.pricePence) * 100) : null,
+        originalPricePence: offerForm.originalPricePence ? Math.round(Number(offerForm.originalPricePence) * 100) : null,
+        validFrom: offerForm.validFrom || null,
+        validTo: offerForm.validTo || null,
+        maxRedemptions: offerForm.maxRedemptions ? Number(offerForm.maxRedemptions) : null,
+      };
+      if (offerForm.id) {
+        await api.put(`/marketplace/${offerForm.id}`, payload);
+      } else {
+        await api.post('/marketplace', payload);
+      }
+      const d = await api.get(`/clubs/${dashboard.club.id}/dashboard`);
+      setDashboard(d);
+      setOfferForm(null);
+      setOfferMsg(offerForm.id ? 'Offer updated' : 'Offer created');
+    } catch (err) {
+      setOfferMsg('Failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setOfferSaving(false);
+    }
+  };
+
+  const handleDeleteOffer = async (offerId) => {
+    if (!confirm('Delete this offer?')) return;
+    try {
+      await api.delete(`/marketplace/${offerId}`);
+      const d = await api.get(`/clubs/${dashboard.club.id}/dashboard`);
+      setDashboard(d);
+      setOfferMsg('Offer deleted');
+    } catch (err) {
+      setOfferMsg('Failed to delete: ' + err.message);
+    }
+  };
+
+  const handleToggleOffer = async (offer) => {
+    try {
+      await api.put(`/marketplace/${offer.id}`, { isActive: !offer.isActive });
+      const d = await api.get(`/clubs/${dashboard.club.id}/dashboard`);
+      setDashboard(d);
+    } catch (err) {
+      setOfferMsg('Failed to update: ' + err.message);
+    }
+  };
+
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   // Admin: show all clubs
@@ -122,6 +197,7 @@ export default function ClubPortal() {
     { id: 'members', label: 'Members', icon: Users },
     { id: 'fixtures', label: 'Fixtures', icon: Calendar },
     { id: 'results', label: 'Results', icon: Trophy },
+    { id: 'offers', label: 'Offers', icon: ShoppingBag },
     { id: 'sponsors', label: 'Sponsors', icon: Megaphone },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -470,6 +546,152 @@ export default function ClubPortal() {
               </tbody>
             </table>
           ) : <p className="text-gray-500 text-sm py-8 text-center">No results yet</p>}
+        </div>
+      )}
+
+      {activeTab === 'offers' && (
+        <div className="bg-white border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Marketplace Offers</h2>
+            <button onClick={() => setOfferForm({ ...newOfferTemplate })}
+              className="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-800 transition flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Create Offer
+            </button>
+          </div>
+
+          {offerMsg && (
+            <div className={`mb-4 px-4 py-2 rounded text-sm ${offerMsg.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+              {offerMsg}
+            </div>
+          )}
+
+          {offerForm && (
+            <div className="mb-6 border rounded-xl p-5 bg-gray-50">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium">{offerForm.id ? 'Edit Offer' : 'New Offer'}</h3>
+                <button onClick={() => setOfferForm(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Offer Type</label>
+                  <select value={offerForm.offeringType} onChange={e => setOfferForm({ ...offerForm, offeringType: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    {OFFER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                  <input type="text" value={offerForm.title} onChange={e => setOfferForm({ ...offerForm, title: e.target.value })}
+                    placeholder="e.g. Summer Visitor Green Fee" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea rows="3" value={offerForm.description} onChange={e => setOfferForm({ ...offerForm, description: e.target.value })}
+                    placeholder="Describe what's included in this offer..." className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (&pound;)</label>
+                  <input type="number" step="0.01" min="0" value={offerForm.pricePence} onChange={e => setOfferForm({ ...offerForm, pricePence: e.target.value })}
+                    placeholder="25.00" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (&pound;) <span className="text-gray-400">(for discount display)</span></label>
+                  <input type="number" step="0.01" min="0" value={offerForm.originalPricePence} onChange={e => setOfferForm({ ...offerForm, originalPricePence: e.target.value })}
+                    placeholder="40.00" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Valid From</label>
+                  <input type="date" value={offerForm.validFrom} onChange={e => setOfferForm({ ...offerForm, validFrom: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
+                  <input type="date" value={offerForm.validTo} onChange={e => setOfferForm({ ...offerForm, validTo: e.target.value })}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Redemptions <span className="text-gray-400">(leave blank for unlimited)</span></label>
+                  <input type="number" min="1" value={offerForm.maxRedemptions} onChange={e => setOfferForm({ ...offerForm, maxRedemptions: e.target.value })}
+                    placeholder="100" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                </div>
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button onClick={handleSaveOffer} disabled={offerSaving || !offerForm.title}
+                  className="bg-green-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-800 transition disabled:opacity-50">
+                  {offerSaving ? 'Saving...' : offerForm.id ? 'Update Offer' : 'Create Offer'}
+                </button>
+                <button onClick={() => setOfferForm(null)}
+                  className="px-6 py-2 rounded-lg font-medium border text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {(dashboard.offerings || []).length > 0 ? (
+            <div className="space-y-3">
+              {dashboard.offerings.map(o => (
+                <div key={o.id} className={`border rounded-xl p-5 ${o.isActive ? 'bg-white' : 'bg-gray-50 opacity-70'}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded capitalize">
+                          {o.offeringType.replace(/_/g, ' ')}
+                        </span>
+                        {!o.isActive && <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Inactive</span>}
+                        {o.originalPricePence > o.pricePence && o.pricePence && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded flex items-center gap-1">
+                            <Tag className="w-3 h-3" /> {Math.round((1 - o.pricePence / o.originalPricePence) * 100)}% off
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-lg">{o.title}</h3>
+                      {o.description && <p className="text-sm text-gray-600 mt-1">{o.description}</p>}
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        {o.pricePence != null && (
+                          <span className="font-semibold text-green-700 text-lg">&pound;{(o.pricePence / 100).toFixed(2)}
+                            {o.originalPricePence > o.pricePence && (
+                              <span className="text-gray-400 line-through text-sm ml-2">&pound;{(o.originalPricePence / 100).toFixed(2)}</span>
+                            )}
+                          </span>
+                        )}
+                        {o.validTo && <span>Valid until {new Date(o.validTo).toLocaleDateString('en-GB')}</span>}
+                        {o.maxRedemptions && <span>Max {o.maxRedemptions} redemptions ({o.redemptionCount || 0} used)</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button onClick={() => handleToggleOffer(o)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${o.isActive ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
+                        {o.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button onClick={() => setOfferForm({
+                        id: o.id,
+                        offeringType: o.offeringType,
+                        title: o.title,
+                        description: o.description || '',
+                        pricePence: o.pricePence ? (o.pricePence / 100).toFixed(2) : '',
+                        originalPricePence: o.originalPricePence ? (o.originalPricePence / 100).toFixed(2) : '',
+                        validFrom: o.validFrom ? o.validFrom.slice(0, 10) : '',
+                        validTo: o.validTo ? o.validTo.slice(0, 10) : '',
+                        maxRedemptions: o.maxRedemptions || '',
+                      })}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={() => handleDeleteOffer(o.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !offerForm && (
+            <div className="text-center py-8">
+              <ShoppingBag className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No offers yet</p>
+              <p className="text-sm text-gray-400 mt-1">Create your first marketplace offer to attract visitors and new members.</p>
+              <button onClick={() => setOfferForm({ ...newOfferTemplate })}
+                className="mt-4 bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-800 transition inline-flex items-center gap-2">
+                <Plus className="w-4 h-4" /> Create Your First Offer
+              </button>
+            </div>
+          )}
         </div>
       )}
 

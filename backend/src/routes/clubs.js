@@ -154,7 +154,7 @@ router.get('/:clubId/dashboard',
         if (!mgr) return res.status(403).json({ error: 'Access denied' });
       }
 
-      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees, leagueStandings, clubChampionship] = await Promise.all([
+      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees, leagueStandings, clubChampionship, offerings] = await Promise.all([
         prisma.club.findUnique({ where: { id: clubId }, include: { region: true } }),
         prisma.player.findMany({
           where: { homeClubId: clubId },
@@ -204,6 +204,11 @@ router.get('/:clubId/dashboard',
           },
           orderBy: { position: 'asc' },
         }),
+        // Club marketplace offerings
+        prisma.courseOffering.findMany({
+          where: { clubId },
+          orderBy: { createdAt: 'desc' },
+        }),
         // Club championship standings
         prisma.clubSeasonPoints.findMany({
           where: { clubId },
@@ -244,6 +249,7 @@ router.get('/:clubId/dashboard',
         leagueStandings,
         clubChampionship,
         regionChampionship,
+        offerings,
       });
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch club dashboard' });
