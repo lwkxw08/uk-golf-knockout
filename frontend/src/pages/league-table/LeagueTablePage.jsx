@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LeagueTablePage() {
   const { tournamentId } = useParams();
+  const { user } = useAuth();
   const [standings, setStandings] = useState([]);
   const [fixtures, setFixtures] = useState({});
   const [allMatches, setAllMatches] = useState([]);
@@ -13,6 +15,13 @@ export default function LeagueTablePage() {
   const [activeTab, setActiveTab] = useState('table');
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [drawStatus, setDrawStatus] = useState(null);
+  const [drawCountdown, setDrawCountdown] = useState(null);
+  const [drawScheduleDate, setDrawScheduleDate] = useState('');
+  const [schedulingDraw, setSchedulingDraw] = useState(false);
+  const [executingDraw, setExecutingDraw] = useState(false);
+  const [regeneratingWeek, setRegeneratingWeek] = useState(null);
+  const [drawMsg, setDrawMsg] = useState('');
 
   useEffect(() => {
     if (tournamentId) loadData();
@@ -35,8 +44,67 @@ export default function LeagueTablePage() {
       const tournamentData = await api.get(`/tournaments/${tournamentId}`);
       setTournament(tournamentData);
     } catch (err) { console.error('Failed to load tournament:', err); }
+    try {
+      const ds = await api.get(`/league/${tournamentId}/draw-status`);
+      setDrawStatus(ds);
+    } catch (err) { console.error('Draw status error:', err); }
     setLoading(false);
   }
+
+  // Countdown timer
+  useEffect(() => {
+    if (!drawStatus?.draw?.scheduledAt || drawStatus.status !== 'SCHEDULED') return;
+    const target = new Date(drawStatus.draw.scheduledAt).getTime();
+    const interval = setInterval(() => {
+      const diff = target - Date.now();
+      if (diff <= 0) { setDrawCountdown(null); clearInterval(interval); return; }
+      setDrawCountdown({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [drawStatus]);
+
+  const handleScheduleDraw = async () => {
+    if (!drawScheduleDate) return;
+    const leagueStage = tournament?.stages?.find(s => s.isLeague);
+    if (!leagueStage) return;
+    setSchedulingDraw(true); setDrawMsg('');
+    try {
+      await api.post(`/league/${tournamentId}/schedule-draw`, { stageId: leagueStage.id, scheduledAt: new Date(drawScheduleDate).toISOString() });
+      const ds = await api.get(`/league/${tournamentId}/draw-status`);
+      setDrawStatus(ds);
+      setDrawMsg('Draw scheduled');
+    } catch (err) { setDrawMsg('Failed: ' + err.message); }
+    finally { setSchedulingDraw(false); }
+  };
+
+  const handleExecuteDraw = async () => {
+    const leagueStage = tournament?.stages?.find(s => s.isLeague);
+    if (!leagueStage || !confirm('Start the live draw now?')) return;
+    setExecutingDraw(true); setDrawMsg('');
+    try {
+      const r = await api.post(`/league/${tournamentId}/execute-live-draw`, { stageId: leagueStage.id });
+      setDrawMsg(`Draw complete — ${r.matchCount} matches`);
+      loadData();
+    } catch (err) { setDrawMsg('Failed: ' + err.message); }
+    finally { setExecutingDraw(false); }
+  };
+
+  const handleRegenerateWeek = async (week) => {
+    const leagueStage = tournament?.stages?.find(s => s.isLeague);
+    if (!leagueStage || !confirm(`Regenerate Game Week ${week}?`)) return;
+    setRegeneratingWeek(week); setDrawMsg('');
+    try {
+      const r = await api.post(`/league/${tournamentId}/regenerate-week`, { gameWeek: week, stageId: leagueStage.id });
+      setDrawMsg(`Week ${week} regenerated — ${r.matchCount} new matches`);
+      loadData();
+    } catch (err) { setDrawMsg('Failed: ' + err.message); }
+    finally { setRegeneratingWeek(null); }
+  };
 
   const weeks = Object.keys(fixtures).map(Number).sort((a, b) => a - b);
 
@@ -64,6 +132,27 @@ export default function LeagueTablePage() {
           <span>Top 4 qualify for National Final</span>
         </div>
       </div>
+
+      {/* Draw Countdown */}
+      {drawStatus?.status === 'SCHEDULED' && drawCountdown && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 mb-6 text-center">
+          <h3 className="text-lg font-bold text-blue-900 mb-3">League Draw Countdown</h3>
+          <div className="flex justify-center gap-3 mb-3">
+            {[['days','Days'],['hours','Hrs'],['minutes','Min'],['seconds','Sec']].map(([k,l]) => (
+              <div key={k} className="bg-white rounded-lg px-4 py-2 min-w-[60px] shadow-sm border border-blue-100">
+                <div className="text-2xl font-bold text-blue-900">{String(drawCountdown[k]).padStart(2,'0')}</div>
+                <div className="text-xs text-blue-500">{l}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-blue-600">
+            {new Date(drawStatus.draw.scheduledAt).toLocaleString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+          </p>
+          <Link to={`/draws/${tournamentId}/live`} className="inline-flex items-center gap-2 mt-3 bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800">
+            Watch Live Draw
+          </Link>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
@@ -105,6 +194,76 @@ export default function LeagueTablePage() {
       {/* Club Points */}
       {activeTab === 'club-points' && (
         <ClubChampionship season={tournament?.season || '2027'} />
+      )}
+
+      {/* Admin Draw Management */}
+      {user?.role === 'ADMIN' && (
+        <div className="mt-8 bg-white border-2 border-blue-200 rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4">League Draw Management (Admin)</h2>
+          {drawMsg && (
+            <div className={`mb-4 px-4 py-2 rounded text-sm ${drawMsg.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+              {drawMsg}
+            </div>
+          )}
+
+          {(!drawStatus || drawStatus.status === 'NOT_SCHEDULED') && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">Schedule a live draw event for players to watch fixtures being revealed.</p>
+              <div className="flex gap-3">
+                <input type="datetime-local" value={drawScheduleDate} onChange={e => setDrawScheduleDate(e.target.value)} className="flex-1 border rounded-lg px-3 py-2 text-sm" />
+                <button onClick={handleScheduleDraw} disabled={schedulingDraw || !drawScheduleDate} className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 disabled:opacity-50">
+                  {schedulingDraw ? 'Scheduling...' : 'Schedule Draw'}
+                </button>
+              </div>
+              <div className="border-t pt-4">
+                <p className="text-sm text-gray-500 mb-2">Or execute immediately:</p>
+                <button onClick={handleExecuteDraw} disabled={executingDraw} className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
+                  {executingDraw ? 'Drawing...' : 'Execute Live Draw Now'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {drawStatus?.status === 'SCHEDULED' && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <p className="text-sm text-blue-700 font-medium">Draw scheduled for:</p>
+                <p className="text-lg font-bold text-blue-900">
+                  {new Date(drawStatus.draw.scheduledAt).toLocaleString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' })}
+                </p>
+              </div>
+              <button onClick={handleExecuteDraw} disabled={executingDraw} className="w-full bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50">
+                {executingDraw ? 'Drawing live...' : 'Start Live Draw Now'}
+              </button>
+              <Link to={`/draws/${tournamentId}/live`} className="block text-center text-blue-600 hover:underline text-sm">
+                Open live draw viewer (share with players)
+              </Link>
+            </div>
+          )}
+
+          {drawStatus?.status === 'COMPLETED' && (
+            <div className="space-y-4">
+              <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700 text-center font-medium">
+                Draw completed — {drawStatus.revealedWeeks?.length || 0} game weeks
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Regenerate Game Week</h3>
+                <p className="text-xs text-gray-500 mb-3">Only unplayed weeks can be regenerated.</p>
+                <div className="flex flex-wrap gap-2">
+                  {(drawStatus.revealedWeeks || []).map(week => (
+                    <button key={week} onClick={() => handleRegenerateWeek(week)} disabled={regeneratingWeek === week}
+                      className="flex items-center gap-1 px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50">
+                      {regeneratingWeek === week ? 'Regenerating...' : `Week ${week}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Link to={`/draws/${tournamentId}/live`} className="block text-center text-blue-600 hover:underline text-sm">
+                View Live Draw Page
+              </Link>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
