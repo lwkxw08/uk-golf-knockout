@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
-const API = import.meta.env.VITE_API_URL || '/api';
+import { api } from '../../api/client';
 
 export default function LeagueTablePage() {
   const { tournamentId } = useParams();
@@ -22,24 +21,20 @@ export default function LeagueTablePage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [standingsRes, fixturesRes, tournamentRes] = await Promise.all([
-        fetch(`${API}/league/${tournamentId}/standings`),
-        fetch(`${API}/league/${tournamentId}/fixtures`),
-        fetch(`${API}/tournaments/${tournamentId}`),
-      ]);
-      const standingsData = await standingsRes.json();
-      const fixturesData = await fixturesRes.json();
-      const tournamentData = await tournamentRes.json();
-
+      const standingsData = await api.get(`/league/${tournamentId}/standings`);
       setStandings(standingsData.standings || []);
       setScoringConfig(standingsData.scoringConfig);
       setMatchCount(standingsData.matchCount || 6);
+    } catch (err) { console.error('Failed to load standings:', err); }
+    try {
+      const fixturesData = await api.get(`/league/${tournamentId}/fixtures`);
       setFixtures(fixturesData.fixtures || {});
       setAllMatches(fixturesData.matches || []);
+    } catch (err) { console.error('Failed to load fixtures:', err); }
+    try {
+      const tournamentData = await api.get(`/tournaments/${tournamentId}`);
       setTournament(tournamentData);
-    } catch (err) {
-      console.error('Failed to load league data:', err);
-    }
+    } catch (err) { console.error('Failed to load tournament:', err); }
     setLoading(false);
   }
 
@@ -457,8 +452,7 @@ function ClubChampionship({ season }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/league/club-points/${season}`)
-      .then(r => r.json())
+    api.get(`/league/club-points/${season}`)
       .then(data => { setClubPoints(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [season]);
