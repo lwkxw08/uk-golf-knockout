@@ -6,6 +6,7 @@ const prisma = require('../config/prisma');
 const {
   DEFAULT_LEAGUE_SCORING,
   generateLeagueFixtures,
+  generateSingleWeekFixtures,
   calculateLeaguePoints,
   calculateHolesDifferential,
   recalculateStandings,
@@ -496,25 +497,39 @@ router.post('/:tournamentId/schedule-draw',
   param('tournamentId').isUUID(),
   body('stageId').isUUID(),
   body('scheduledAt').isISO8601(),
+  body('gameWeek').isInt({ min: 1, max: 6 }),
   validate,
   async (req, res) => {
     try {
       const { tournamentId } = req.params;
-      const { stageId, scheduledAt } = req.body;
+      const { stageId, scheduledAt, gameWeek } = req.body;
 
       const stage = await prisma.tournamentStage_.findUnique({ where: { id: stageId } });
       if (!stage || !stage.isLeague) {
         return res.status(400).json({ error: 'Stage is not a league stage' });
       }
 
-      const draw = await prisma.draw.create({
-        data: {
-          tournamentId,
-          stage: 'REGIONAL_LEAGUE',
-          roundNumber: 0,
-          scheduledAt: new Date(scheduledAt),
-        },
+      // Check if this week already has a draw scheduled
+      const existing = await prisma.draw.findFirst({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', roundNumber: gameWeek },
       });
+
+      let draw;
+      if (existing) {
+        draw = await prisma.draw.update({
+          where: { id: existing.id },
+          data: { scheduledAt: new Date(scheduledAt), status: 'SCHEDULED', startedAt: null, completedAt: null },
+        });
+      } else {
+        draw = await prisma.draw.create({
+          data: {
+            tournamentId,
+            stage: 'REGIONAL_LEAGUE',
+            roundNumber: gameWeek,
+            scheduledAt: new Date(scheduledAt),
+          },
+        });
+      }
 
       // Store stageId in tournament metadata for draw reference
       await prisma.tournament.update({
@@ -559,24 +574,43 @@ router.get('/:tournamentId/draw-status',
     try {
       const { tournamentId } = req.params;
 
-      const draw = await prisma.draw.findFirst({
+      // Get all per-week draw records
+      const draws = await prisma.draw.findMany({
         where: { tournamentId, stage: 'REGIONAL_LEAGUE' },
-        orderBy: { scheduledAt: 'desc' },
+        orderBy: { roundNumber: 'asc' },
       });
 
-      if (!draw) return res.json({ status: 'NOT_SCHEDULED', draw: null });
-
-      // Check how many game weeks have been revealed
+      // Check which game weeks already have fixtures
       const revealedWeeks = await prisma.match.findMany({
         where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
         select: { gameWeek: true },
         distinct: ['gameWeek'],
       });
+      const revealedWeekNums = revealedWeeks.map(w => w.gameWeek).sort((a, b) => a - b);
+
+      // Build per-week status map
+      const weekDraws = draws.map(d => ({
+        ...d,
+        gameWeek: d.roundNumber,
+        hasFixtures: revealedWeekNums.includes(d.roundNumber),
+      }));
+
+      // Find the next upcoming draw (SCHEDULED, earliest scheduledAt)
+      const nextDraw = draws.find(d => d.status === 'SCHEDULED');
+
+      // Legacy: compute overall status for backward compatibility
+      const allCompleted = weekDraws.length > 0 && weekDraws.every(d => d.status === 'COMPLETED');
+      const anyScheduled = weekDraws.some(d => d.status === 'SCHEDULED');
+      const overallStatus = weekDraws.length === 0 ? 'NOT_SCHEDULED'
+        : allCompleted ? 'COMPLETED'
+        : anyScheduled ? 'SCHEDULED'
+        : 'NOT_SCHEDULED';
 
       res.json({
-        status: draw.status,
-        draw,
-        revealedWeeks: revealedWeeks.map(w => w.gameWeek).sort((a, b) => a - b),
+        status: overallStatus,
+        draw: nextDraw || draws[0] || null,
+        revealedWeeks: revealedWeekNums,
+        weekDraws,
       });
     } catch (err) {
       console.error('Draw status error:', err);
@@ -592,11 +626,12 @@ router.post('/:tournamentId/execute-live-draw',
   requireRole('ADMIN'),
   param('tournamentId').isUUID(),
   body('stageId').isUUID(),
+  body('gameWeek').isInt({ min: 1, max: 6 }),
   validate,
   async (req, res) => {
     try {
       const { tournamentId } = req.params;
-      const { stageId } = req.body;
+      const { stageId, gameWeek } = req.body;
 
       const stage = await prisma.tournamentStage_.findUnique({
         where: { id: stageId },
@@ -604,6 +639,14 @@ router.post('/:tournamentId/execute-live-draw',
       });
       if (!stage || !stage.isLeague) {
         return res.status(400).json({ error: 'Stage is not a league stage' });
+      }
+
+      // Check this week doesn't already have fixtures
+      const existingWeekMatches = await prisma.match.findFirst({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek },
+      });
+      if (existingWeekMatches) {
+        return res.status(400).json({ error: `Game Week ${gameWeek} already has fixtures. Use regenerate to replace them.` });
       }
 
       // Get entries
@@ -636,7 +679,7 @@ router.post('/:tournamentId/execute-live-draw',
       const matchCount = stage.leagueMatchCount || 6;
       const homeCount = stage.homeMatchCount || 3;
 
-      // Fetch existing matches so the algorithm accounts for them
+      // Fetch ALL existing matches (other weeks) so the algorithm accounts for them
       const existingDbMatches = await prisma.match.findMany({
         where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
         select: { gameWeek: true, playerAId: true, playerBId: true, isHomeForPlayerA: true, matchNumber: true },
@@ -649,24 +692,12 @@ router.post('/:tournamentId/execute-live-draw',
         isHomeForPlayerA: m.isHomeForPlayerA,
       }));
 
-      // Find which weeks already exist
-      const existingWeeks = new Set(existingMatches.map(m => m.gameWeek));
-      const weeksToGenerate = [];
-      for (let w = 1; w <= matchCount; w++) {
-        if (!existingWeeks.has(w)) weeksToGenerate.push(w);
-      }
-
-      if (weeksToGenerate.length === 0) {
-        return res.status(400).json({ error: 'All game weeks already have fixtures. Nothing to draw.' });
-      }
-
       // Find highest existing match number
       const maxExistingMatchNum = existingDbMatches.reduce((max, m) => Math.max(max, m.matchNumber || 0), 0);
 
-      // Update draw status to IN_PROGRESS
+      // Update this week's draw status to IN_PROGRESS
       const draw = await prisma.draw.findFirst({
-        where: { tournamentId, stage: 'REGIONAL_LEAGUE', status: { in: ['SCHEDULED', 'COMPLETED'] } },
-        orderBy: { scheduledAt: 'asc' },
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', roundNumber: gameWeek },
       });
       if (draw) {
         await prisma.draw.update({
@@ -682,90 +713,76 @@ router.post('/:tournamentId/execute-live-draw',
         io.to(`draw-${tournamentId}`).emit('league-draw:starting', {
           tournamentId,
           playerCount: players.length,
-          totalWeeks: weeksToGenerate.length,
+          gameWeek,
         });
       }
 
-      // Generate only the missing weeks, accounting for existing fixtures
-      const fixtures = generateLeagueFixtures(players, matchCount, homeCount, existingMatches);
+      // Generate fixtures for this single week
+      const weekFixtures = generateSingleWeekFixtures(players, gameWeek, matchCount, homeCount, existingMatches);
 
-      // Group by game week
-      const fixturesByWeek = {};
-      for (const f of fixtures) {
-        if (!fixturesByWeek[f.gameWeek]) fixturesByWeek[f.gameWeek] = [];
-        fixturesByWeek[f.gameWeek].push(f);
+      // Emit week announcement
+      if (io) {
+        io.to(`draw-${tournamentId}`).emit('league-draw:week-announce', {
+          gameWeek,
+          totalWeeks: matchCount,
+          matchCount: weekFixtures.length,
+        });
+        await new Promise(r => setTimeout(r, 2000));
       }
 
-      // Reveal week by week with delays for dramatic effect
+      // Create matches and reveal each one
       let matchNumber = maxExistingMatchNum + 1;
-      const allCreatedMatches = [];
+      const createdMatches = [];
 
-      for (const week of weeksToGenerate) {
-        const weekFixtures = fixturesByWeek[week] || [];
+      for (const f of weekFixtures) {
+        const playerA = players.find(p => p.id === f.playerAId);
+        const playerB = players.find(p => p.id === f.playerBId);
 
-        // Emit week announcement
+        const match = await prisma.match.create({
+          data: {
+            tournamentId,
+            stage: 'REGIONAL_LEAGUE',
+            roundNumber: gameWeek,
+            matchNumber: matchNumber++,
+            playerAId: f.playerAId,
+            playerBId: f.playerBId,
+            venueClubId: f.venueClubId,
+            gameWeek,
+            isHomeForPlayerA: f.isHomeForPlayerA,
+            status: 'SCHEDULED',
+          },
+        });
+        createdMatches.push(match);
+
+        // Emit each fixture reveal
         if (io) {
-          io.to(`draw-${tournamentId}`).emit('league-draw:week-announce', {
-            gameWeek: week,
-            totalWeeks: matchCount,
-            matchCount: weekFixtures.length,
-          });
-          await new Promise(r => setTimeout(r, 2000));
-        }
-
-        // Create matches and reveal each one
-        for (const f of weekFixtures) {
-          const playerA = players.find(p => p.id === f.playerAId);
-          const playerB = players.find(p => p.id === f.playerBId);
-
-          const match = await prisma.match.create({
-            data: {
-              tournamentId,
-              stage: 'REGIONAL_LEAGUE',
-              roundNumber: week,
-              matchNumber: matchNumber++,
-              playerAId: f.playerAId,
-              playerBId: f.playerBId,
-              venueClubId: f.venueClubId,
-              gameWeek: week,
-              isHomeForPlayerA: f.isHomeForPlayerA,
-              status: 'SCHEDULED',
+          io.to(`draw-${tournamentId}`).emit('league-draw:fixture', {
+            gameWeek,
+            matchId: match.id,
+            home: {
+              id: playerA?.id,
+              name: `${playerA?.firstName} ${playerA?.lastName}`,
+              handicap: playerA?.handicapIndex,
+              club: playerA?.clubName,
             },
+            away: {
+              id: playerB?.id,
+              name: `${playerB?.firstName} ${playerB?.lastName}`,
+              handicap: playerB?.handicapIndex,
+              club: playerB?.clubName,
+            },
+            venue: playerA?.clubName,
           });
-          allCreatedMatches.push(match);
-
-          // Emit each fixture reveal
-          if (io) {
-            io.to(`draw-${tournamentId}`).emit('league-draw:fixture', {
-              gameWeek: week,
-              matchId: match.id,
-              home: {
-                id: playerA?.id,
-                name: `${playerA?.firstName} ${playerA?.lastName}`,
-                handicap: playerA?.handicapIndex,
-                club: playerA?.clubName,
-              },
-              away: {
-                id: playerB?.id,
-                name: `${playerB?.firstName} ${playerB?.lastName}`,
-                handicap: playerB?.handicapIndex,
-                club: playerB?.clubName,
-              },
-              venue: playerA?.clubName,
-            });
-            // Stagger reveals
-            await new Promise(r => setTimeout(r, 1200));
-          }
+          await new Promise(r => setTimeout(r, 1200));
         }
+      }
 
-        // Emit week complete
-        if (io) {
-          io.to(`draw-${tournamentId}`).emit('league-draw:week-complete', {
-            gameWeek: week,
-            totalWeeks: matchCount,
-          });
-          await new Promise(r => setTimeout(r, 1500));
-        }
+      // Emit week complete
+      if (io) {
+        io.to(`draw-${tournamentId}`).emit('league-draw:week-complete', {
+          gameWeek,
+          totalWeeks: matchCount,
+        });
       }
 
       // Create league standings for all players
@@ -783,7 +800,7 @@ router.post('/:tournamentId/execute-live-draw',
         });
       }
 
-      // Update draw status to COMPLETED
+      // Update this week's draw status to COMPLETED
       if (draw) {
         await prisma.draw.update({
           where: { id: draw.id },
@@ -795,58 +812,38 @@ router.post('/:tournamentId/execute-live-draw',
       if (io) {
         io.to(`draw-${tournamentId}`).emit('league-draw:complete', {
           tournamentId,
-          totalMatches: allCreatedMatches.length,
-          totalWeeks: matchCount,
+          gameWeek,
+          totalMatches: createdMatches.length,
         });
       }
 
-      // Send fixture notification emails to all players (async, don't block response)
-      const allMatches = await prisma.match.findMany({
-        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
-        include: {
-          playerA: { select: { id: true, firstName: true, lastName: true, user: { select: { email: true } }, homeClub: { select: { name: true } } } },
-          playerB: { select: { id: true, firstName: true, lastName: true, user: { select: { email: true } }, homeClub: { select: { name: true } } } },
-          venueClub: { select: { name: true } },
-        },
-        orderBy: { gameWeek: 'asc' },
-      });
-      const playerFixtureMap = {};
-      for (const m of allMatches) {
-        if (m.playerA) {
-          if (!playerFixtureMap[m.playerA.id]) playerFixtureMap[m.playerA.id] = { ...m.playerA, fixtures: [] };
-          playerFixtureMap[m.playerA.id].fixtures.push({
-            gameWeek: m.gameWeek,
-            opponent: `${m.playerB?.firstName} ${m.playerB?.lastName}`,
-            isHome: true,
-            venue: m.venueClub?.name || m.playerA.homeClub?.name,
-          });
+      // Send fixture notification emails (async)
+      for (const m of createdMatches) {
+        const pA = players.find(p => p.id === m.playerAId);
+        const pB = players.find(p => p.id === m.playerBId);
+        const entryA = entries.find(e => e.playerId === m.playerAId);
+        const entryB = entries.find(e => e.playerId === m.playerBId);
+        const emailA = entryA?.player?.user?.email;
+        const emailB = entryB?.player?.user?.email;
+        if (emailA) {
+          sendLeagueFixtureNotification(
+            emailA, `${pA.firstName} ${pA.lastName}`, stage.tournament.name,
+            [{ gameWeek, opponent: `${pB.firstName} ${pB.lastName}`, isHome: true, venue: pA.clubName }],
+          ).catch(err => console.error('Fixture email error:', err));
         }
-        if (m.playerB) {
-          if (!playerFixtureMap[m.playerB.id]) playerFixtureMap[m.playerB.id] = { ...m.playerB, fixtures: [] };
-          playerFixtureMap[m.playerB.id].fixtures.push({
-            gameWeek: m.gameWeek,
-            opponent: `${m.playerA?.firstName} ${m.playerA?.lastName}`,
-            isHome: false,
-            venue: m.venueClub?.name || m.playerA?.homeClub?.name,
-          });
+        if (emailB) {
+          sendLeagueFixtureNotification(
+            emailB, `${pB.firstName} ${pB.lastName}`, stage.tournament.name,
+            [{ gameWeek, opponent: `${pA.firstName} ${pA.lastName}`, isHome: false, venue: pA.clubName }],
+          ).catch(err => console.error('Fixture email error:', err));
         }
-      }
-      for (const p of Object.values(playerFixtureMap)) {
-        const playerEmail = p.user?.email;
-        if (!playerEmail) continue;
-        sendLeagueFixtureNotification(
-          playerEmail,
-          `${p.firstName} ${p.lastName}`,
-          stage.tournament.name,
-          p.fixtures.sort((a, b) => a.gameWeek - b.gameWeek),
-        ).catch(err => console.error('Fixture email error:', err));
       }
 
       res.json({
-        message: `Live draw completed — ${allCreatedMatches.length} new matches across ${weeksToGenerate.length} game week(s) (weeks ${weeksToGenerate.join(', ')})`,
-        matchCount: allCreatedMatches.length,
+        message: `Game Week ${gameWeek} draw completed — ${createdMatches.length} matches generated`,
+        matchCount: createdMatches.length,
         playerCount: players.length,
-        weeksGenerated: weeksToGenerate,
+        gameWeek,
       });
     } catch (err) {
       console.error('Live draw error:', err);

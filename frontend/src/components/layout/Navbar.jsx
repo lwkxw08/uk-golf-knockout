@@ -47,7 +47,9 @@ export default function Navbar() {
                 {user.role === 'CLUB_MANAGER' && (
                   <Link to="/club-portal" className="hover:text-green-200 transition text-sm">Club Portal</Link>
                 )}
-                <Link to="/dashboard" className="hover:text-green-200 transition text-sm">Dashboard</Link>
+                {user.role !== 'ADMIN' && (
+                  <Link to="/dashboard" className="hover:text-green-200 transition text-sm">Dashboard</Link>
+                )}
                 <button onClick={handleLogout} className="bg-green-700 hover:bg-green-600 px-4 py-2 rounded transition text-sm">
                   Logout
                 </button>
@@ -87,7 +89,9 @@ export default function Navbar() {
                 {user.role === 'CLUB_MANAGER' && (
                   <Link to="/club-portal" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Club Portal</Link>
                 )}
-                <Link to="/dashboard" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>My Dashboard</Link>
+                {user.role !== 'ADMIN' && (
+                  <Link to="/dashboard" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>My Dashboard</Link>
+                )}
                 <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="block w-full text-left py-2 hover:text-green-200">Logout</button>
               </>
             ) : (

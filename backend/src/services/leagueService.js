@@ -149,6 +149,68 @@ function generateLeagueFixtures(players, matchCount = 6, homeCount = 3, existing
 }
 
 /**
+ * Generate fixtures for a single specific game week, accounting for existing matches.
+ *
+ * @param {Array} players - [{id, homeClubId}]
+ * @param {number} targetWeek - the game week number to generate
+ * @param {number} matchCount - total matches per player (default 6)
+ * @param {number} homeCount - home matches per player (default 3)
+ * @param {Array} existingMatches - already-played matches
+ * @returns {Array} fixtures for the target week only
+ */
+function generateSingleWeekFixtures(players, targetWeek, matchCount = 6, homeCount = 3, existingMatches = []) {
+  const awayCount = matchCount - homeCount;
+  const n = players.length;
+
+  // Build adjacency constraints
+  const sameClub = {};
+  for (const p of players) {
+    if (!sameClub[p.homeClubId]) sameClub[p.homeClubId] = [];
+    sameClub[p.homeClubId].push(p.id);
+  }
+
+  const playerMap = {};
+  for (const p of players) playerMap[p.id] = p;
+
+  const maxAttempts = 200;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const opponents = {};
+    const homePlayed = {};
+    const awayPlayed = {};
+    const weekMatches = {};
+
+    for (const p of players) {
+      opponents[p.id] = new Set();
+      homePlayed[p.id] = 0;
+      awayPlayed[p.id] = 0;
+      weekMatches[p.id] = new Set();
+    }
+
+    // Pre-populate from existing matches
+    for (const m of existingMatches) {
+      const homeId = m.isHomeForPlayerA ? m.playerAId : m.playerBId;
+      const awayId = m.isHomeForPlayerA ? m.playerBId : m.playerAId;
+      if (opponents[m.playerAId]) opponents[m.playerAId].add(m.playerBId);
+      if (opponents[m.playerBId]) opponents[m.playerBId].add(m.playerAId);
+      if (homePlayed[homeId] != null) homePlayed[homeId]++;
+      if (awayPlayed[awayId] != null) awayPlayed[awayId]++;
+      if (weekMatches[m.playerAId]) weekMatches[m.playerAId].add(m.gameWeek);
+      if (weekMatches[m.playerBId]) weekMatches[m.playerBId].add(m.gameWeek);
+    }
+
+    const weekFixtures = generateGameWeek(
+      players, targetWeek, opponents, homePlayed, awayPlayed,
+      weekMatches, homeCount, awayCount, sameClub, playerMap
+    );
+
+    if (weekFixtures && weekFixtures.length > 0) return weekFixtures;
+  }
+
+  throw new Error(`Failed to generate valid fixtures for week ${targetWeek} after maximum attempts.`);
+}
+
+/**
  * Generate pairings for a single game week.
  * Uses constraint-aware matching: sorts players by how constrained they are
  * (must-be-home / must-be-away, fewest valid opponents) and uses backtracking.
@@ -740,6 +802,7 @@ function generateGameWeekConstrained(players, week, opponents, homePlayed, awayP
 module.exports = {
   DEFAULT_LEAGUE_SCORING,
   generateLeagueFixtures,
+  generateSingleWeekFixtures,
   generateGameWeekConstrained,
   calculateLeaguePoints,
   calculateHolesDifferential,

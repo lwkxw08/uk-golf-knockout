@@ -118,17 +118,29 @@ router.post('/regions',
 
 router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
   try {
-    const [clubs, players, tournaments, activeMatches, revenue, memberships, clubSubs] = await Promise.all([
+    const [
+      clubs, players, tournaments, activeMatches, completedMatches, totalMatches,
+      revenue, memberships, clubSubs, entries, disputes,
+      recentPlayers, recentMatches, tournamentsByStatus, regions,
+    ] = await Promise.all([
       prisma.club.count({ where: { isActive: true } }),
       prisma.player.count(),
       prisma.tournament.count(),
       prisma.match.count({ where: { status: { in: ['PENDING', 'SCHEDULED', 'IN_PROGRESS'] } } }),
+      prisma.match.count({ where: { status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] } } }),
+      prisma.match.count(),
       prisma.revenueTransaction.aggregate({
         _sum: { totalAmountPence: true, platformAmountPence: true, clubAmountPence: true },
         where: { status: 'COMPLETED' },
       }),
       prisma.playerMembership.count({ where: { status: 'ACTIVE' } }),
       prisma.clubSubscription.count({ where: { status: 'ACTIVE' } }),
+      prisma.tournamentEntry.count(),
+      prisma.match.count({ where: { status: 'DISPUTED' } }),
+      prisma.player.findMany({ take: 5, orderBy: { createdAt: 'desc' }, select: { id: true, firstName: true, lastName: true, createdAt: true, homeClub: { select: { name: true } } } }),
+      prisma.match.findMany({ take: 8, orderBy: { updatedAt: 'desc' }, where: { status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] } }, select: { id: true, matchNumber: true, status: true, updatedAt: true, gameWeek: true, tournament: { select: { name: true } }, playerA: { select: { firstName: true, lastName: true } }, playerB: { select: { firstName: true, lastName: true } }, result: { select: { resultText: true } } } }),
+      prisma.tournament.groupBy({ by: ['status'], _count: true }),
+      prisma.club.groupBy({ by: ['county'], _count: true }),
     ]);
 
     res.json({
@@ -136,6 +148,10 @@ router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
       players,
       tournaments,
       activeMatches,
+      completedMatches,
+      totalMatches,
+      totalEntries: entries,
+      disputes,
       activeMemberships: memberships,
       activeClubSubscriptions: clubSubs,
       revenue: {
@@ -143,8 +159,13 @@ router.get('/stats', authenticate, requireRole('ADMIN'), async (req, res) => {
         platform: revenue._sum.platformAmountPence || 0,
         clubs: revenue._sum.clubAmountPence || 0,
       },
+      recentPlayers,
+      recentMatches,
+      tournamentsByStatus: tournamentsByStatus.reduce((acc, t) => { acc[t.status] = t._count; return acc; }, {}),
+      regionBreakdown: regions.sort((a, b) => b._count - a._count),
     });
   } catch (err) {
+    console.error('Admin stats error:', err);
     res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });

@@ -31,6 +31,12 @@ function ProtectedRoute({ children, roles }) {
   return children;
 }
 
+function DashboardRouter() {
+  const { user } = useAuth();
+  if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />;
+  return <PlayerDashboard />;
+}
+
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -56,7 +62,7 @@ function AppRoutes() {
 
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <PlayerDashboard />
+              <DashboardRouter />
             </ProtectedRoute>
           } />
 

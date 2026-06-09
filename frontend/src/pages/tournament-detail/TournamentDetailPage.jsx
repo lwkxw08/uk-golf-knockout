@@ -19,9 +19,9 @@ export default function TournamentDetailPage() {
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [drawStatus, setDrawStatus] = useState(null);
   const [drawCountdown, setDrawCountdown] = useState(null);
-  const [drawScheduleDate, setDrawScheduleDate] = useState('');
-  const [schedulingDraw, setSchedulingDraw] = useState(false);
-  const [executingDraw, setExecutingDraw] = useState(false);
+  const [weekScheduleDates, setWeekScheduleDates] = useState({});
+  const [schedulingWeek, setSchedulingWeek] = useState(null);
+  const [executingWeek, setExecutingWeek] = useState(null);
   const [regeneratingWeek, setRegeneratingWeek] = useState(null);
   const [drawMsg, setDrawMsg] = useState('');
   const [leagueFixtures, setLeagueFixtures] = useState({});
@@ -51,14 +51,17 @@ export default function TournamentDetailPage() {
     }
   }, [id, tournament, activeStage]);
 
-  // Draw countdown timer
+  // Draw countdown timer — uses next scheduled week draw
   useEffect(() => {
-    if (!drawStatus?.draw?.scheduledAt || drawStatus.status !== 'SCHEDULED') return;
-    const target = new Date(drawStatus.draw.scheduledAt).getTime();
+    const nextScheduled = (drawStatus?.weekDraws || []).find(d => d.status === 'SCHEDULED');
+    if (!nextScheduled?.scheduledAt) { setDrawCountdown(null); return; }
+    const target = new Date(nextScheduled.scheduledAt).getTime();
     const interval = setInterval(() => {
       const diff = target - Date.now();
       if (diff <= 0) { setDrawCountdown(null); clearInterval(interval); return; }
       setDrawCountdown({
+        gameWeek: nextScheduled.gameWeek,
+        scheduledAt: nextScheduled.scheduledAt,
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
         minutes: Math.floor((diff % 3600000) / 60000),
@@ -68,34 +71,36 @@ export default function TournamentDetailPage() {
     return () => clearInterval(interval);
   }, [drawStatus]);
 
-  const handleScheduleDraw = async () => {
-    if (!drawScheduleDate) return;
+  const handleScheduleWeekDraw = async (week) => {
+    const dateVal = weekScheduleDates[week];
+    if (!dateVal) return;
     const leagueStage = tournament.stages?.find(s => s.isLeague);
     if (!leagueStage) return;
-    setSchedulingDraw(true);
+    setSchedulingWeek(week);
     setDrawMsg('');
     try {
-      await api.post(`/league/${id}/schedule-draw`, { stageId: leagueStage.id, scheduledAt: new Date(drawScheduleDate).toISOString() });
+      await api.post(`/league/${id}/schedule-draw`, { stageId: leagueStage.id, scheduledAt: new Date(dateVal).toISOString(), gameWeek: week });
       const status = await api.get(`/league/${id}/draw-status`);
       setDrawStatus(status);
-      setDrawMsg('Draw scheduled successfully');
+      setDrawMsg(`Week ${week} draw scheduled`);
     } catch (err) { setDrawMsg('Failed: ' + err.message); }
-    finally { setSchedulingDraw(false); }
+    finally { setSchedulingWeek(null); }
   };
 
-  const handleExecuteDraw = async () => {
+  const handleExecuteWeekDraw = async (week) => {
     const leagueStage = tournament.stages?.find(s => s.isLeague);
     if (!leagueStage) return;
-    if (!confirm('Start the live draw now? All connected viewers will see fixtures revealed in real-time.')) return;
-    setExecutingDraw(true);
+    if (!confirm(`Start the live draw for Game Week ${week}? Fixtures will be revealed in real-time.`)) return;
+    setExecutingWeek(week);
     setDrawMsg('');
     try {
-      const result = await api.post(`/league/${id}/execute-live-draw`, { stageId: leagueStage.id });
-      setDrawMsg(`Draw complete — ${result.matchCount} matches generated`);
+      const result = await api.post(`/league/${id}/execute-live-draw`, { stageId: leagueStage.id, gameWeek: week });
+      setDrawMsg(`Week ${week} draw complete — ${result.matchCount} matches`);
       const status = await api.get(`/league/${id}/draw-status`);
       setDrawStatus(status);
+      api.get(`/league/${id}/fixtures`).then(data => setLeagueFixtures(data.fixtures || {})).catch(() => {});
     } catch (err) { setDrawMsg('Failed: ' + err.message); }
-    finally { setExecutingDraw(false); }
+    finally { setExecutingWeek(null); }
   };
 
   const handleRegenerateWeek = async (week) => {
@@ -286,11 +291,11 @@ export default function TournamentDetailPage() {
             </div>
           )}
 
-          {/* Draw Countdown (visible to all for league tournaments) */}
-          {isLeague && drawStatus?.status === 'SCHEDULED' && drawCountdown && (
+          {/* Draw Countdown (visible to all — next scheduled week draw) */}
+          {isLeague && drawCountdown && (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 text-center">
               <Clock className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-blue-900 mb-3">League Draw Countdown</h3>
+              <h3 className="text-lg font-bold text-blue-900 mb-3">Game Week {drawCountdown.gameWeek} Draw Countdown</h3>
               <div className="flex justify-center gap-3 mb-3">
                 {[['days', 'Days'], ['hours', 'Hrs'], ['minutes', 'Min'], ['seconds', 'Sec']].map(([key, label]) => (
                   <div key={key} className="bg-white rounded-lg px-4 py-2 min-w-[60px] shadow-sm border border-blue-100">
@@ -300,7 +305,7 @@ export default function TournamentDetailPage() {
                 ))}
               </div>
               <p className="text-sm text-blue-600">
-                {new Date(drawStatus.draw.scheduledAt).toLocaleString('en-GB', {
+                {new Date(drawCountdown.scheduledAt).toLocaleString('en-GB', {
                   weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
                   hour: '2-digit', minute: '2-digit',
                 })}
@@ -311,111 +316,84 @@ export default function TournamentDetailPage() {
             </div>
           )}
 
-          {/* Live Draw link (when draw completed) */}
-          {isLeague && drawStatus?.status === 'COMPLETED' && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-green-600" />
-                <span className="font-medium text-green-800">League draw completed — {drawStatus.revealedWeeks?.length || 0} game weeks</span>
-              </div>
-              <Link to={`/draws/${id}/live`} className="text-green-700 hover:underline text-sm font-medium flex items-center gap-1">
-                View Fixtures <Eye className="w-4 h-4" />
-              </Link>
-            </div>
-          )}
-
-          {/* Admin: Draw Management */}
+          {/* Admin: Per-Week Draw Management */}
           {user?.role === 'ADMIN' && isLeague && (
             <div className="bg-white border-2 border-blue-200 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Shuffle className="w-5 h-5 text-blue-600" /> League Draw Management
               </h2>
+              <p className="text-sm text-gray-600 mb-4">Each game week has its own independent draw. Schedule a date/time or trigger immediately.</p>
               {drawMsg && (
                 <div className={`mb-4 px-4 py-2 rounded text-sm ${drawMsg.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
                   {drawMsg}
                 </div>
               )}
 
-              {(!drawStatus || drawStatus.status === 'NOT_SCHEDULED') && (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">Schedule a live draw event. Players can watch the fixtures being revealed in real-time.</p>
-                  <div className="flex gap-3">
-                    <input
-                      type="datetime-local"
-                      value={drawScheduleDate}
-                      onChange={e => setDrawScheduleDate(e.target.value)}
-                      className="flex-1 border rounded-lg px-3 py-2 text-sm"
-                    />
-                    <button
-                      onClick={handleScheduleDraw}
-                      disabled={schedulingDraw || !drawScheduleDate}
-                      className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <Clock className="w-4 h-4" /> {schedulingDraw ? 'Scheduling...' : 'Schedule Draw'}
-                    </button>
-                  </div>
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-gray-500 mb-2">Or execute immediately (no countdown):</p>
-                    <button
-                      onClick={handleExecuteDraw}
-                      disabled={executingDraw}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <Play className="w-4 h-4" /> {executingDraw ? 'Drawing...' : 'Execute Live Draw Now'}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-3">
+                {Array.from({ length: tournament?.stages?.find(s => s.isLeague)?.leagueMatchCount || 6 }, (_, i) => i + 1).map(week => {
+                  const weekDraw = (drawStatus?.weekDraws || []).find(d => d.gameWeek === week);
+                  const hasFixtures = drawStatus?.revealedWeeks?.includes(week);
 
-              {drawStatus?.status === 'SCHEDULED' && (
-                <div className="space-y-4">
-                  <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-blue-700 font-medium">Draw scheduled for:</p>
-                    <p className="text-lg font-bold text-blue-900">
-                      {new Date(drawStatus.draw.scheduledAt).toLocaleString('en-GB', {
-                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleExecuteDraw}
-                    disabled={executingDraw}
-                    className="w-full bg-red-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    <Play className="w-5 h-5" /> {executingDraw ? 'Drawing live...' : 'Start Live Draw Now'}
-                  </button>
-                  <Link to={`/draws/${id}/live`} className="block text-center text-blue-600 hover:underline text-sm">
-                    Open live draw viewer (share this link with players)
-                  </Link>
-                </div>
-              )}
+                  return (
+                    <div key={week} className={`border rounded-lg p-4 ${hasFixtures ? 'bg-green-50 border-green-200' : weekDraw?.status === 'SCHEDULED' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-sm">Week {week}</span>
+                          {hasFixtures && (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded font-medium">Drawn</span>
+                          )}
+                          {weekDraw?.status === 'SCHEDULED' && !hasFixtures && (
+                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-medium">
+                              Scheduled: {new Date(weekDraw.scheduledAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                          {!weekDraw && !hasFixtures && (
+                            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded font-medium">Not scheduled</span>
+                          )}
+                        </div>
 
-              {drawStatus?.status === 'COMPLETED' && (
-                <div className="space-y-4">
-                  <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700 text-center font-medium">
-                    Draw completed — {drawStatus.revealedWeeks?.length || 0} game weeks generated
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Regenerate Game Week</h3>
-                    <p className="text-xs text-gray-500 mb-3">Only unplayed weeks can be regenerated. Weeks with submitted results are locked.</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(drawStatus.revealedWeeks || []).map(week => (
-                        <button
-                          key={week}
-                          onClick={() => handleRegenerateWeek(week)}
-                          disabled={regeneratingWeek === week}
-                          className="flex items-center gap-1 px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
-                        >
-                          <RefreshCw className={`w-3.5 h-3.5 ${regeneratingWeek === week ? 'animate-spin' : ''}`} />
-                          Week {week}
-                        </button>
-                      ))}
+                        <div className="flex items-center gap-2">
+                          {/* Schedule draw for this week */}
+                          {!hasFixtures && (
+                            <>
+                              <input
+                                type="datetime-local"
+                                value={weekScheduleDates[week] || ''}
+                                onChange={e => setWeekScheduleDates(prev => ({ ...prev, [week]: e.target.value }))}
+                                className="border rounded px-2 py-1 text-xs w-44"
+                              />
+                              <button
+                                onClick={() => handleScheduleWeekDraw(week)}
+                                disabled={schedulingWeek === week || !weekScheduleDates[week]}
+                                className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                              >
+                                <Clock className="w-3 h-3" /> {schedulingWeek === week ? '...' : 'Schedule'}
+                              </button>
+                              <button
+                                onClick={() => handleExecuteWeekDraw(week)}
+                                disabled={executingWeek === week}
+                                className="bg-red-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                              >
+                                <Play className="w-3 h-3" /> {executingWeek === week ? 'Drawing...' : 'Draw Now'}
+                              </button>
+                            </>
+                          )}
+                          {hasFixtures && (
+                            <button
+                              onClick={() => handleRegenerateWeek(week)}
+                              disabled={regeneratingWeek === week}
+                              className="flex items-center gap-1 px-3 py-1 border rounded text-xs hover:bg-gray-100 disabled:opacity-50"
+                            >
+                              <RefreshCw className={`w-3 h-3 ${regeneratingWeek === week ? 'animate-spin' : ''}`} />
+                              Regenerate
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
