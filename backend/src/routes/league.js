@@ -636,9 +636,36 @@ router.post('/:tournamentId/execute-live-draw',
       const matchCount = stage.leagueMatchCount || 6;
       const homeCount = stage.homeMatchCount || 3;
 
+      // Fetch existing matches so the algorithm accounts for them
+      const existingDbMatches = await prisma.match.findMany({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
+        select: { gameWeek: true, playerAId: true, playerBId: true, isHomeForPlayerA: true, matchNumber: true },
+      });
+
+      const existingMatches = existingDbMatches.map(m => ({
+        gameWeek: m.gameWeek,
+        playerAId: m.playerAId,
+        playerBId: m.playerBId,
+        isHomeForPlayerA: m.isHomeForPlayerA,
+      }));
+
+      // Find which weeks already exist
+      const existingWeeks = new Set(existingMatches.map(m => m.gameWeek));
+      const weeksToGenerate = [];
+      for (let w = 1; w <= matchCount; w++) {
+        if (!existingWeeks.has(w)) weeksToGenerate.push(w);
+      }
+
+      if (weeksToGenerate.length === 0) {
+        return res.status(400).json({ error: 'All game weeks already have fixtures. Nothing to draw.' });
+      }
+
+      // Find highest existing match number
+      const maxExistingMatchNum = existingDbMatches.reduce((max, m) => Math.max(max, m.matchNumber || 0), 0);
+
       // Update draw status to IN_PROGRESS
       const draw = await prisma.draw.findFirst({
-        where: { tournamentId, stage: 'REGIONAL_LEAGUE', status: 'SCHEDULED' },
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', status: { in: ['SCHEDULED', 'COMPLETED'] } },
         orderBy: { scheduledAt: 'asc' },
       });
       if (draw) {
@@ -655,12 +682,12 @@ router.post('/:tournamentId/execute-live-draw',
         io.to(`draw-${tournamentId}`).emit('league-draw:starting', {
           tournamentId,
           playerCount: players.length,
-          totalWeeks: matchCount,
+          totalWeeks: weeksToGenerate.length,
         });
       }
 
-      // Generate all fixtures at once
-      const fixtures = generateLeagueFixtures(players, matchCount, homeCount);
+      // Generate only the missing weeks, accounting for existing fixtures
+      const fixtures = generateLeagueFixtures(players, matchCount, homeCount, existingMatches);
 
       // Group by game week
       const fixturesByWeek = {};
@@ -670,10 +697,10 @@ router.post('/:tournamentId/execute-live-draw',
       }
 
       // Reveal week by week with delays for dramatic effect
-      let matchNumber = 1;
+      let matchNumber = maxExistingMatchNum + 1;
       const allCreatedMatches = [];
 
-      for (let week = 1; week <= matchCount; week++) {
+      for (const week of weeksToGenerate) {
         const weekFixtures = fixturesByWeek[week] || [];
 
         // Emit week announcement
@@ -816,9 +843,10 @@ router.post('/:tournamentId/execute-live-draw',
       }
 
       res.json({
-        message: `Live draw completed — ${allCreatedMatches.length} matches across ${matchCount} game weeks`,
+        message: `Live draw completed — ${allCreatedMatches.length} new matches across ${weeksToGenerate.length} game week(s) (weeks ${weeksToGenerate.join(', ')})`,
         matchCount: allCreatedMatches.length,
         playerCount: players.length,
+        weeksGenerated: weeksToGenerate,
       });
     } catch (err) {
       console.error('Live draw error:', err);

@@ -52,9 +52,12 @@ const DEFAULT_LEAGUE_SCORING = {
  * @param {Array} players - [{id, homeClubId}]
  * @param {number} matchCount - total matches per player (default 6)
  * @param {number} homeCount - home matches per player (default 3)
+ * @param {Array} existingMatches - already-played matches to account for
+ *   [{gameWeek, playerAId, playerBId, isHomeForPlayerA}]
  * @returns {Array} fixtures [{gameWeek, playerAId, playerBId, isHomeForPlayerA, venueClubId}]
+ *   Only returns NEW fixtures (not existing ones)
  */
-function generateLeagueFixtures(players, matchCount = 6, homeCount = 3) {
+function generateLeagueFixtures(players, matchCount = 6, homeCount = 3, existingMatches = []) {
   const awayCount = matchCount - homeCount;
   const n = players.length;
 
@@ -69,38 +72,52 @@ function generateLeagueFixtures(players, matchCount = 6, homeCount = 3) {
     sameClub[p.homeClubId].push(p.id);
   }
 
-  // Track: opponents played, home/away counts
-  const opponents = {}; // playerId -> Set of opponentIds
-  const homePlayed = {}; // playerId -> count
-  const awayPlayed = {}; // playerId -> count
-  const weekMatches = {}; // playerId -> Set of game weeks they play in
-
-  for (const p of players) {
-    opponents[p.id] = new Set();
-    homePlayed[p.id] = 0;
-    awayPlayed[p.id] = 0;
-    weekMatches[p.id] = new Set();
+  // Determine which weeks already have fixtures
+  const existingWeeks = new Set(existingMatches.map(m => m.gameWeek));
+  const weeksToGenerate = [];
+  for (let w = 1; w <= matchCount; w++) {
+    if (!existingWeeks.has(w)) weeksToGenerate.push(w);
   }
+
+  // If nothing to generate, return empty
+  if (weeksToGenerate.length === 0) return [];
 
   const playerMap = {};
   for (const p of players) playerMap[p.id] = p;
 
   const fixtures = [];
-  const maxAttempts = 50;
+  const maxAttempts = 100;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Reset state
+    // Track: opponents played, home/away counts
+    const opponents = {};
+    const homePlayed = {};
+    const awayPlayed = {};
+    const weekMatches = {};
+
     for (const p of players) {
       opponents[p.id] = new Set();
       homePlayed[p.id] = 0;
       awayPlayed[p.id] = 0;
       weekMatches[p.id] = new Set();
     }
-    fixtures.length = 0;
 
+    // Pre-populate state from existing matches
+    for (const m of existingMatches) {
+      const homeId = m.isHomeForPlayerA ? m.playerAId : m.playerBId;
+      const awayId = m.isHomeForPlayerA ? m.playerBId : m.playerAId;
+      if (opponents[m.playerAId]) opponents[m.playerAId].add(m.playerBId);
+      if (opponents[m.playerBId]) opponents[m.playerBId].add(m.playerAId);
+      if (homePlayed[homeId] != null) homePlayed[homeId]++;
+      if (awayPlayed[awayId] != null) awayPlayed[awayId]++;
+      if (weekMatches[m.playerAId]) weekMatches[m.playerAId].add(m.gameWeek);
+      if (weekMatches[m.playerBId]) weekMatches[m.playerBId].add(m.gameWeek);
+    }
+
+    fixtures.length = 0;
     let success = true;
 
-    for (let week = 1; week <= matchCount; week++) {
+    for (const week of weeksToGenerate) {
       const weekFixtures = generateGameWeek(
         players, week, opponents, homePlayed, awayPlayed,
         weekMatches, homeCount, awayCount, sameClub, playerMap
@@ -115,12 +132,15 @@ function generateLeagueFixtures(players, matchCount = 6, homeCount = 3) {
     }
 
     if (success) {
-      // Verify all constraints met
-      const allValid = players.every(p =>
-        opponents[p.id].size === matchCount &&
-        homePlayed[p.id] === homeCount &&
-        awayPlayed[p.id] === awayCount
-      );
+      // Verify constraints for new weeks: each player who still needs matches got them
+      const allValid = players.every(p => {
+        const totalOpponents = opponents[p.id].size;
+        const totalHome = homePlayed[p.id];
+        const totalAway = awayPlayed[p.id];
+        return totalOpponents === matchCount &&
+               totalHome === homeCount &&
+               totalAway === awayCount;
+      });
       if (allValid) return fixtures;
     }
   }
@@ -130,7 +150,8 @@ function generateLeagueFixtures(players, matchCount = 6, homeCount = 3) {
 
 /**
  * Generate pairings for a single game week.
- * Uses greedy matching with randomization.
+ * Uses constraint-aware matching: sorts players by how constrained they are
+ * (must-be-home / must-be-away, fewest valid opponents) and uses backtracking.
  */
 function generateGameWeek(players, week, opponents, homePlayed, awayPlayed, weekMatches, homeCount, awayCount, sameClub, playerMap) {
   const matchCount = homeCount + awayCount;
@@ -141,67 +162,114 @@ function generateGameWeek(players, week, opponents, homePlayed, awayPlayed, week
     opponents[p.id].size < matchCount
   );
 
-  // Shuffle for randomness
+  if (eligible.length < 2) return null;
+
+  // Shuffle for randomness then sort most-constrained first
   const shuffled = [...eligible].sort(() => Math.random() - 0.5);
+
+  // For each player, compute how constrained they are
+  function constraintScore(p) {
+    let score = 0;
+    const validOpponents = shuffled.filter(o =>
+      o.id !== p.id &&
+      !opponents[p.id].has(o.id) &&
+      o.homeClubId !== p.homeClubId
+    ).length;
+    score += (100 - validOpponents); // fewer opponents = more constrained
+    // Must-be-home or must-be-away is very constrained
+    if (homePlayed[p.id] >= homeCount) score += 50; // must be away
+    if (awayPlayed[p.id] >= awayCount) score += 50; // must be home
+    return score;
+  }
+
+  shuffled.sort((a, b) => constraintScore(b) - constraintScore(a));
+
+  // Check if two players can be paired with valid home/away assignment
+  function canPairWithHA(pA, pB) {
+    if (pA.homeClubId === pB.homeClubId) return false;
+    if (opponents[pA.id].has(pB.id)) return false;
+    // At least one valid home/away arrangement must exist
+    const aCanHome = homePlayed[pA.id] < homeCount;
+    const aCanAway = awayPlayed[pA.id] < awayCount;
+    const bCanHome = homePlayed[pB.id] < homeCount;
+    const bCanAway = awayPlayed[pB.id] < awayCount;
+    return (aCanHome && bCanAway) || (bCanHome && aCanAway);
+  }
+
+  // Backtracking approach to find a valid matching
   const paired = new Set();
   const weekFixtures = [];
 
-  for (let i = 0; i < shuffled.length; i++) {
-    const pA = shuffled[i];
-    if (paired.has(pA.id)) continue;
+  function backtrack(idx) {
+    // Skip already-paired players
+    while (idx < shuffled.length && paired.has(shuffled[idx].id)) idx++;
+    if (idx >= shuffled.length) return true; // all processed
 
-    // Find best partner
-    const candidates = shuffled.filter(pB => {
-      if (pB.id === pA.id) return false;
-      if (paired.has(pB.id)) return false;
-      if (opponents[pA.id].has(pB.id)) return false; // already played
-      // Same club check
-      if (pA.homeClubId === pB.homeClubId) return false;
-      return true;
+    const pA = shuffled[idx];
+
+    // Find all valid partners from remaining unpaired
+    const candidates = [];
+    for (let j = idx + 1; j < shuffled.length; j++) {
+      const pB = shuffled[j];
+      if (paired.has(pB.id)) continue;
+      if (canPairWithHA(pA, pB)) candidates.push(pB);
+    }
+
+    // Shuffle candidates for variety
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+
+    // Sort by urgency (fewest remaining valid partners first)
+    candidates.sort((a, b) => {
+      const aValid = shuffled.filter(o => !paired.has(o.id) && o.id !== a.id && o.id !== pA.id && canPairWithHA(a, o)).length;
+      const bValid = shuffled.filter(o => !paired.has(o.id) && o.id !== b.id && o.id !== pA.id && canPairWithHA(b, o)).length;
+      return aValid - bValid; // pair with player who has fewest other options
     });
 
-    if (candidates.length === 0) continue;
+    for (const pB of candidates) {
+      const { home, away } = assignHomeAway(pA, pB, homePlayed, awayPlayed, homeCount, awayCount);
 
-    // Score candidates by how urgently they need a match, to balance
-    const scored = candidates.map(c => {
-      let score = 0;
-      // Prefer players who have fewer matches (more urgently need one)
-      score += (matchCount - opponents[c.id].size) * 10;
-      return { player: c, score };
-    }).sort((a, b) => b.score - a.score);
+      // Apply pairing
+      weekFixtures.push({
+        gameWeek: week,
+        playerAId: home.id,
+        playerBId: away.id,
+        isHomeForPlayerA: true,
+        venueClubId: home.homeClubId,
+      });
+      opponents[home.id].add(away.id);
+      opponents[away.id].add(home.id);
+      homePlayed[home.id]++;
+      awayPlayed[away.id]++;
+      weekMatches[home.id].add(week);
+      weekMatches[away.id].add(week);
+      paired.add(home.id);
+      paired.add(away.id);
 
-    // Pick from top candidates (with some randomness)
-    const topN = Math.min(3, scored.length);
-    const pick = scored[Math.floor(Math.random() * topN)].player;
+      if (backtrack(idx + 1)) return true;
 
-    // Determine home/away
-    const { home, away } = assignHomeAway(pA, pick, homePlayed, awayPlayed, homeCount, awayCount);
+      // Undo pairing
+      weekFixtures.pop();
+      opponents[home.id].delete(away.id);
+      opponents[away.id].delete(home.id);
+      homePlayed[home.id]--;
+      awayPlayed[away.id]--;
+      weekMatches[home.id].delete(week);
+      weekMatches[away.id].delete(week);
+      paired.delete(home.id);
+      paired.delete(away.id);
+    }
 
-    weekFixtures.push({
-      gameWeek: week,
-      playerAId: home.id,
-      playerBId: away.id,
-      isHomeForPlayerA: true,
-      venueClubId: home.homeClubId,
-    });
-
-    opponents[home.id].add(away.id);
-    opponents[away.id].add(home.id);
-    homePlayed[home.id]++;
-    awayPlayed[away.id]++;
-    weekMatches[home.id].add(week);
-    weekMatches[away.id].add(week);
-    paired.add(home.id);
-    paired.add(away.id);
+    // It's OK if this player can't be paired (odd player out) — skip them
+    paired.add(pA.id);
+    const skipResult = backtrack(idx + 1);
+    paired.delete(pA.id);
+    return skipResult;
   }
 
-  // Check if enough matches were generated
-  const unpaired = players.filter(p => !weekMatches[p.id].has(week) && opponents[p.id].size < matchCount);
-  if (unpaired.length > 1) {
-    // Not everyone got a match — that's OK for some weeks if player count is odd
-    // But if too many are unpaired, this week may be problematic
-  }
-
+  const success = backtrack(0);
   return weekFixtures.length > 0 ? weekFixtures : null;
 }
 
