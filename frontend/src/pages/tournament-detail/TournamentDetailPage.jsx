@@ -24,6 +24,8 @@ export default function TournamentDetailPage() {
   const [executingDraw, setExecutingDraw] = useState(false);
   const [regeneratingWeek, setRegeneratingWeek] = useState(null);
   const [drawMsg, setDrawMsg] = useState('');
+  const [leagueFixtures, setLeagueFixtures] = useState({});
+  const [leagueFixtureWeek, setLeagueFixtureWeek] = useState(1);
 
   useEffect(() => {
     Promise.all([
@@ -36,13 +38,16 @@ export default function TournamentDetailPage() {
     }).catch(console.error).finally(() => setLoading(false));
   }, [id]);
 
+  const isLeague = tournament?.stages?.some(s => s.isLeague);
+
   useEffect(() => {
     if (!tournament) return;
-    api.get(`/matches/${id}/bracket?stage=${activeStage}`).then(setBracket).catch(() => setBracket(null));
-
-    // Fetch league draw status
-    if (tournament.stages?.some(s => s.isLeague)) {
+    if (isLeague) {
+      // Fetch league fixtures instead of bracket
+      api.get(`/league/${id}/fixtures`).then(data => setLeagueFixtures(data.fixtures || {})).catch(() => setLeagueFixtures({}));
       api.get(`/league/${id}/draw-status`).then(setDrawStatus).catch(() => {});
+    } else {
+      api.get(`/matches/${id}/bracket?stage=${activeStage}`).then(setBracket).catch(() => setBracket(null));
     }
   }, [id, tournament, activeStage]);
 
@@ -206,16 +211,83 @@ export default function TournamentDetailPage() {
             </div>
           )}
 
-          {/* Bracket */}
-          {bracket && bracket.totalRounds > 0 && (
+          {/* Bracket (knockout only) */}
+          {!isLeague && bracket && bracket.totalRounds > 0 && (
             <div className="bg-white border rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4">Bracket — {stageLabels[activeStage] || activeStage}</h2>
               <KnockoutBracket rounds={bracket.rounds} totalRounds={bracket.totalRounds} roundLabels={bracket.roundLabels} />
             </div>
           )}
 
+          {/* League Fixtures (league only) */}
+          {isLeague && Object.keys(leagueFixtures).length > 0 && (
+            <div className="bg-white border rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-lg">League Fixtures</h2>
+                <Link to={`/league/${id}`} className="text-green-700 hover:underline text-sm font-medium">View Full League Table →</Link>
+              </div>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                {Object.keys(leagueFixtures).map(Number).sort((a, b) => a - b).map(week => (
+                  <button
+                    key={week}
+                    onClick={() => setLeagueFixtureWeek(week)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                      leagueFixtureWeek === week
+                        ? 'bg-green-700 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Week {week}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-3">
+                {(leagueFixtures[leagueFixtureWeek] || []).map(match => (
+                  <div key={match.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA !== false ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{match.isHomeForPlayerA !== false ? 'HOME' : 'AWAY'}</span>
+                          <span className="font-medium">{match.playerA ? `${match.playerA.firstName} ${match.playerA.lastName}` : 'TBD'}</span>
+                          {match.playerA?.handicapIndex != null && <span className="text-xs text-gray-400">({match.playerA.handicapIndex})</span>}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{match.playerA?.homeClub?.name || ''}</div>
+                      </div>
+                      <div className="px-4 text-center min-w-[120px]">
+                        {match.status === 'COMPLETED' ? (
+                          <>
+                            <div className="font-bold text-gray-900 text-sm">{match.result?.resultText || 'Completed'}</div>
+                            {(match.leaguePointsA != null || match.leaguePointsB != null) && (
+                              <div className="text-xs text-gray-500 mt-1">{match.leaguePointsA ?? 0} - {match.leaguePointsB ?? 0} pts</div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-400 uppercase">{match.status}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {match.playerB?.handicapIndex != null && <span className="text-xs text-gray-400">({match.playerB.handicapIndex})</span>}
+                          <span className="font-medium">{match.playerB ? `${match.playerB.firstName} ${match.playerB.lastName}` : 'TBD'}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA === false ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{match.isHomeForPlayerA === false ? 'HOME' : 'AWAY'}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">{match.playerB?.homeClub?.name || ''}</div>
+                      </div>
+                    </div>
+                    {match.venueClub && (
+                      <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {match.venueClub.name}
+                        {match.scheduledDate && <> • <Calendar className="w-3 h-3 ml-1" /> {new Date(match.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</>}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Draw Countdown (visible to all for league tournaments) */}
-          {tournament.stages?.some(s => s.isLeague) && drawStatus?.status === 'SCHEDULED' && drawCountdown && (
+          {isLeague && drawStatus?.status === 'SCHEDULED' && drawCountdown && (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 text-center">
               <Clock className="w-8 h-8 text-blue-600 mx-auto mb-3" />
               <h3 className="text-lg font-bold text-blue-900 mb-3">League Draw Countdown</h3>
@@ -240,7 +312,7 @@ export default function TournamentDetailPage() {
           )}
 
           {/* Live Draw link (when draw completed) */}
-          {tournament.stages?.some(s => s.isLeague) && drawStatus?.status === 'COMPLETED' && (
+          {isLeague && drawStatus?.status === 'COMPLETED' && (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-green-600" />
@@ -253,7 +325,7 @@ export default function TournamentDetailPage() {
           )}
 
           {/* Admin: Draw Management */}
-          {user?.role === 'ADMIN' && tournament.stages?.some(s => s.isLeague) && (
+          {user?.role === 'ADMIN' && isLeague && (
             <div className="bg-white border-2 border-blue-200 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Shuffle className="w-5 h-5 text-blue-600" /> League Draw Management
