@@ -11,6 +11,7 @@ const {
   recalculateStandings,
   updateClubSeasonPoints,
 } = require('../services/leagueService');
+const { sendDrawDayAnnouncement, sendLeagueFixtureNotification } = require('../services/emailService');
 
 const router = express.Router();
 
@@ -521,6 +522,26 @@ router.post('/:tournamentId/schedule-draw',
         data: { leagueDrawStageId: stageId },
       });
 
+      // Send draw day announcement emails to all entered players
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: tournamentId },
+        select: { name: true },
+      });
+      const entries = await prisma.tournamentEntry.findMany({
+        where: { tournamentId },
+        include: { player: { select: { firstName: true, lastName: true, user: { select: { email: true } } } } },
+      });
+      for (const entry of entries) {
+        const email = entry.player?.user?.email;
+        if (!email) continue;
+        sendDrawDayAnnouncement(
+          email,
+          `${entry.player.firstName} ${entry.player.lastName}`,
+          tournament.name,
+          scheduledAt,
+        ).catch(err => console.error('Draw announcement email error:', err));
+      }
+
       res.status(201).json(draw);
     } catch (err) {
       console.error('Schedule draw error:', err);
@@ -750,6 +771,48 @@ router.post('/:tournamentId/execute-live-draw',
           totalMatches: allCreatedMatches.length,
           totalWeeks: matchCount,
         });
+      }
+
+      // Send fixture notification emails to all players (async, don't block response)
+      const allMatches = await prisma.match.findMany({
+        where: { tournamentId, stage: 'REGIONAL_LEAGUE', gameWeek: { not: null } },
+        include: {
+          playerA: { select: { id: true, firstName: true, lastName: true, user: { select: { email: true } }, homeClub: { select: { name: true } } } },
+          playerB: { select: { id: true, firstName: true, lastName: true, user: { select: { email: true } }, homeClub: { select: { name: true } } } },
+          venueClub: { select: { name: true } },
+        },
+        orderBy: { gameWeek: 'asc' },
+      });
+      const playerFixtureMap = {};
+      for (const m of allMatches) {
+        if (m.playerA) {
+          if (!playerFixtureMap[m.playerA.id]) playerFixtureMap[m.playerA.id] = { ...m.playerA, fixtures: [] };
+          playerFixtureMap[m.playerA.id].fixtures.push({
+            gameWeek: m.gameWeek,
+            opponent: `${m.playerB?.firstName} ${m.playerB?.lastName}`,
+            isHome: true,
+            venue: m.venueClub?.name || m.playerA.homeClub?.name,
+          });
+        }
+        if (m.playerB) {
+          if (!playerFixtureMap[m.playerB.id]) playerFixtureMap[m.playerB.id] = { ...m.playerB, fixtures: [] };
+          playerFixtureMap[m.playerB.id].fixtures.push({
+            gameWeek: m.gameWeek,
+            opponent: `${m.playerA?.firstName} ${m.playerA?.lastName}`,
+            isHome: false,
+            venue: m.venueClub?.name || m.playerA?.homeClub?.name,
+          });
+        }
+      }
+      for (const p of Object.values(playerFixtureMap)) {
+        const playerEmail = p.user?.email;
+        if (!playerEmail) continue;
+        sendLeagueFixtureNotification(
+          playerEmail,
+          `${p.firstName} ${p.lastName}`,
+          stage.tournament.name,
+          p.fixtures.sort((a, b) => a.gameWeek - b.gameWeek),
+        ).catch(err => console.error('Fixture email error:', err));
       }
 
       res.json({

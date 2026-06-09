@@ -144,6 +144,89 @@ async function sendStagePromotionNotification(playerEmail, playerName, tournamen
   return sendEmail(playerEmail, subject, html);
 }
 
+async function sendDrawDayAnnouncement(playerEmail, playerName, tournamentName, drawDate, drawPageUrl) {
+  const formatted = new Date(drawDate).toLocaleString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+  const subject = `League Draw Announced — ${tournamentName}`;
+  const html = emailWrapper(`
+    <h2 style="color:#111;margin-top:0;">The League Draw Date is Set!</h2>
+    <p style="color:#374151;">Hi ${playerName},</p>
+    <p style="color:#374151;">The fixture draw for <strong>${tournamentName}</strong> has been scheduled.</p>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 4px;color:#1e40af;font-size:14px;">DRAW DATE</p>
+      <p style="margin:0;color:#111;font-size:22px;font-weight:700;">${formatted}</p>
+    </div>
+    <p style="color:#374151;">Watch the draw live on the platform — your 6 match fixtures (3 home, 3 away) will be revealed week-by-week in real time.</p>
+    ${drawPageUrl ? `<a href="${drawPageUrl}" style="display:inline-block;background:${BRAND_COLOR};color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Watch the Live Draw</a>` : ''}
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Good luck! — ${PLATFORM_NAME}</p>
+  `);
+  return sendEmail(playerEmail, subject, html);
+}
+
+async function sendDrawDayReminder(playerEmail, playerName, tournamentName, drawDate, hoursUntil) {
+  const formatted = new Date(drawDate).toLocaleString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+  const timeLabel = hoursUntil <= 1 ? 'starting soon' : `in ${hoursUntil} hours`;
+  const subject = `Draw Day Reminder — ${tournamentName} (${timeLabel})`;
+  const html = emailWrapper(`
+    <h2 style="color:#111;margin-top:0;">Draw Day Reminder</h2>
+    <p style="color:#374151;">Hi ${playerName},</p>
+    <p style="color:#374151;">The fixture draw for <strong>${tournamentName}</strong> is <strong>${timeLabel}</strong>!</p>
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
+      <p style="margin:0 0 4px;color:#92400e;font-size:14px;">STARTING</p>
+      <p style="margin:0;color:#111;font-size:22px;font-weight:700;">${formatted}</p>
+    </div>
+    <p style="color:#374151;">Head to the Live Draw page to watch your fixtures being revealed in real time. Find out who you'll be playing, where, and when!</p>
+    <a href="#" style="display:inline-block;background:${BRAND_COLOR};color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Watch the Live Draw</a>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">— ${PLATFORM_NAME}</p>
+  `);
+  return sendEmail(playerEmail, subject, html);
+}
+
+async function sendLeagueFixtureNotification(playerEmail, playerName, tournamentName, fixtures) {
+  const fixtureRows = fixtures.map(f => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#374151;">Week ${f.gameWeek}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#374151;font-weight:600;">${f.opponent}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">
+        <span style="background:${f.isHome ? '#dcfce7' : '#dbeafe'};color:${f.isHome ? '#166534' : '#1e40af'};padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">${f.isHome ? 'HOME' : 'AWAY'}</span>
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:13px;">${f.venue || '-'}</td>
+    </tr>
+  `).join('');
+
+  const subject = `Your League Fixtures — ${tournamentName}`;
+  const html = emailWrapper(`
+    <h2 style="color:#111;margin-top:0;">Your League Fixtures</h2>
+    <p style="color:#374151;">Hi ${playerName},</p>
+    <p style="color:#374151;">The draw for <strong>${tournamentName}</strong> is complete! Here are your 6 match fixtures:</p>
+    <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+      <tr style="background:#f9fafb;">
+        <th style="padding:8px 12px;text-align:left;color:#6b7280;font-size:13px;border-bottom:2px solid #e5e7eb;">Week</th>
+        <th style="padding:8px 12px;text-align:left;color:#6b7280;font-size:13px;border-bottom:2px solid #e5e7eb;">Opponent</th>
+        <th style="padding:8px 12px;text-align:left;color:#6b7280;font-size:13px;border-bottom:2px solid #e5e7eb;">H/A</th>
+        <th style="padding:8px 12px;text-align:left;color:#6b7280;font-size:13px;border-bottom:2px solid #e5e7eb;">Venue</th>
+      </tr>
+      ${fixtureRows}
+    </table>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:20px 0;">
+      <p style="margin:0;color:#166534;font-weight:600;">What happens next?</p>
+      <ul style="color:#166534;margin:8px 0 0;padding-left:20px;">
+        <li>Contact each opponent to arrange a mutually convenient date</li>
+        <li>Home player's course is the venue unless otherwise agreed</li>
+        <li>Submit your scores after each match via the platform</li>
+      </ul>
+    </div>
+    <a href="#" style="display:inline-block;background:${BRAND_COLOR};color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">View My Dashboard</a>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Good luck! — ${PLATFORM_NAME}</p>
+  `);
+  return sendEmail(playerEmail, subject, html);
+}
+
 module.exports = {
   sendEmail,
   sendEntryConfirmation,
@@ -151,4 +234,7 @@ module.exports = {
   sendResultConfirmation,
   sendMatchReminder,
   sendStagePromotionNotification,
+  sendDrawDayAnnouncement,
+  sendDrawDayReminder,
+  sendLeagueFixtureNotification,
 };
