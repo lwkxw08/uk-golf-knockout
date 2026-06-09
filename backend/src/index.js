@@ -6,6 +6,7 @@ const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const config = require('./config');
+const { startDrawScheduler } = require('./services/drawScheduler');
 
 const app = express();
 const server = http.createServer(app);
@@ -85,6 +86,7 @@ app.use((err, req, res, next) => {
 
 server.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
+  startDrawScheduler(io);
 });
 
 module.exports = { app, server, io };
