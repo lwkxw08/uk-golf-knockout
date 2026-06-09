@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, Users, Trophy, DollarSign, Megaphone, Calendar, Settings, MapPin, Phone, Mail, Globe, ClipboardList, ChevronRight, Search } from 'lucide-react';
+import { Building2, Users, Trophy, DollarSign, Megaphone, Calendar, Settings, MapPin, Phone, Mail, Globe, ClipboardList, ChevronRight, Search, Award, TrendingUp } from 'lucide-react';
 
 export default function ClubPortal() {
   const { user } = useAuth();
@@ -118,6 +118,7 @@ export default function ClubPortal() {
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Building2 },
+    { id: 'championship', label: 'Championship', icon: Award },
     { id: 'members', label: 'Members', icon: Users },
     { id: 'fixtures', label: 'Fixtures', icon: Calendar },
     { id: 'results', label: 'Results', icon: Trophy },
@@ -235,6 +236,138 @@ export default function ClubPortal() {
               ) : <p className="text-gray-500 text-sm">No results yet</p>}
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'championship' && (
+        <div className="space-y-6">
+          {/* Club Championship Position */}
+          {(dashboard.regionChampionship || []).length > 0 && (
+            <div className="bg-white border rounded-xl p-6">
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-600" /> Club Championship Standings
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                How your club ranks against others in the region. Clubs earn points from their players' league performances.
+              </p>
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Club</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Players</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Matches</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Wins</th>
+                    <th className="px-3 py-2 text-center font-semibold text-amber-700 bg-amber-50">Points</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {dashboard.regionChampionship.map((c, i) => {
+                    const isOurClub = c.clubId === dashboard.club.id;
+                    return (
+                      <tr key={c.id} className={`${isOurClub ? 'bg-green-50 font-medium' : ''} hover:bg-gray-50`}>
+                        <td className="px-3 py-3 font-bold text-gray-700">{c.position || i + 1}</td>
+                        <td className="px-3 py-3">
+                          <span className={isOurClub ? 'text-green-700 font-semibold' : 'text-gray-900'}>
+                            {c.club?.name} {isOurClub && '(You)'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-center text-gray-600">{c.playerCount}</td>
+                        <td className="px-3 py-3 text-center text-gray-600">{c.matchesPlayed}</td>
+                        <td className="px-3 py-3 text-center text-gray-600">{c.matchesWon}</td>
+                        <td className="px-3 py-3 text-center font-bold text-amber-700 bg-amber-50">{c.totalPoints}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Individual Player League Standings */}
+          {(dashboard.leagueStandings || []).length > 0 ? (
+            <div className="bg-white border rounded-xl p-6">
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-700" /> Your Players' League Standings
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Individual performance of your club's players across all active leagues.
+              </p>
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Pos</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Player</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600">League</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">P</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">W</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">D</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">L</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Bonus</th>
+                    <th className="px-3 py-2 text-center font-semibold text-emerald-700 bg-emerald-50">Pts</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600">+/-</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {dashboard.leagueStandings
+                    .sort((a, b) => b.totalPoints - a.totalPoints)
+                    .map((s, i) => (
+                    <tr key={s.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-3">
+                        <span className={`font-bold ${s.position <= 4 ? 'text-emerald-700' : 'text-gray-700'}`}>
+                          {s.position || '-'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="font-medium text-gray-900">{s.player?.firstName} {s.player?.lastName}</div>
+                        <div className="text-xs text-gray-500">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
+                      </td>
+                      <td className="px-3 py-3 text-xs text-gray-500">{s.tournament?.name}</td>
+                      <td className="px-3 py-3 text-center text-gray-700">{s.played}</td>
+                      <td className="px-3 py-3 text-center font-medium text-gray-900">{s.wins}</td>
+                      <td className="px-3 py-3 text-center text-gray-600">{s.draws}</td>
+                      <td className="px-3 py-3 text-center text-gray-600">{s.losses}</td>
+                      <td className="px-3 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
+                      <td className="px-3 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
+                      <td className="px-3 py-3 text-center">
+                        <span className={`font-medium ${s.holesDifferential > 0 ? 'text-emerald-600' : s.holesDifferential < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                          {s.holesDifferential > 0 ? '+' : ''}{s.holesDifferential}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="bg-white border rounded-xl p-6 text-center py-12">
+              <Trophy className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No league data yet</p>
+              <p className="text-sm text-gray-400 mt-1">Player standings will appear here once league matches are played</p>
+            </div>
+          )}
+
+          {/* Club Championship Summary Card */}
+          {(dashboard.clubChampionship || []).length > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-6">
+              <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                <Award className="w-5 h-5" /> Season Summary
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {dashboard.clubChampionship.map(cp => (
+                  <div key={cp.id} className="text-center">
+                    <p className="text-xs text-amber-700 font-medium">{cp.season} Season</p>
+                    <p className="text-3xl font-bold text-amber-900">{cp.totalPoints}</p>
+                    <p className="text-xs text-amber-600">points</p>
+                    <div className="mt-2 text-xs text-amber-700 space-y-0.5">
+                      <p>{cp.playerCount} players • {cp.matchesWon}/{cp.matchesPlayed} wins</p>
+                      {cp.position && <p className="font-semibold">Position: #{cp.position}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

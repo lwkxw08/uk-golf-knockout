@@ -154,7 +154,7 @@ router.get('/:clubId/dashboard',
         if (!mgr) return res.status(403).json({ error: 'Access denied' });
       }
 
-      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees] = await Promise.all([
+      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees, leagueStandings, clubChampionship] = await Promise.all([
         prisma.club.findUnique({ where: { id: clubId }, include: { region: true } }),
         prisma.player.findMany({
           where: { homeClubId: clubId },
@@ -195,7 +195,38 @@ router.get('/:clubId/dashboard',
           include: { holes: { orderBy: { holeNumber: 'asc' } } },
           orderBy: { teeName: 'asc' },
         }),
+        // League standings for this club's players
+        prisma.leagueStanding.findMany({
+          where: { clubId },
+          include: {
+            player: { select: { id: true, firstName: true, lastName: true, handicapIndex: true } },
+            tournament: { select: { id: true, name: true, season: true } },
+          },
+          orderBy: { position: 'asc' },
+        }),
+        // Club championship standings
+        prisma.clubSeasonPoints.findMany({
+          where: { clubId },
+          include: {
+            club: { select: { id: true, name: true, slug: true } },
+            region: { select: { id: true, name: true } },
+          },
+          orderBy: { season: 'desc' },
+        }),
       ]);
+
+      // Also fetch all clubs in same region for championship comparison
+      const regionId = club?.regionId;
+      let regionChampionship = [];
+      if (regionId && clubChampionship.length > 0) {
+        regionChampionship = await prisma.clubSeasonPoints.findMany({
+          where: { season: clubChampionship[0].season, regionId },
+          include: {
+            club: { select: { id: true, name: true, slug: true } },
+          },
+          orderBy: { position: 'asc' },
+        });
+      }
 
       res.json({
         club,
@@ -210,6 +241,9 @@ router.get('/:clubId/dashboard',
         results: recentResults,
         sponsors,
         tees,
+        leagueStandings,
+        clubChampionship,
+        regionChampionship,
       });
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch club dashboard' });
