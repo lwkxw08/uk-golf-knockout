@@ -139,11 +139,14 @@ router.post('/:matchId/scores',
   body('scores.*.score').isInt({ min: 1, max: 20 }),
   body('scores.*.putts').optional().isInt({ min: 0, max: 10 }),
   body('scores.*.fairwayHit').optional().isBoolean(),
+  body('opponentScores').optional().isArray({ min: 1, max: 18 }),
+  body('opponentScores.*.holeNumber').optional().isInt({ min: 1, max: 18 }),
+  body('opponentScores.*.score').optional().isInt({ min: 1, max: 20 }),
   validate,
   async (req, res) => {
     try {
       const { matchId } = req.params;
-      const { scores } = req.body;
+      const { scores, opponentScores } = req.body;
 
       const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
       if (!player) return res.status(400).json({ error: 'Player profile required' });
@@ -166,7 +169,7 @@ router.post('/:matchId/scores',
         return res.status(400).json({ error: 'You have already submitted scores for this match. Use the update endpoint to modify.' });
       }
 
-      // Save hole scores
+      // Save own hole scores to MatchHoleScore
       await prisma.matchHoleScore.createMany({
         data: scores.map(s => ({
           matchId,
@@ -178,16 +181,42 @@ router.post('/:matchId/scores',
         })),
       });
 
-      // Check if both players have submitted
-      const opponentId = match.playerAId === player.id ? match.playerBId : match.playerAId;
-      const opponentScores = match.holeScores.filter(s => s.playerId === opponentId);
+      // Store full submission (own + opponent scores) in scoreSubmissions JSON
+      const isA = match.playerAId === player.id;
+      const existingSubmissions = match.scoreSubmissions || {};
+      const ownScoreMap = {};
+      scores.forEach(s => { ownScoreMap[s.holeNumber] = s.score; });
+      const oppScoreMap = {};
+      if (opponentScores) {
+        opponentScores.forEach(s => { oppScoreMap[s.holeNumber] = s.score; });
+      }
 
-      if (opponentScores.length > 0) {
-        // Both have submitted — compare scores
-        const comparison = await compareScores(match, player.id, opponentId);
+      existingSubmissions[player.id] = { ownScores: ownScoreMap, opponentScores: oppScoreMap };
+      await prisma.match.update({
+        where: { id: matchId },
+        data: { scoreSubmissions: existingSubmissions },
+      });
+
+      // Check if both players have submitted
+      const opponentId = isA ? match.playerBId : match.playerAId;
+      const opponentHoleScores = match.holeScores.filter(s => s.playerId === opponentId);
+
+      if (opponentHoleScores.length > 0 && existingSubmissions[opponentId]) {
+        // Both have submitted — cross-check all scores
+        const crossCheck = crossCheckScores(existingSubmissions, match.playerAId, match.playerBId);
+
+        if (crossCheck.allMatch) {
+          // Auto-accept: all scores agree
+          return res.json({
+            message: 'Scores submitted. Both players agree — scores auto-confirmed.',
+            crossCheck,
+            status: 'AUTO_CONFIRMED',
+          });
+        }
+
         return res.json({
-          message: 'Scores submitted. Both players have submitted — comparison ready.',
-          comparison,
+          message: 'Scores submitted. Both players have submitted — some scores differ, please review.',
+          crossCheck,
           status: 'BOTH_SUBMITTED',
         });
       }
@@ -213,11 +242,14 @@ router.put('/:matchId/scores',
   body('scores').isArray({ min: 1, max: 18 }),
   body('scores.*.holeNumber').isInt({ min: 1, max: 18 }),
   body('scores.*.score').isInt({ min: 1, max: 20 }),
+  body('opponentScores').optional().isArray({ min: 1, max: 18 }),
+  body('opponentScores.*.holeNumber').optional().isInt({ min: 1, max: 18 }),
+  body('opponentScores.*.score').optional().isInt({ min: 1, max: 20 }),
   validate,
   async (req, res) => {
     try {
       const { matchId } = req.params;
-      const { scores } = req.body;
+      const { scores, opponentScores } = req.body;
 
       const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
       if (!player) return res.status(400).json({ error: 'Player profile required' });
@@ -226,7 +258,7 @@ router.put('/:matchId/scores',
       if (!match) return res.status(404).json({ error: 'Match not found' });
       if (match.status === 'COMPLETED') return res.status(400).json({ error: 'Match already completed' });
 
-      // Upsert each score
+      // Upsert own scores
       for (const s of scores) {
         await prisma.matchHoleScore.upsert({
           where: { matchId_playerId_holeNumber: { matchId, playerId: player.id, holeNumber: s.holeNumber } },
@@ -234,6 +266,20 @@ router.put('/:matchId/scores',
           create: { matchId, playerId: player.id, holeNumber: s.holeNumber, score: s.score, putts: s.putts ?? null, fairwayHit: s.fairwayHit ?? null },
         });
       }
+
+      // Update scoreSubmissions with latest version
+      const existingSubmissions = match.scoreSubmissions || {};
+      const ownScoreMap = {};
+      scores.forEach(s => { ownScoreMap[s.holeNumber] = s.score; });
+      const oppScoreMap = {};
+      if (opponentScores) {
+        opponentScores.forEach(s => { oppScoreMap[s.holeNumber] = s.score; });
+      }
+      existingSubmissions[player.id] = { ownScores: ownScoreMap, opponentScores: oppScoreMap };
+      await prisma.match.update({
+        where: { id: matchId },
+        data: { scoreSubmissions: existingSubmissions },
+      });
 
       res.json({ message: 'Scores updated' });
     } catch (err) {
@@ -363,8 +409,12 @@ router.get('/:matchId/scores',
         matchplayResult = calcMatchplayResult(holeResults);
       }
 
-      // Detect mismatches — not applicable in per-player scoring (both enter independently)
-      // But flag if both submitted and scores need confirmation
+      // Cross-check submissions if both players have submitted
+      let crossCheck = null;
+      const submissions = match.scoreSubmissions || {};
+      if (playerAScores.length > 0 && playerBScores.length > 0 && submissions[match.playerAId] && submissions[match.playerBId]) {
+        crossCheck = crossCheckScores(submissions, match.playerAId, match.playerBId);
+      }
 
       res.json({
         matchId,
@@ -390,6 +440,8 @@ router.get('/:matchId/scores',
         holes: holeComparison,
         matchplayResult,
         bothSubmitted: playerAScores.length > 0 && playerBScores.length > 0,
+        crossCheck,
+        scoreSubmissions: submissions,
       });
     } catch (err) {
       console.error('Get scores error:', err);
@@ -630,7 +682,7 @@ router.post('/:matchId/scores/resolve',
   }
 );
 
-// Helper: compare scores between two players
+// Helper: compare scores between two players (legacy — checks each player's own scores only)
 async function compareScores(match, playerIdA, playerIdB) {
   const allScores = await prisma.matchHoleScore.findMany({
     where: { matchId: match.id },
@@ -650,6 +702,54 @@ async function compareScores(match, playerIdA, playerIdB) {
   }
 
   return { mismatches, scoresMatch: mismatches.length === 0 };
+}
+
+/**
+ * Cross-check both players' submissions.
+ * Each player submits their own scores AND their version of the opponent's scores.
+ * Cross-check verifies:
+ *   - Player A's version of Player B's scores matches Player B's own scores
+ *   - Player B's version of Player A's scores matches Player A's own scores
+ */
+function crossCheckScores(submissions, playerAId, playerBId) {
+  const subA = submissions[playerAId];
+  const subB = submissions[playerBId];
+
+  if (!subA || !subB) return { allMatch: false, mismatches: [], incomplete: true };
+
+  const mismatches = [];
+
+  // Check A's version of B's scores vs B's own scores
+  for (let h = 1; h <= 18; h++) {
+    const aVersionOfB = subA.opponentScores?.[h] ?? subA.opponentScores?.[String(h)];
+    const bOwnScore = subB.ownScores?.[h] ?? subB.ownScores?.[String(h)];
+    if (aVersionOfB != null && bOwnScore != null && Number(aVersionOfB) !== Number(bOwnScore)) {
+      mismatches.push({
+        holeNumber: h,
+        type: 'A_version_of_B',
+        playerARecorded: Number(aVersionOfB),
+        playerBRecorded: Number(bOwnScore),
+        description: `Hole ${h}: Player A recorded ${aVersionOfB} for Player B, but Player B recorded ${bOwnScore}`,
+      });
+    }
+  }
+
+  // Check B's version of A's scores vs A's own scores
+  for (let h = 1; h <= 18; h++) {
+    const bVersionOfA = subB.opponentScores?.[h] ?? subB.opponentScores?.[String(h)];
+    const aOwnScore = subA.ownScores?.[h] ?? subA.ownScores?.[String(h)];
+    if (bVersionOfA != null && aOwnScore != null && Number(bVersionOfA) !== Number(aOwnScore)) {
+      mismatches.push({
+        holeNumber: h,
+        type: 'B_version_of_A',
+        playerBRecorded: Number(bVersionOfA),
+        playerARecorded: Number(aOwnScore),
+        description: `Hole ${h}: Player B recorded ${bVersionOfA} for Player A, but Player A recorded ${aOwnScore}`,
+      });
+    }
+  }
+
+  return { allMatch: mismatches.length === 0, mismatches };
 }
 
 module.exports = router;

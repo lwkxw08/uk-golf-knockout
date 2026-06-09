@@ -8,3 +8,5 @@ build/
 coverage/
 .prisma/
 backend/prisma.config.ts
+draw-management-screenshot.png
+league-table-screenshot.png

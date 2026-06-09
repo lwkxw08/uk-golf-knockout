@@ -533,6 +533,10 @@ model Match {
   leagueBonusDetailA Json?     @map("league_bonus_detail_a")
   leagueBonusDetailB Json?     @map("league_bonus_detail_b")
 
+  // Stores each player's full submission: own scores + their version of opponent scores
+  // { "playerAId": { ownScores: {1:4,...}, opponentScores: {1:5,...} }, "playerBId": {...} }
+  scoreSubmissions   Json?     @map("score_submissions")
+
   tournament Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   playerA    Player?     @relation("PlayerA", fields: [playerAId], references: [id])
   playerB    Player?     @relation("PlayerB", fields: [playerBId], references: [id])
