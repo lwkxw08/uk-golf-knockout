@@ -47,6 +47,11 @@ app.use('/api/courses', require('./routes/courses'));
 app.use('/api/scoring', require('./routes/scoring'));
 app.use('/api/league', require('./routes/league'));
 app.use('/api/live-match', require('./routes/liveMatch'));
+app.use('/api/feed', require('./routes/feed'));
+app.use('/api/chat', require('./routes/matchChat'));
+app.use('/api/weather', require('./routes/weather'));
+app.use('/api/checkin', require('./routes/checkin'));
+app.use('/api/tee-time', require('./routes/teeTime'));
 
 // Health check
 app.get('/api/health', (req, res) => {

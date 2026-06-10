@@ -276,6 +276,36 @@ router.post('/:matchId/confirm',
         }
       }
 
+      // Auto-post match result to social feed
+      try {
+        const winner = await prisma.player.findUnique({ where: { id: match.winnerId }, include: { homeClub: true } });
+        const loser = loserId ? await prisma.player.findUnique({ where: { id: loserId }, include: { homeClub: true } }) : null;
+        const resultText = match.result?.resultText || 'result confirmed';
+        const venueName = match.venueClub?.name || match.tournament.name;
+        const content = `${winner?.firstName} ${winner?.lastName} beat ${loser?.firstName} ${loser?.lastName} ${resultText} at ${venueName}`;
+
+        await prisma.feedPost.create({
+          data: {
+            type: 'MATCH_RESULT',
+            content,
+            authorId: match.winnerId,
+            matchId: match.id,
+            tournamentId: match.tournamentId,
+            clubId: match.venueClubId,
+            metadata: {
+              winnerId: match.winnerId,
+              loserId,
+              resultText,
+              tournament: match.tournament.name,
+              stage: match.stage,
+              roundNumber: match.roundNumber,
+            },
+          },
+        });
+      } catch (feedErr) {
+        console.error('Feed post error (non-fatal):', feedErr);
+      }
+
       res.json({ message: 'Result confirmed, winner advanced' });
     } catch (err) {
       console.error('Confirm result error:', err);

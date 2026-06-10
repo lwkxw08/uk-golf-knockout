@@ -181,6 +181,11 @@ model Player {
   playerMemberships  PlayerMembership[]
   holeScores         MatchHoleScore[]
   leagueStandings    LeagueStanding[]
+  feedPosts          FeedPost[]       @relation("FeedPostAuthor")
+  feedComments       FeedComment[]
+  feedReactions      FeedReaction[]
+  matchMessages      MatchMessage[]
+  matchCheckIns      MatchCheckIn[]
 
   @@map("players")
 }
@@ -223,6 +228,8 @@ model Club {
   clubSubscriptions    ClubSubscription[]
   scoreRecords         ScoreRecord[]
   clubSeasonPoints     ClubSeasonPoints[]
+  feedPosts            FeedPost[]         @relation("FeedPostClub")
+  matchCheckIns        MatchCheckIn[]     @relation("CheckInClub")
 
   @@map("clubs")
 }
@@ -351,6 +358,7 @@ model Tournament {
   scoreRecords ScoreRecord[]
   tournamentTees TournamentTee[]
   leagueStandings LeagueStanding[]
+  feedPosts       FeedPost[]
 
   @@map("tournaments")
 }
@@ -552,6 +560,9 @@ model Match {
   prevMatches Match[]    @relation("MatchProgression")
   result     MatchResult?
   holeScores MatchHoleScore[]
+  feedPosts  FeedPost[]
+  messages   MatchMessage[]
+  checkIns   MatchCheckIn[]
 
   @@map("matches")
 }
@@ -807,4 +818,89 @@ model CourseOffering {
   club Club @relation(fields: [clubId], references: [id])
 
   @@map("course_offerings")
+}
+
+// ── Social Feed ──────────────────────────────────
+
+model FeedPost {
+  id          String   @id @default(uuid())
+  type        String   // MATCH_RESULT, PROMOTION, ANNOUNCEMENT, PLAYER_ACHIEVEMENT
+  content     String
+  authorId    String?  @map("author_id")
+  matchId     String?  @map("match_id")
+  tournamentId String? @map("tournament_id")
+  clubId      String?  @map("club_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  author      Player?  @relation("FeedPostAuthor", fields: [authorId], references: [id])
+  match       Match?   @relation(fields: [matchId], references: [id])
+  tournament  Tournament? @relation(fields: [tournamentId], references: [id])
+  club        Club?    @relation("FeedPostClub", fields: [clubId], references: [id])
+  comments    FeedComment[]
+  reactions   FeedReaction[]
+
+  @@map("feed_posts")
+}
+
+model FeedComment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post    FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player  Player   @relation(fields: [playerId], references: [id])
+
+  @@map("feed_comments")
+}
+
+model FeedReaction {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  type      String   @default("like") // like, clap, fire
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post    FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player  Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([postId, playerId, type])
+  @@map("feed_reactions")
+}
+
+// ── Match Chat ───────────────────────────────────
+
+model MatchMessage {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  senderId  String   @map("sender_id")
+  content   String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender  Player @relation(fields: [senderId], references: [id])
+
+  @@map("match_messages")
+}
+
+// ── QR Code Check-In ─────────────────────────────
+
+model MatchCheckIn {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  playerId  String   @map("player_id")
+  clubId    String?  @map("club_id")
+  checkedInAt DateTime @default(now()) @map("checked_in_at")
+  latitude  Float?
+  longitude Float?
+
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player  Player @relation(fields: [playerId], references: [id])
+  club    Club?  @relation("CheckInClub", fields: [clubId], references: [id])
+
+  @@unique([matchId, playerId])
+  @@map("match_check_ins")
 }

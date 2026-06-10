@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun } from 'lucide-react';
 import DigitalScorecard from '../../components/scoring/DigitalScorecard';
 
 export default function PlayerDashboard() {
@@ -200,6 +200,14 @@ export default function PlayerDashboard() {
                             <Swords className="w-3 h-3" /> H2H Record
                           </Link>
                         )}
+                        <Link to={`/match/${match.id}/chat`}
+                          className="text-teal-600 hover:underline text-xs flex items-center gap-0.5">
+                          <MessageCircle className="w-3 h-3" /> Chat
+                        </Link>
+                        <Link to={`/match/${match.id}/checkin`}
+                          className="text-orange-600 hover:underline text-xs flex items-center gap-0.5">
+                          <QrCode className="w-3 h-3" /> Check-In
+                        </Link>
                       </div>
                     </div>
                   </div>

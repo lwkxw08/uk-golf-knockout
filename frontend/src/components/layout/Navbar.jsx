@@ -26,6 +26,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-5">
             <Link to="/tournaments" className="hover:text-green-200 transition text-sm">Tournaments</Link>
             <Link to="/leaderboard" className="hover:text-green-200 transition text-sm">Leaderboard</Link>
+            <Link to="/feed" className="hover:text-green-200 transition text-sm">Feed</Link>
             <Link to="/marketplace" className="hover:text-green-200 transition text-sm">Marketplace</Link>
             <Link to="/membership" className="hover:text-green-200 transition text-sm">Membership</Link>
 
@@ -73,6 +74,7 @@ export default function Navbar() {
           <div className="md:hidden pb-4 space-y-2">
             <Link to="/tournaments" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Tournaments</Link>
             <Link to="/leaderboard" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Leaderboard</Link>
+            <Link to="/feed" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Feed</Link>
             <Link to="/marketplace" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Marketplace</Link>
             <Link to="/membership" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Membership</Link>
             <Link to="/subscriptions" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Club Plans</Link>

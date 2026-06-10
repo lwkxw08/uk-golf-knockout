@@ -25,6 +25,9 @@ import LeagueTablePage from './pages/league-table/LeagueTablePage';
 import LiveMatchPage from './pages/live-match/LiveMatchPage';
 import PlayerStatsPage from './pages/player-stats/PlayerStatsPage';
 import HeadToHeadPage from './pages/head-to-head/HeadToHeadPage';
+import SocialFeedPage from './pages/feed/SocialFeedPage';
+import MatchChatPage from './pages/match-chat/MatchChatPage';
+import QRCheckInPage from './pages/checkin/QRCheckInPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -65,6 +68,17 @@ function AppRoutes() {
           <Route path="/my-stats" element={
             <ProtectedRoute>
               <PlayerStatsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/feed" element={<SocialFeedPage />} />
+          <Route path="/match/:matchId/chat" element={
+            <ProtectedRoute>
+              <MatchChatPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/match/:matchId/checkin" element={
+            <ProtectedRoute>
+              <QRCheckInPage />
             </ProtectedRoute>
           } />
           <Route path="/marketplace" element={<MarketplacePage />} />
