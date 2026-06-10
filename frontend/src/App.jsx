@@ -22,6 +22,9 @@ import MembershipPage from './pages/membership/MembershipPage';
 import ClubSubscriptionPage from './pages/subscriptions/ClubSubscriptionPage';
 import ScorecardPage from './pages/scorecard/ScorecardPage';
 import LeagueTablePage from './pages/league-table/LeagueTablePage';
+import LiveMatchPage from './pages/live-match/LiveMatchPage';
+import PlayerStatsPage from './pages/player-stats/PlayerStatsPage';
+import HeadToHeadPage from './pages/head-to-head/HeadToHeadPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -56,6 +59,14 @@ function AppRoutes() {
           <Route path="/clubs/:slug" element={<ClubPublicPage />} />
           <Route path="/clubs/:slug/scorecard" element={<ScorecardPage />} />
           <Route path="/league/:tournamentId" element={<LeagueTablePage />} />
+          <Route path="/match/:matchId/live" element={<LiveMatchPage />} />
+          <Route path="/players/:playerId/stats" element={<PlayerStatsPage />} />
+          <Route path="/players/:playerId/head-to-head/:opponentId" element={<HeadToHeadPage />} />
+          <Route path="/my-stats" element={
+            <ProtectedRoute>
+              <PlayerStatsPage />
+            </ProtectedRoute>
+          } />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/membership" element={<MembershipPage />} />
           <Route path="/subscriptions" element={<ClubSubscriptionPage />} />

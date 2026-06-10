@@ -26,6 +26,8 @@ export default function TournamentDetailPage() {
   const [drawMsg, setDrawMsg] = useState('');
   const [leagueFixtures, setLeagueFixtures] = useState({});
   const [leagueFixtureWeek, setLeagueFixtureWeek] = useState(1);
+  const [weekDeadlines, setWeekDeadlines] = useState({});
+  const [settingDeadline, setSettingDeadline] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -266,8 +268,18 @@ export default function TournamentDetailPage() {
                               <div className="text-xs text-gray-500 mt-1">{match.leaguePointsA ?? 0} - {match.leaguePointsB ?? 0} pts</div>
                             )}
                           </>
+                        ) : match.status === 'IN_PROGRESS' ? (
+                          <Link to={`/match/${match.id}/live`} className="flex flex-col items-center gap-1">
+                            <span className="flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">LIVE</span>
+                            {match.currentHole && <span className="text-xs text-gray-500">Hole {match.currentHole}</span>}
+                          </Link>
                         ) : (
-                          <span className="text-xs text-gray-400 uppercase">{match.status}</span>
+                          <div>
+                            <span className="text-xs text-gray-400 uppercase">{match.status}</span>
+                            {match.scheduledDate && (
+                              <div className="text-xs text-gray-500 mt-1">{new Date(match.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="flex-1 text-right">
@@ -279,12 +291,23 @@ export default function TournamentDetailPage() {
                         <div className="text-xs text-gray-500 mt-0.5">{match.playerB?.homeClub?.name || ''}</div>
                       </div>
                     </div>
-                    {match.venueClub && (
-                      <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {match.venueClub.name}
-                        {match.scheduledDate && <> • <Calendar className="w-3 h-3 ml-1" /> {new Date(match.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</>}
-                      </div>
-                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                      {match.venueClub && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {match.venueClub.name}
+                        </span>
+                      )}
+                      {match.scheduledDate && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {new Date(match.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                      {match.roundDeadline && (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <Clock className="w-3 h-3" /> Deadline: {new Date(match.roundDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -389,6 +412,69 @@ export default function TournamentDetailPage() {
                             </button>
                           )}
                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Round Deadlines (Admin) */}
+          {user?.role === 'ADMIN' && isLeague && (
+            <div className="bg-white border-2 border-amber-200 rounded-xl p-6">
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" /> Round Deadlines
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">Set a deadline for each game week. Players must arrange and play their match before this date.</p>
+              <div className="space-y-3">
+                {Array.from({ length: tournament?.stages?.find(s => s.isLeague)?.leagueMatchCount || 6 }, (_, i) => i + 1).map(week => {
+                  // Check if fixtures exist for this week and get current deadline
+                  const weekFixtures = leagueFixtures[week] || [];
+                  const currentDeadline = weekFixtures[0]?.roundDeadline;
+
+                  return (
+                    <div key={week} className="border rounded-lg p-3 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                      <div>
+                        <span className="font-medium text-sm">Week {week}</span>
+                        {currentDeadline && (
+                          <span className="ml-2 text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                            Deadline: {new Date(currentDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          value={weekDeadlines[week] || ''}
+                          onChange={e => setWeekDeadlines(prev => ({ ...prev, [week]: e.target.value }))}
+                          className="border rounded px-2 py-1 text-xs w-44"
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!weekDeadlines[week]) return;
+                            setSettingDeadline(week);
+                            try {
+                              await api.put('/live-match/admin/round-deadline', {
+                                tournamentId: id,
+                                roundNumber: 1,
+                                gameWeek: week,
+                                deadline: new Date(weekDeadlines[week]).toISOString(),
+                              });
+                              setDrawMsg(`Week ${week} deadline set successfully`);
+                              // Refresh fixtures
+                              api.get(`/league/${id}/fixtures`).then(data => setLeagueFixtures(data.fixtures || {})).catch(() => {});
+                            } catch (err) {
+                              setDrawMsg(`Failed to set deadline: ${err.message}`);
+                            } finally {
+                              setSettingDeadline(null);
+                            }
+                          }}
+                          disabled={settingDeadline === week || !weekDeadlines[week]}
+                          className="bg-amber-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          {settingDeadline === week ? '...' : 'Set Deadline'}
+                        </button>
                       </div>
                     </div>
                   );

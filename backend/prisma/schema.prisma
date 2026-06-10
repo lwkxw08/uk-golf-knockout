@@ -537,6 +537,12 @@ model Match {
   // { "playerAId": { ownScores: {1:4,...}, opponentScores: {1:5,...} }, "playerBId": {...} }
   scoreSubmissions   Json?     @map("score_submissions")
 
+  // Round deadline & match scheduling
+  roundDeadline      DateTime? @map("round_deadline")
+  matchStartedAt     DateTime? @map("match_started_at")
+  matchEndedAt       DateTime? @map("match_ended_at")
+  currentHole        Int?      @map("current_hole")
+
   tournament Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   playerA    Player?     @relation("PlayerA", fields: [playerAId], references: [id])
   playerB    Player?     @relation("PlayerB", fields: [playerBId], references: [id])

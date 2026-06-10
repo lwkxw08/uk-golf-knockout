@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock } from 'lucide-react';
 import DigitalScorecard from '../../components/scoring/DigitalScorecard';
 
 export default function PlayerDashboard() {
@@ -27,11 +27,22 @@ export default function PlayerDashboard() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
   if (!player) return <div className="text-center py-12 text-gray-500">Player profile not found</div>;
 
+  const inProgressMatches = matches.filter(m => m.status === 'IN_PROGRESS');
   const upcomingMatches = matches.filter(m => ['PENDING', 'SCHEDULED'].includes(m.status));
   const needsAction = matches.filter(m =>
     m.status === 'RESULT_SUBMITTED' && m.result && m.result.submittedById !== player.id
   );
   const completedMatches = matches.filter(m => ['COMPLETED', 'RESULT_CONFIRMED'].includes(m.status));
+
+  const startGame = async (matchId) => {
+    try {
+      await api.post(`/live-match/${matchId}/start`);
+      const updated = await api.get('/players/me/matches');
+      setMatches(updated);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -87,21 +98,55 @@ export default function PlayerDashboard() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        {/* Stats */}
-        <div className="bg-white border rounded-xl p-6 text-center">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white border rounded-xl p-5 text-center">
           <p className="text-3xl font-bold text-green-700">{player.entries?.length || 0}</p>
           <p className="text-sm text-gray-500">Tournaments</p>
         </div>
-        <div className="bg-white border rounded-xl p-6 text-center">
+        <div className="bg-white border rounded-xl p-5 text-center">
           <p className="text-3xl font-bold text-green-700">{completedMatches.filter(m => m.winnerId === player.id).length}</p>
           <p className="text-sm text-gray-500">Wins</p>
         </div>
-        <div className="bg-white border rounded-xl p-6 text-center">
+        <div className="bg-white border rounded-xl p-5 text-center">
           <p className="text-3xl font-bold text-green-700">{player.rankingPoints}</p>
           <p className="text-sm text-gray-500">Ranking Points</p>
         </div>
+        <Link to="/my-stats" className="bg-white border rounded-xl p-5 text-center hover:border-green-300 transition">
+          <BarChart3 className="w-7 h-7 text-green-700 mx-auto mb-1" />
+          <p className="text-sm text-green-700 font-medium">My Stats</p>
+        </Link>
       </div>
+
+      {/* In Progress Matches */}
+      {inProgressMatches.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+          <h2 className="font-semibold text-red-800 flex items-center gap-2 mb-3">
+            <Radio className="w-5 h-5 animate-pulse" /> Match In Progress
+          </h2>
+          <div className="space-y-3">
+            {inProgressMatches.map(match => {
+              const opponent = match.playerAId === player.id ? match.playerB : match.playerA;
+              return (
+                <div key={match.id} className="flex items-center justify-between bg-white rounded-lg p-4 border border-red-100">
+                  <div>
+                    <p className="font-medium text-gray-900">{match.tournament.name}</p>
+                    <p className="text-sm text-gray-600">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
+                    {match.currentHole && <p className="text-sm text-red-600 mt-1">Currently on Hole {match.currentHole}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setScorecardModal(match)} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1">
+                      <ClipboardList className="w-4 h-4" /> Continue Scoring
+                    </button>
+                    <Link to={`/match/${match.id}/live`} className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+                      <Radio className="w-3 h-3" /> Live View
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Upcoming Matches */}
@@ -119,24 +164,42 @@ export default function PlayerDashboard() {
                       <div>
                         <p className="font-medium">{match.tournament.name}</p>
                         <p className="text-sm text-gray-600">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
+                        {match.gameWeek && <p className="text-xs text-blue-600 mt-0.5">Week {match.gameWeek}</p>}
                         {match.scheduledDate && (
-                          <p className="text-xs text-gray-400 mt-1">{new Date(match.scheduledDate).toLocaleDateString('en-GB')}</p>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(match.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </p>
                         )}
                         {match.venueClub && <p className="text-xs text-gray-400">at {match.venueClub.name}</p>}
+                        {match.roundDeadline && (
+                          <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            Deadline: {new Date(match.roundDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1">
+                        {match.scheduledDate && (
+                          <button onClick={() => startGame(match.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
+                            <Play className="w-3 h-3" /> Start Game
+                          </button>
+                        )}
                         <button onClick={() => setScorecardModal(match)}
                           className="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1">
                           <ClipboardList className="w-3 h-3" /> Enter Scores
-                        </button>
-                        <button onClick={() => setSubmitModal(match)}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded-lg text-xs">
-                          Upload Card
                         </button>
                         <button onClick={() => setScheduleModal(match)}
                           className="text-blue-600 hover:underline text-xs">
                           Schedule
                         </button>
+                        {opponent && (
+                          <Link to={`/players/${player.id}/head-to-head/${opponent.id}`}
+                            className="text-purple-600 hover:underline text-xs flex items-center gap-0.5">
+                            <Swords className="w-3 h-3" /> H2H Record
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -373,7 +436,7 @@ function ScheduleModal({ match, onClose, onScheduled }) {
     try {
       const body = { scheduledDate: new Date(date).toISOString() };
       if (venueClubId) body.venueClubId = venueClubId;
-      await api.post(`/matches/${match.id}/schedule`, body);
+      await api.put(`/live-match/${match.id}/schedule`, body);
       onScheduled();
     } catch (err) {
       alert(err.message);

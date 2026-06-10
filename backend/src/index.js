@@ -7,6 +7,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 const config = require('./config');
 const { startDrawScheduler } = require('./services/drawScheduler');
+const { startNotificationScheduler } = require('./services/notificationScheduler');
 
 const app = express();
 const server = http.createServer(app);
@@ -45,6 +46,7 @@ app.use('/api/subscriptions', require('./routes/subscriptions'));
 app.use('/api/courses', require('./routes/courses'));
 app.use('/api/scoring', require('./routes/scoring'));
 app.use('/api/league', require('./routes/league'));
+app.use('/api/live-match', require('./routes/liveMatch'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -63,6 +65,16 @@ io.on('connection', (socket) => {
 
   socket.on('draw:leave', (tournamentId) => {
     socket.leave(`draw-${tournamentId}`);
+  });
+
+  // Join live match room for real-time hole-by-hole updates
+  socket.on('match:join', (matchId) => {
+    socket.join(`match-${matchId}`);
+    console.log(`${socket.id} joined match room: match-${matchId}`);
+  });
+
+  socket.on('match:leave', (matchId) => {
+    socket.leave(`match-${matchId}`);
   });
 
   socket.on('disconnect', () => {
@@ -87,6 +99,7 @@ app.use((err, req, res, next) => {
 server.listen(config.port, () => {
   console.log(`Server running on port ${config.port}`);
   startDrawScheduler(io);
+  startNotificationScheduler();
 });
 
 module.exports = { app, server, io };
