@@ -154,7 +154,7 @@ router.get('/:clubId/dashboard',
         if (!mgr) return res.status(403).json({ error: 'Access denied' });
       }
 
-      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees, leagueStandings, clubChampionship, offerings] = await Promise.all([
+      const [club, membersList, entries, matchesTotal, upcomingFixtures, recentResults, revenue, sponsors, tees, leagueStandings, offerings, clubChampionship] = await Promise.all([
         prisma.club.findUnique({ where: { id: clubId }, include: { region: true } }),
         prisma.player.findMany({
           where: { homeClubId: clubId },
