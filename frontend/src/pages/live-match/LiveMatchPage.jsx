@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { Radio, Share2, Users, Clock, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Radio, Share2, Users, Clock, MapPin, ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import SponsorBanner from '../../components/sponsors/SponsorBanner';
 import io from 'socket.io-client';
 
 export default function LiveMatchPage() {
@@ -270,11 +271,20 @@ export default function LiveMatchPage() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm text-gray-500">
-          <Users className="w-4 h-4" />
-          <span>Share this page so friends and family can follow along live</span>
+        <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span>Share this page so friends and family can follow along live</span>
+          </div>
+          <a href={`/api/calendar/match/${matchId}`} download
+            className="flex items-center gap-1 text-green-600 hover:text-green-700 text-xs">
+            <CalendarPlus className="w-3.5 h-3.5" /> Add to Calendar
+          </a>
         </div>
       </div>
+
+      {/* Sponsor Banner */}
+      <SponsorBanner placement="match_page" tournamentId={match.tournamentId} matchId={matchId} className="mt-4" />
     </div>
   );
 }

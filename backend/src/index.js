@@ -52,6 +52,12 @@ app.use('/api/chat', require('./routes/matchChat'));
 app.use('/api/weather', require('./routes/weather'));
 app.use('/api/checkin', require('./routes/checkin'));
 app.use('/api/tee-time', require('./routes/teeTime'));
+app.use('/api/sponsor-ads', require('./routes/sponsorAds'));
+app.use('/api/referrals', require('./routes/referrals'));
+app.use('/api/calendar', require('./routes/calendar'));
+app.use('/api/gallery', require('./routes/gallery'));
+app.use('/api/programme', require('./routes/programme'));
+app.use('/api/video-highlights', require('./routes/videoHighlights'));
 
 // Health check
 app.get('/api/health', (req, res) => {

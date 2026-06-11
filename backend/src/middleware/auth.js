@@ -51,4 +51,25 @@ async function requireClubAccess(req, res, next) {
   next();
 }
 
-module.exports = { authenticate, requireRole, requireClubAccess };
+function optionalAuth(req, res, next) {
+  const header = req.headers.authorization;
+  const altHeader = req.headers['x-auth-token'];
+  let token;
+
+  if (altHeader) {
+    token = altHeader;
+  } else if (header && header.startsWith('Bearer ')) {
+    token = header.split(' ')[1];
+  }
+
+  if (token) {
+    try {
+      req.user = jwt.verify(token, config.jwtSecret);
+    } catch {
+      // ignore invalid token for optional auth
+    }
+  }
+  next();
+}
+
+module.exports = { authenticate, optionalAuth, requireRole, requireClubAccess };

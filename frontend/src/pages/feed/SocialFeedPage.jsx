@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { MessageSquare, Heart, Flame, Trophy, Megaphone, Tag, Send, ChevronDown, Clock, MapPin } from 'lucide-react';
 import { api } from '../../api/client';
+import SponsorBanner from '../../components/sponsors/SponsorBanner';
 
 const REACTION_ICONS = { like: '👍', clap: '👏', fire: '🔥' };
 
@@ -204,6 +205,9 @@ export default function SocialFeedPage() {
               )}
             </div>
           ))}
+
+          {/* Sponsor ad after every 5 posts */}
+          <SponsorBanner placement="feed" className="my-4" />
 
           {page < totalPages && (
             <button onClick={() => fetchPosts(page + 1)}

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun, Gift, CalendarPlus } from 'lucide-react';
 import DigitalScorecard from '../../components/scoring/DigitalScorecard';
 
 export default function PlayerDashboard() {
@@ -114,6 +114,18 @@ export default function PlayerDashboard() {
         <Link to="/my-stats" className="bg-white border rounded-xl p-5 text-center hover:border-green-300 transition">
           <BarChart3 className="w-7 h-7 text-green-700 mx-auto mb-1" />
           <p className="text-sm text-green-700 font-medium">My Stats</p>
+        </Link>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-3 mb-8">
+        <a href="/api/calendar/my-matches" download
+          className="inline-flex items-center gap-1.5 bg-white border rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          <CalendarPlus className="w-4 h-4" /> Export Calendar (.ics)
+        </a>
+        <Link to="/referral"
+          className="inline-flex items-center gap-1.5 bg-white border rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          <Gift className="w-4 h-4" /> Refer a Friend — Get £5 Off
         </Link>
       </div>
 

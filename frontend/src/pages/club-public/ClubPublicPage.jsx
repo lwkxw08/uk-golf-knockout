@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { Building2, Users, Calendar, Trophy, MapPin, ExternalLink, ShoppingBag, Phone, Mail, Globe } from 'lucide-react';
+import { Building2, Users, Calendar, Trophy, MapPin, ExternalLink, ShoppingBag, Phone, Mail, Globe, Camera } from 'lucide-react';
 
 export default function ClubPublicPage() {
   const { slug } = useParams();
@@ -32,6 +32,11 @@ export default function ClubPublicPage() {
             <Link to={`/clubs/${slug}/scorecard`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
               View Scorecard
             </Link>
+            {club.id && (
+              <Link to={`/clubs/${club.id}/gallery`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                <Camera className="w-4 h-4" /> Gallery
+              </Link>
+            )}
           </div>
         </div>
       </div>

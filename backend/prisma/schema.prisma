@@ -186,6 +186,10 @@ model Player {
   feedReactions      FeedReaction[]
   matchMessages      MatchMessage[]
   matchCheckIns      MatchCheckIn[]
+  referralsMade      Referral[]       @relation("ReferralsMade")
+  referralsReceived  Referral[]       @relation("ReferralsReceived")
+  photosUploaded     CoursePhoto[]    @relation("PhotosUploaded")
+  videosUploaded     VideoHighlight[] @relation("VideosUploaded")
 
   @@map("players")
 }
@@ -230,6 +234,8 @@ model Club {
   clubSeasonPoints     ClubSeasonPoints[]
   feedPosts            FeedPost[]         @relation("FeedPostClub")
   matchCheckIns        MatchCheckIn[]     @relation("CheckInClub")
+  coursePhotos         CoursePhoto[]      @relation("CoursePhotos")
+  videoHighlights     VideoHighlight[]   @relation("ClubVideoHighlights")
 
   @@map("clubs")
 }
@@ -359,6 +365,7 @@ model Tournament {
   tournamentTees TournamentTee[]
   leagueStandings LeagueStanding[]
   feedPosts       FeedPost[]
+  adImpressions   SponsorAdImpression[]
 
   @@map("tournaments")
 }
@@ -563,6 +570,8 @@ model Match {
   feedPosts  FeedPost[]
   messages   MatchMessage[]
   checkIns   MatchCheckIn[]
+  adImpressions SponsorAdImpression[]
+  videoHighlights VideoHighlight[]
 
   @@map("matches")
 }
@@ -657,6 +666,7 @@ model Sponsor {
   region     Region?     @relation(fields: [regionId], references: [id])
   club       Club?       @relation(fields: [clubId], references: [id])
   tournament Tournament? @relation(fields: [tournamentId], references: [id])
+  impressions SponsorAdImpression[]
 
   @@map("sponsors")
 }
@@ -903,4 +913,81 @@ model MatchCheckIn {
 
   @@unique([matchId, playerId])
   @@map("match_check_ins")
+}
+
+// ── Sponsor Ad Impressions ────────────────────────
+
+model SponsorAdImpression {
+  id          String   @id @default(uuid())
+  sponsorId   String   @map("sponsor_id")
+  placement   String   // match_page, scorecard, bracket, leaderboard, feed
+  matchId     String?  @map("match_id")
+  tournamentId String? @map("tournament_id")
+  viewerId    String?  @map("viewer_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  sponsor    Sponsor     @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  match      Match?      @relation(fields: [matchId], references: [id])
+  tournament Tournament? @relation(fields: [tournamentId], references: [id])
+
+  @@map("sponsor_ad_impressions")
+}
+
+// ── Referral Programme ────────────────────────────
+
+model Referral {
+  id             String    @id @default(uuid())
+  referrerPlayerId String  @map("referrer_player_id")
+  referralCode   String    @unique @map("referral_code")
+  referredEmail  String?   @map("referred_email")
+  referredPlayerId String? @map("referred_player_id")
+  status         String    @default("pending") // pending, registered, redeemed
+  discountPence  Int       @default(500) @map("discount_pence")
+  referrerCredited Boolean @default(false) @map("referrer_credited")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  redeemedAt     DateTime? @map("redeemed_at")
+
+  referrer       Player    @relation("ReferralsMade", fields: [referrerPlayerId], references: [id])
+  referredPlayer Player?   @relation("ReferralsReceived", fields: [referredPlayerId], references: [id])
+
+  @@map("referrals")
+}
+
+// ── Course Photo Gallery ──────────────────────────
+
+model CoursePhoto {
+  id          String   @id @default(uuid())
+  clubId      String   @map("club_id")
+  holeNumber  Int?     @map("hole_number")
+  caption     String?
+  imageUrl    String   @map("image_url")
+  uploadedById String? @map("uploaded_by_id")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  club       Club    @relation("CoursePhotos", fields: [clubId], references: [id], onDelete: Cascade)
+  uploadedBy Player? @relation("PhotosUploaded", fields: [uploadedById], references: [id])
+
+  @@map("course_photos")
+}
+
+// ── Club Premium Features ─────────────────────────
+
+model VideoHighlight {
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  clubId      String?  @map("club_id")
+  title       String
+  videoUrl    String   @map("video_url")
+  thumbnailUrl String? @map("thumbnail_url")
+  durationSec Int?     @map("duration_sec")
+  uploadedById String? @map("uploaded_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  match      Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  club       Club?   @relation("ClubVideoHighlights", fields: [clubId], references: [id])
+  uploadedBy Player? @relation("VideosUploaded", fields: [uploadedById], references: [id])
+
+  @@map("video_highlights")
 }

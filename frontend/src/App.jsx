@@ -28,6 +28,9 @@ import HeadToHeadPage from './pages/head-to-head/HeadToHeadPage';
 import SocialFeedPage from './pages/feed/SocialFeedPage';
 import MatchChatPage from './pages/match-chat/MatchChatPage';
 import QRCheckInPage from './pages/checkin/QRCheckInPage';
+import ReferralPage from './pages/referral/ReferralPage';
+import CourseGalleryPage from './pages/gallery/CourseGalleryPage';
+import TournamentProgrammePage from './pages/programme/TournamentProgrammePage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -81,6 +84,13 @@ function AppRoutes() {
               <QRCheckInPage />
             </ProtectedRoute>
           } />
+          <Route path="/referral" element={
+            <ProtectedRoute>
+              <ReferralPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/clubs/:clubId/gallery" element={<CourseGalleryPage />} />
+          <Route path="/tournaments/:tournamentId/programme" element={<TournamentProgrammePage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/membership" element={<MembershipPage />} />
           <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
