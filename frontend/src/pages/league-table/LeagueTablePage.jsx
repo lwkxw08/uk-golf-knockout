@@ -394,15 +394,25 @@ function FixturesList({ fixtures, weeks, selectedWeek, setSelectedWeek }) {
       </div>
 
       {/* Fixture cards */}
-      {displayWeeks.map(week => (
+      {displayWeeks.map(week => {
+        const weekDeadline = fixtures[week]?.[0]?.roundDeadline;
+        const deadlineDate = weekDeadline ? new Date(weekDeadline) : null;
+        const isOverdue = deadlineDate && deadlineDate < new Date();
+        return (
         <div key={week} className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2 flex-wrap">
             Game Week {week}
             {fixtures[week]?.[0]?.status === 'COMPLETED' && (
               <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Complete</span>
             )}
             {fixtures[week]?.[0]?.status === 'SCHEDULED' && (
               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Upcoming</span>
+            )}
+            {deadlineDate && (
+              <span className={`text-xs px-2 py-0.5 rounded flex items-center gap-1 ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                ⏰ Deadline: {deadlineDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                {isOverdue && <span className="font-bold">(OVERDUE)</span>}
+              </span>
             )}
           </h3>
           <div className="grid gap-3">
@@ -411,7 +421,8 @@ function FixturesList({ fixtures, weeks, selectedWeek, setSelectedWeek }) {
             ))}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -484,12 +495,22 @@ function FixtureCard({ match }) {
         </div>
       </div>
 
-      {/* Venue */}
-      {venue && (
-        <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400">
-          📍 {venue.name}
-        </div>
-      )}
+      {/* Venue & schedule info */}
+      <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 flex flex-wrap items-center gap-3">
+        {venue && (
+          <span>📍 {venue.name}</span>
+        )}
+        {match.scheduledDate && (
+          <span className="text-green-700 font-medium">
+            📅 {new Date(match.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at {new Date(match.scheduledDate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+        {match.roundDeadline && !isCompleted && (
+          <span className="text-amber-600">
+            ⏰ Deadline: {new Date(match.roundDeadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
