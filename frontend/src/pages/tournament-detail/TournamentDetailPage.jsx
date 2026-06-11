@@ -259,6 +259,23 @@ export default function TournamentDetailPage() {
                   </button>
                 ))}
               </div>
+              {/* Week deadline header */}
+              {(() => {
+                const weekFixtures = leagueFixtures[leagueFixtureWeek] || [];
+                const deadline = weekFixtures[0]?.roundDeadline;
+                if (!deadline) return null;
+                const deadlineDate = new Date(deadline);
+                const isPast = deadlineDate < new Date();
+                return (
+                  <div className={`flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-sm font-medium ${
+                    isPast ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  }`}>
+                    <Clock className="w-4 h-4" />
+                    <span>Week {leagueFixtureWeek} Deadline: {deadlineDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    {isPast && <span className="ml-1 text-xs font-bold">(OVERDUE)</span>}
+                  </div>
+                );
+              })()}
               <div className="space-y-3">
                 {(leagueFixtures[leagueFixtureWeek] || []).map(match => (
                   <div key={match.id} className="border rounded-lg p-4">
@@ -309,8 +326,8 @@ export default function TournamentDetailPage() {
                         </span>
                       )}
                       {match.scheduledDate && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {new Date(match.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        <span className="flex items-center gap-1 text-green-700 font-medium">
+                          <Calendar className="w-3 h-3" /> {new Date(match.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at {new Date(match.scheduledDate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
                       {match.roundDeadline && (
