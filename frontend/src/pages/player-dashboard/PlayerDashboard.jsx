@@ -2,8 +2,60 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun, Gift, CalendarPlus } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun, Gift, CalendarPlus, ExternalLink } from 'lucide-react';
 import DigitalScorecard from '../../components/scoring/DigitalScorecard';
+
+const WMO_CODES = {
+  0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Fog', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Dense drizzle',
+  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
+  80: 'Light showers', 81: 'Showers', 82: 'Heavy showers', 95: 'Thunderstorm',
+};
+
+function MatchWeatherTeeTime({ clubId, matchDate }) {
+  const [weather, setWeather] = useState(null);
+  const [teeLink, setTeeLink] = useState(null);
+
+  useEffect(() => {
+    if (!clubId) return;
+    api.get(`/weather/forecast?clubId=${clubId}`).then((d) => {
+      if (d.forecast?.length) {
+        const today = d.forecast[0];
+        setWeather({
+          desc: WMO_CODES[today.weatherCode] || 'Unknown',
+          temp: today.tempMax ?? today.tempMin,
+          rain: today.precipMm,
+          wind: today.windMax,
+        });
+      }
+    }).catch(() => {});
+    api.get(`/tee-time/club/${clubId}${matchDate ? '?date=' + matchDate.split('T')[0] : ''}`)
+      .then((d) => {
+        if (d.bookingLinks?.length) setTeeLink(d.bookingLinks[0].url);
+      }).catch(() => {});
+  }, [clubId, matchDate]);
+
+  if (!weather && !teeLink) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 mt-1.5">
+      {weather && (
+        <span className="inline-flex items-center gap-1.5 text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+          <CloudSun className="w-3 h-3" />
+          {weather.desc} {weather.temp != null && `${weather.temp}\u00b0C`}
+          {weather.rain != null && <span className="text-blue-500">💧 {weather.rain}mm</span>}
+          {weather.wind != null && <span className="text-gray-500">💨 {weather.wind}km/h</span>}
+        </span>
+      )}
+      {teeLink && (
+        <a href={teeLink} target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] text-green-700 hover:text-green-800 font-medium">
+          <CalendarPlus className="w-3 h-3" /> Book Tee Time <ExternalLink className="w-2.5 h-2.5" />
+        </a>
+      )}
+    </div>
+  );
+}
 
 export default function PlayerDashboard() {
   const { user } = useAuth();
@@ -183,7 +235,12 @@ export default function PlayerDashboard() {
                             {new Date(match.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           </p>
                         )}
-                        {match.venueClub && <p className="text-xs text-gray-400">at {match.venueClub.name}</p>}
+                        {match.venueClub && (
+                          <>
+                            <p className="text-xs text-gray-400">at {match.venueClub.name}</p>
+                            <MatchWeatherTeeTime clubId={match.venueClubId || match.venueClub?.id} matchDate={match.scheduledDate} />
+                          </>
+                        )}
                         {match.roundDeadline && (
                           <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
@@ -203,8 +260,8 @@ export default function PlayerDashboard() {
                           <ClipboardList className="w-3 h-3" /> Enter Scores
                         </button>
                         <button onClick={() => setScheduleModal(match)}
-                          className="text-blue-600 hover:underline text-xs">
-                          Schedule
+                          className="text-blue-600 hover:underline text-xs flex items-center gap-0.5">
+                          <Calendar className="w-3 h-3" /> Schedule
                         </button>
                         {opponent && (
                           <Link to={`/players/${player.id}/head-to-head/${opponent.id}`}
