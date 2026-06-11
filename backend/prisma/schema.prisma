@@ -141,6 +141,10 @@ model User {
   role          UserRole @default(PLAYER)
   isActive      Boolean  @default(true) @map("is_active")
   emailVerified Boolean  @default(false) @map("email_verified")
+  emailVerifyToken  String?  @map("email_verify_token")
+  emailVerifyExpiry DateTime? @map("email_verify_expiry")
+  resetToken        String?  @map("reset_token")
+  resetTokenExpiry  DateTime? @map("reset_token_expiry")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -990,4 +994,18 @@ model VideoHighlight {
   uploadedBy Player? @relation("VideosUploaded", fields: [uploadedById], references: [id])
 
   @@map("video_highlights")
+}
+
+// ── System Settings (admin-configurable) ─────────────────────
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  label     String?
+  category  String   @default("general")
+  isSecret  Boolean  @default(false) @map("is_secret")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }

@@ -1,10 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import CookieConsent from './components/CookieConsent';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/home/HomePage';
 import LoginPage from './pages/login/LoginPage';
 import RegisterPage from './pages/register/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import ProfilePage from './pages/profile/ProfilePage';
 import TournamentsPage from './pages/tournaments/TournamentsPage';
 import TournamentDetailPage from './pages/tournament-detail/TournamentDetailPage';
 import LiveDrawPage from './pages/live-draw/LiveDrawPage';
@@ -14,6 +20,7 @@ import CreateTournament from './pages/admin/CreateTournament';
 import SponsorManagement from './pages/admin/SponsorManagement';
 import PricingManagement from './pages/admin/PricingManagement';
 import ClubManagement from './pages/admin/ClubManagement';
+import SettingsPage from './pages/admin/SettingsPage';
 import ClubPortal from './pages/club-portal/ClubPortal';
 import ClubPublicPage from './pages/club-public/ClubPublicPage';
 import MarketplacePage from './pages/marketplace/MarketplacePage';
@@ -31,6 +38,9 @@ import QRCheckInPage from './pages/checkin/QRCheckInPage';
 import ReferralPage from './pages/referral/ReferralPage';
 import CourseGalleryPage from './pages/gallery/CourseGalleryPage';
 import TournamentProgrammePage from './pages/programme/TournamentProgrammePage';
+import TermsPage from './pages/legal/TermsPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import NotFoundPage from './pages/errors/NotFoundPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -53,88 +63,110 @@ function AppRoutes() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/tournaments" element={<TournamentsPage />} />
-          <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
-          <Route path="/draws/:tournamentId/live" element={<LiveDrawPage />} />
-          <Route path="/rankings" element={<LeaderboardPage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/clubs/:slug" element={<ClubPublicPage />} />
-          <Route path="/clubs/:slug/scorecard" element={<ScorecardPage />} />
-          <Route path="/league/:tournamentId" element={<LeagueTablePage />} />
-          <Route path="/match/:matchId/live" element={<LiveMatchPage />} />
-          <Route path="/players/:playerId/stats" element={<PlayerStatsPage />} />
-          <Route path="/players/:playerId/head-to-head/:opponentId" element={<HeadToHeadPage />} />
-          <Route path="/my-stats" element={
-            <ProtectedRoute>
-              <PlayerStatsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/feed" element={<SocialFeedPage />} />
-          <Route path="/match/:matchId/chat" element={
-            <ProtectedRoute>
-              <MatchChatPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/match/:matchId/checkin" element={
-            <ProtectedRoute>
-              <QRCheckInPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/referral" element={
-            <ProtectedRoute>
-              <ReferralPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/clubs/:clubId/gallery" element={<CourseGalleryPage />} />
-          <Route path="/tournaments/:tournamentId/programme" element={<TournamentProgrammePage />} />
-          <Route path="/marketplace" element={<MarketplacePage />} />
-          <Route path="/membership" element={<MembershipPage />} />
-          <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/tournaments" element={<TournamentsPage />} />
+            <Route path="/tournaments/:id" element={<TournamentDetailPage />} />
+            <Route path="/draws/:tournamentId/live" element={<LiveDrawPage />} />
+            <Route path="/rankings" element={<LeaderboardPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/clubs/:slug" element={<ClubPublicPage />} />
+            <Route path="/clubs/:slug/scorecard" element={<ScorecardPage />} />
+            <Route path="/league/:tournamentId" element={<LeagueTablePage />} />
+            <Route path="/match/:matchId/live" element={<LiveMatchPage />} />
+            <Route path="/players/:playerId/stats" element={<PlayerStatsPage />} />
+            <Route path="/players/:playerId/head-to-head/:opponentId" element={<HeadToHeadPage />} />
+            <Route path="/my-stats" element={
+              <ProtectedRoute>
+                <PlayerStatsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/feed" element={<SocialFeedPage />} />
+            <Route path="/match/:matchId/chat" element={
+              <ProtectedRoute>
+                <MatchChatPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/match/:matchId/checkin" element={
+              <ProtectedRoute>
+                <QRCheckInPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/referral" element={
+              <ProtectedRoute>
+                <ReferralPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/clubs/:clubId/gallery" element={<CourseGalleryPage />} />
+            <Route path="/tournaments/:tournamentId/programme" element={<TournamentProgrammePage />} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/membership" element={<MembershipPage />} />
+            <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
 
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardRouter />
-            </ProtectedRoute>
-          } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/club-portal" element={
-            <ProtectedRoute roles={['ADMIN', 'CLUB_MANAGER']}>
-              <ClubPortal />
-            </ProtectedRoute>
-          } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardRouter />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/admin" element={
-            <ProtectedRoute roles={['ADMIN']}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/tournaments/new" element={
-            <ProtectedRoute roles={['ADMIN']}>
-              <CreateTournament />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/sponsors" element={
-            <ProtectedRoute roles={['ADMIN']}>
-              <SponsorManagement />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/pricing" element={
-            <ProtectedRoute roles={['ADMIN']}>
-              <PricingManagement />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/clubs" element={
-            <ProtectedRoute roles={['ADMIN']}>
-              <ClubManagement />
-            </ProtectedRoute>
-          } />
-        </Routes>
+            <Route path="/club-portal" element={
+              <ProtectedRoute roles={['ADMIN', 'CLUB_MANAGER']}>
+                <ClubPortal />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/tournaments/new" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <CreateTournament />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/sponsors" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <SponsorManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/pricing" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <PricingManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/clubs" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <ClubManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
+
+            {/* 404 catch-all */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
       <Footer />
+      <CookieConsent />
     </div>
   );
 }

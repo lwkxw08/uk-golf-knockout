@@ -229,6 +229,7 @@ async function sendLeagueFixtureNotification(playerEmail, playerName, tournament
 
 module.exports = {
   sendEmail,
+  emailWrapper,
   sendEntryConfirmation,
   sendDrawNotification,
   sendResultConfirmation,

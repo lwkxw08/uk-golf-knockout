@@ -69,6 +69,34 @@ router.put('/me',
   }
 );
 
+// Avatar upload (stores as data URL for simplicity; replace with S3/R2 in production)
+router.post('/me/avatar',
+  authenticate,
+  async (req, res) => {
+    try {
+      const multer = require('multer');
+      const upload = multer({ limits: { fileSize: 2 * 1024 * 1024 } }).single('avatar');
+
+      upload(req, res, async (err) => {
+        if (err) return res.status(400).json({ error: 'File too large (max 2MB)' });
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+        const base64 = req.file.buffer.toString('base64');
+        const avatarUrl = `data:${req.file.mimetype};base64,${base64}`;
+
+        await prisma.player.update({
+          where: { userId: req.user.id },
+          data: { avatarUrl },
+        });
+
+        res.json({ avatarUrl });
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to upload avatar' });
+    }
+  }
+);
+
 // WHS handicap lookup
 router.get('/whs-lookup/:whsId',
   authenticate,

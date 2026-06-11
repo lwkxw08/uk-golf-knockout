@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
@@ -19,10 +20,36 @@ const io = new Server(server, {
 
 app.set('io', io);
 
-// Middleware
-app.use(helmet({ contentSecurityPolicy: false }));
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+}));
 app.use(cors({ origin: true, credentials: true }));
 app.use(morgan('combined'));
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts, please try again later.' },
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
 
 // Stripe webhook needs raw body — mount before json parser
 const paymentsRouter = require('./routes/payments');
@@ -58,6 +85,8 @@ app.use('/api/calendar', require('./routes/calendar'));
 app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/programme', require('./routes/programme'));
 app.use('/api/video-highlights', require('./routes/videoHighlights'));
+app.use('/api/settings', require('./routes/settings'));
+app.use('/api/search', require('./routes/search'));
 
 // Health check
 app.get('/api/health', (req, res) => {
