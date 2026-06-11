@@ -337,13 +337,14 @@ export default function PlayerDashboard() {
                 {completedMatches.map(match => {
                   const opponent = match.playerAId === player.id ? match.playerB : match.playerA;
                   const won = match.winnerId === player.id;
+                  const halved = !match.winnerId;
                   return (
                     <tr key={match.id} className="border-b last:border-0">
                       <td className="py-2">{match.tournament.name}</td>
                       <td className="py-2">{opponent ? `${opponent.firstName} ${opponent.lastName}` : 'N/A'}</td>
                       <td className="py-2">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${won ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {won ? 'Won' : 'Lost'}
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${won ? 'bg-green-100 text-green-700' : halved ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
+                          {won ? 'Won' : halved ? 'Halved' : 'Lost'}
                         </span>
                         {match.result?.resultText && <span className="text-gray-500 ml-2">{match.result.resultText}</span>}
                       </td>
