@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { ShoppingBag, MapPin, Tag } from 'lucide-react';
+import { ShoppingBag, MapPin, Tag, Search, Navigation } from 'lucide-react';
 
 const TYPES = [
   { value: '', label: 'All Offers' },
@@ -11,26 +11,124 @@ const TYPES = [
   { value: 'lesson_package', label: 'Lesson Packages' },
 ];
 
+const RADIUS_OPTIONS = [
+  { value: 5, label: '5 miles' },
+  { value: 10, label: '10 miles' },
+  { value: 25, label: '25 miles' },
+  { value: 50, label: '50 miles' },
+  { value: 100, label: '100 miles' },
+];
+
 export default function MarketplacePage() {
   const [offerings, setOfferings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [postcode, setPostcode] = useState('');
+  const [radius, setRadius] = useState(25);
+  const [postcodeError, setPostcodeError] = useState('');
+  const [activePostcode, setActivePostcode] = useState('');
 
+  const loadOffers = useCallback(async () => {
+    setLoading(true);
+    setPostcodeError('');
+    try {
+      const params = new URLSearchParams();
+      if (typeFilter) params.set('type', typeFilter);
+      if (searchText.trim()) params.set('search', searchText.trim());
+      if (activePostcode) {
+        params.set('postcode', activePostcode);
+        params.set('radius', radius);
+      }
+      const qs = params.toString();
+      const data = await api.get(`/marketplace${qs ? `?${qs}` : ''}`);
+      setOfferings(data.offerings || []);
+    } catch (err) {
+      if (err.message?.includes('Invalid postcode')) {
+        setPostcodeError('Invalid postcode — please check and try again');
+        setOfferings([]);
+      } else {
+        console.error(err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [typeFilter, searchText, activePostcode, radius]);
+
+  useEffect(() => { loadOffers(); }, [typeFilter, activePostcode, radius]);
+
+  // Debounce text search
   useEffect(() => {
-    const params = typeFilter ? `?type=${typeFilter}` : '';
-    api.get(`/marketplace${params}`).then(data => setOfferings(data.offerings || []))
-      .catch(console.error).finally(() => setLoading(false));
-  }, [typeFilter]);
+    const timer = setTimeout(() => loadOffers(), 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
+  const handlePostcodeSearch = (e) => {
+    e.preventDefault();
+    setActivePostcode(postcode.trim());
+  };
+
+  const clearPostcode = () => {
+    setPostcode('');
+    setActivePostcode('');
+    setPostcodeError('');
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3"><ShoppingBag className="w-8 h-8 text-green-700" /> Course Marketplace</h1>
         <p className="text-gray-600 mt-2">Discover green fee discounts, society packages, and special offers from participating clubs.</p>
       </div>
 
+      {/* Search bar */}
+      <div className="bg-white border rounded-xl p-4 mb-6 space-y-3">
+        <div className="flex flex-wrap gap-3">
+          {/* Free text search */}
+          <div className="flex-1 min-w-[200px] relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search offers, clubs, descriptions..."
+              className="w-full border rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+            />
+          </div>
+
+          {/* Postcode search */}
+          <form onSubmit={handlePostcodeSearch} className="flex gap-2 items-center">
+            <div className="relative">
+              <Navigation className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={postcode}
+                onChange={(e) => setPostcode(e.target.value.toUpperCase())}
+                placeholder="Postcode (e.g. HP9 2SE)"
+                className="border rounded-lg pl-9 pr-3 py-2 text-sm w-44 focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <select value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="border rounded-lg px-2 py-2 text-sm">
+              {RADIUS_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+            <button type="submit" className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              Search
+            </button>
+            {activePostcode && (
+              <button type="button" onClick={clearPostcode} className="text-sm text-gray-500 hover:text-red-600 transition">
+                Clear
+              </button>
+            )}
+          </form>
+        </div>
+
+        {activePostcode && !postcodeError && (
+          <p className="text-xs text-green-700">Showing offers within {radius} miles of {activePostcode}</p>
+        )}
+        {postcodeError && <p className="text-xs text-red-600">{postcodeError}</p>}
+      </div>
+
+      {/* Type filter */}
       <div className="flex flex-wrap gap-2 mb-6">
         {TYPES.map(t => (
           <button key={t.value} onClick={() => setTypeFilter(t.value)}
@@ -40,7 +138,11 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      {offerings.length > 0 ? (
+      {loading ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />)}
+        </div>
+      ) : offerings.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {offerings.map(o => (
             <div key={o.id} className="bg-white border rounded-xl overflow-hidden hover:shadow-md transition">
@@ -61,6 +163,9 @@ export default function MarketplacePage() {
                   <MapPin className="w-3 h-3" /> {o.club.name}
                   {o.club.city && <span className="text-gray-400">— {o.club.city}</span>}
                 </Link>
+                {o.distance != null && (
+                  <p className="text-xs text-blue-600 mt-1">{o.distance.toFixed(1)} miles away</p>
+                )}
                 <div className="mt-4 flex items-end gap-2">
                   <span className="text-2xl font-bold text-green-700">&pound;{((o.pricePence || 0) / 100).toFixed(2)}</span>
                   {o.originalPricePence > o.pricePence && (
@@ -75,8 +180,10 @@ export default function MarketplacePage() {
       ) : (
         <div className="text-center py-16 text-gray-500">
           <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="font-medium">No offers available yet</p>
-          <p className="text-sm mt-1">Check back soon for deals from participating clubs.</p>
+          <p className="font-medium">No offers found</p>
+          <p className="text-sm mt-1">
+            {searchText || activePostcode ? 'Try adjusting your search or expanding the radius.' : 'Check back soon for deals from participating clubs.'}
+          </p>
         </div>
       )}
     </div>

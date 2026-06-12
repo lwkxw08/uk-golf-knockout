@@ -4,16 +4,56 @@ const validate = require('../middleware/validate');
 const { authenticate, requireRole } = require('../middleware/auth');
 const prisma = require('../config/prisma');
 
+const { geocodePostcode, haversineDistanceMiles } = require('../services/geocodeService');
+
 const router = express.Router();
 
-// Public: list tournaments
+// Public: list tournaments with text search and postcode/radius
 router.get('/', async (req, res) => {
   try {
-    const { status, format, ageCategory, page = 1, limit = 20 } = req.query;
+    const { status, format, ageCategory, search, postcode, radius = 25, page = 1, limit = 20 } = req.query;
     const where = {};
     if (status) where.status = status;
     if (format) where.formatType = format;
     if (ageCategory) where.ageCategory = ageCategory;
+
+    // Free text search
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { season: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Postcode + radius: find tournaments that have entries from clubs near the postcode
+    let userCoords = null;
+    if (postcode) {
+      userCoords = await geocodePostcode(postcode);
+      if (!userCoords) {
+        return res.status(400).json({ error: 'Invalid postcode' });
+      }
+    }
+
+    if (userCoords) {
+      // Find clubs within radius
+      const allClubs = await prisma.club.findMany({
+        where: { latitude: { not: null }, longitude: { not: null } },
+        select: { id: true, latitude: true, longitude: true },
+      });
+
+      const radiusMiles = Number(radius);
+      const nearbyClubIds = allClubs
+        .filter(c => haversineDistanceMiles(userCoords.latitude, userCoords.longitude, Number(c.latitude), Number(c.longitude)) <= radiusMiles)
+        .map(c => c.id);
+
+      if (nearbyClubIds.length === 0) {
+        return res.json({ tournaments: [], total: 0, page: 1, totalPages: 0 });
+      }
+
+      // Find tournaments that have entries from these clubs
+      where.entries = { some: { clubId: { in: nearbyClubIds } } };
+    }
 
     const [tournaments, total] = await Promise.all([
       prisma.tournament.findMany({
@@ -23,15 +63,16 @@ router.get('/', async (req, res) => {
           pricing: { where: { isActive: true, feeType: 'ENTRY_FEE' }, take: 1 },
           stages: { select: { id: true, name: true, isLeague: true } },
         },
-        skip: (page - 1) * limit,
+        skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
         orderBy: { createdAt: 'desc' },
       }),
       prisma.tournament.count({ where }),
     ]);
 
-    res.json({ tournaments, total, page: Number(page), totalPages: Math.ceil(total / limit) });
+    res.json({ tournaments, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
   } catch (err) {
+    console.error('Tournament list error:', err);
     res.status(500).json({ error: 'Failed to fetch tournaments' });
   }
 });
@@ -251,15 +292,19 @@ router.put('/:id',
   validate,
   async (req, res) => {
     try {
+      const dateFields = ['registrationOpens', 'registrationDeadline', 'startDate', 'endDate'];
       const allowedFields = [
-        'name', 'description', 'rulesText', 'status', 'enableLeaderboard',
-        'registrationOpens', 'registrationDeadline', 'startDate', 'endDate',
-        'bannerUrl',
+        'name', 'slug', 'season', 'description', 'rulesText', 'status',
+        'formatType', 'scoringSystem', 'teamSize', 'isKnockout',
+        'handicapAllowancePct', 'maxHandicap',
+        'ageCategory', 'genderCategory', 'minAge', 'maxAge',
+        'enableLeaderboard', 'bannerUrl',
+        ...dateFields,
       ];
       const data = {};
       for (const f of allowedFields) {
         if (req.body[f] !== undefined) {
-          if (['registrationOpens', 'registrationDeadline', 'startDate', 'endDate'].includes(f)) {
+          if (dateFields.includes(f)) {
             data[f] = req.body[f] ? new Date(req.body[f]) : null;
           } else {
             data[f] = req.body[f];

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import KnockoutBracket from '../../components/bracket/KnockoutBracket';
-import { Trophy, Calendar, Users, MapPin, Award, Eye, Clock, RefreshCw, Play, Shuffle, FileText, CalendarPlus, Camera } from 'lucide-react';
+import { Trophy, Calendar, Users, MapPin, Award, Eye, Clock, RefreshCw, Play, Shuffle, FileText, CalendarPlus, Camera, Pencil } from 'lucide-react';
 import SponsorBanner from '../../components/sponsors/SponsorBanner';
 
 export default function TournamentDetailPage() {
@@ -170,6 +170,12 @@ export default function TournamentDetailPage() {
               className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 transition">
               <CalendarPlus className="w-4 h-4" /> Calendar
             </a>
+            {user?.role === 'ADMIN' && (
+              <Link to={`/admin/tournaments/${id}/edit`}
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 transition">
+                <Pencil className="w-4 h-4" /> Edit
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -22,6 +22,7 @@ import PricingManagement from './pages/admin/PricingManagement';
 import ClubManagement from './pages/admin/ClubManagement';
 import SettingsPage from './pages/admin/SettingsPage';
 import UserManagement from './pages/admin/UserManagement';
+import EditTournament from './pages/admin/EditTournament';
 import ClubPortal from './pages/club-portal/ClubPortal';
 import ClubPublicPage from './pages/club-public/ClubPublicPage';
 import MarketplacePage from './pages/marketplace/MarketplacePage';
@@ -163,6 +164,11 @@ function AppRoutes() {
             <Route path="/admin/users" element={
               <ProtectedRoute roles={['ADMIN']}>
                 <UserManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/tournaments/:id/edit" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <EditTournament />
               </ProtectedRoute>
             } />
 
