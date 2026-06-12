@@ -1,24 +1,67 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
 const config = require('./config');
+const { validateEnv } = require('./config/validateEnv');
 const { startDrawScheduler } = require('./services/drawScheduler');
 const { startNotificationScheduler } = require('./services/notificationScheduler');
+
+// Validate environment variables
+const envStatus = validateEnv();
+
+// Sentry error monitoring (if configured)
+let Sentry = null;
+if (config.sentry.dsn) {
+  Sentry = require('@sentry/node');
+  Sentry.init({
+    dsn: config.sentry.dsn,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0.1,
+  });
+}
+
+// Pino structured logging
+const pino = require('pino');
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV !== 'production'
+    ? { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:HH:MM:ss' } }
+    : undefined,
+});
 
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io for live draws
+// Socket.io with optional Redis adapter
 const io = new Server(server, {
-  cors: { origin: config.clientUrl, methods: ['GET', 'POST'] },
+  cors: { origin: true, methods: ['GET', 'POST'] },
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
+// Redis adapter for multi-instance WebSocket support
+if (config.redis.url) {
+  const { createAdapter } = require('@socket.io/redis-adapter');
+  const { Redis } = require('ioredis');
+  const pubClient = new Redis(config.redis.url);
+  const subClient = pubClient.duplicate();
+  Promise.all([
+    new Promise(r => pubClient.on('ready', r)),
+    new Promise(r => subClient.on('ready', r)),
+  ]).then(() => {
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('Socket.io Redis adapter connected');
+  }).catch(err => {
+    logger.warn({ err: err.message }, 'Redis adapter failed — falling back to in-memory');
+  });
+}
+
 app.set('io', io);
+app.set('logger', logger);
 
 // Security middleware
 app.use(helmet({
@@ -27,11 +70,22 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true },
 }));
 app.use(cors({ origin: true, credentials: true }));
-app.use(morgan('combined'));
+
+// Structured request logging
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path.startsWith('/api')) {
+      logger.info({ method: req.method, path: req.path, status: res.statusCode, duration: `${duration}ms` });
+    }
+  });
+  next();
+});
 
 // Rate limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
@@ -88,29 +142,46 @@ app.use('/api/video-highlights', require('./routes/videoHighlights'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/search', require('./routes/search'));
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Enhanced health check
+app.get('/api/health', async (req, res) => {
+  const prisma = require('./config/prisma');
+  let dbStatus = 'unknown';
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+  } catch {
+    dbStatus = 'disconnected';
+  }
+
+  res.json({
+    status: dbStatus === 'connected' ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    services: {
+      database: dbStatus,
+      stripe: envStatus.hasStripe ? 'configured' : 'not configured',
+      email: envStatus.hasSendGrid ? 'configured' : 'not configured',
+      storage: envStatus.hasR2 ? 'configured' : 'fallback (base64)',
+      websockets: envStatus.hasRedis ? 'redis adapter' : 'in-memory',
+      monitoring: envStatus.hasSentry ? 'sentry' : 'console only',
+    },
+  });
 });
 
 // Socket.io connections
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
+  logger.debug({ socketId: socket.id }, 'Client connected');
 
-  // Join draw room for live updates
   socket.on('draw:join', (tournamentId) => {
     socket.join(`draw-${tournamentId}`);
-    console.log(`${socket.id} joined draw room: draw-${tournamentId}`);
   });
 
   socket.on('draw:leave', (tournamentId) => {
     socket.leave(`draw-${tournamentId}`);
   });
 
-  // Join live match room for real-time hole-by-hole updates
   socket.on('match:join', (matchId) => {
     socket.join(`match-${matchId}`);
-    console.log(`${socket.id} joined match room: match-${matchId}`);
   });
 
   socket.on('match:leave', (matchId) => {
@@ -118,7 +189,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    logger.debug({ socketId: socket.id }, 'Client disconnected');
   });
 });
 
@@ -132,12 +203,24 @@ app.get('{*splat}', (req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error({ err: err.message, stack: err.stack, path: req.path });
+  if (Sentry) Sentry.captureException(err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received — shutting down gracefully');
+  server.close(() => {
+    logger.info('Server closed');
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000);
+});
+
 server.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+  logger.info({ port: config.port }, 'Server running');
+  logger.info({ ...envStatus }, 'Service status');
   startDrawScheduler(io);
   startNotificationScheduler();
 });

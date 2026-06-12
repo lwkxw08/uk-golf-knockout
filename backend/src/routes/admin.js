@@ -532,4 +532,206 @@ router.delete('/subscription-tiers/:id',
   }
 );
 
+// ─── USER MANAGEMENT ─────────────────────────────────────────────────────────
+
+// List all users with filtering
+router.get('/users',
+  authenticate,
+  requireRole('ADMIN'),
+  async (req, res) => {
+    try {
+      const { page = 1, limit = 50, role, search, status } = req.query;
+
+      const where = {};
+      if (role) where.role = role;
+      if (status === 'active') where.isActive = true;
+      if (status === 'suspended') where.isActive = false;
+      if (search) {
+        where.OR = [
+          { email: { contains: search, mode: 'insensitive' } },
+          { player: { firstName: { contains: search, mode: 'insensitive' } } },
+          { player: { lastName: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
+
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            isActive: true,
+            emailVerified: true,
+            createdAt: true,
+            updatedAt: true,
+            player: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                handicapIndex: true,
+                homeClub: { select: { name: true } },
+              },
+            },
+            clubManager: {
+              select: {
+                id: true,
+                club: { select: { id: true, name: true } },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: (Number(page) - 1) * Number(limit),
+          take: Number(limit),
+        }),
+        prisma.user.count({ where }),
+      ]);
+
+      res.json({ users, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
+    } catch (err) {
+      console.error('User list error:', err);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  }
+);
+
+// Get single user detail
+router.get('/users/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.params.id },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          isActive: true,
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+          player: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              handicapIndex: true,
+              whsHandicapId: true,
+              phone: true,
+              dateOfBirth: true,
+              rankingPoints: true,
+              avatarUrl: true,
+              homeClub: { select: { id: true, name: true } },
+            },
+          },
+          clubManager: {
+            select: {
+              id: true,
+              club: { select: { id: true, name: true } },
+            },
+          },
+        },
+      });
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      res.json(user);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch user' });
+    }
+  }
+);
+
+// Suspend user
+router.post('/users/:id/suspend',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      if (req.params.id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot suspend yourself' });
+      }
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: { isActive: false },
+        select: { id: true, email: true, isActive: true },
+      });
+      res.json({ message: 'User suspended', user });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to suspend user' });
+    }
+  }
+);
+
+// Reactivate user
+router.post('/users/:id/reactivate',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: { isActive: true },
+        select: { id: true, email: true, isActive: true },
+      });
+      res.json({ message: 'User reactivated', user });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to reactivate user' });
+    }
+  }
+);
+
+// Change user role
+router.post('/users/:id/role',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  body('role').isIn(['PLAYER', 'CLUB_MANAGER', 'ADMIN']),
+  validate,
+  async (req, res) => {
+    try {
+      if (req.params.id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot change your own role' });
+      }
+      const user = await prisma.user.update({
+        where: { id: req.params.id },
+        data: { role: req.body.role },
+        select: { id: true, email: true, role: true },
+      });
+      res.json({ message: 'Role updated', user });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to update role' });
+    }
+  }
+);
+
+// Delete user (soft — just deactivate, or hard delete if no data)
+router.delete('/users/:id',
+  authenticate,
+  requireRole('ADMIN'),
+  param('id').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      if (req.params.id === req.user.id) {
+        return res.status(400).json({ error: 'Cannot delete yourself' });
+      }
+      // Soft delete — deactivate
+      await prisma.user.update({
+        where: { id: req.params.id },
+        data: { isActive: false },
+      });
+      res.json({ message: 'User deactivated' });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to delete user' });
+    }
+  }
+);
+
 module.exports = router;

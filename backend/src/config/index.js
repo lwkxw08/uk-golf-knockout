@@ -18,6 +18,13 @@ module.exports = {
     secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
     endpoint: process.env.CLOUDFLARE_R2_ENDPOINT_URL,
     bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL,
+  },
+  redis: {
+    url: process.env.REDIS_URL,
+  },
+  sentry: {
+    dsn: process.env.SENTRY_DSN,
   },
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   courseDataProvider: process.env.COURSE_DATA_PROVIDER || 'golfcourseapi',

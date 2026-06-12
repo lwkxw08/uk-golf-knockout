@@ -69,23 +69,26 @@ router.put('/me',
   }
 );
 
-// Avatar upload (stores as data URL for simplicity; replace with S3/R2 in production)
+// Avatar upload (uses R2 in production, base64 fallback in dev)
 router.post('/me/avatar',
   authenticate,
   async (req, res) => {
     try {
       const multer = require('multer');
+      const { uploadAvatar } = require('../services/uploadService');
       const upload = multer({ limits: { fileSize: 2 * 1024 * 1024 } }).single('avatar');
 
       upload(req, res, async (err) => {
         if (err) return res.status(400).json({ error: 'File too large (max 2MB)' });
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-        const base64 = req.file.buffer.toString('base64');
-        const avatarUrl = `data:${req.file.mimetype};base64,${base64}`;
+        const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
+        if (!player) return res.status(404).json({ error: 'Player not found' });
+
+        const avatarUrl = await uploadAvatar(req.file, player.id);
 
         await prisma.player.update({
-          where: { userId: req.user.id },
+          where: { id: player.id },
           data: { avatarUrl },
         });
 

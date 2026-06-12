@@ -44,6 +44,7 @@ export default function Navbar() {
                       <Link to="/admin/sponsors" className="block px-4 py-2 hover:bg-gray-100 text-sm">Sponsors</Link>
                       <Link to="/admin/pricing" className="block px-4 py-2 hover:bg-gray-100 text-sm">Pricing</Link>
                       <Link to="/admin/clubs" className="block px-4 py-2 hover:bg-gray-100 text-sm">Clubs</Link>
+                      <Link to="/admin/users" className="block px-4 py-2 hover:bg-gray-100 text-sm">Users</Link>
                       <Link to="/admin/settings" className="block px-4 py-2 hover:bg-gray-100 text-sm">Settings</Link>
                       <Link to="/club-portal" className="block px-4 py-2 hover:bg-gray-100 text-sm">Club Portal</Link>
                     </div>

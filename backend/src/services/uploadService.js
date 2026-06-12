@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('../config');
 const { v4: uuidv4 } = require('uuid');
@@ -19,6 +19,80 @@ function getS3Client() {
   return s3Client;
 }
 
+function isStorageConfigured() {
+  return !!(config.r2.endpoint && config.r2.accessKeyId && config.r2.secretAccessKey && config.r2.bucketName);
+}
+
+async function uploadFile(file, folder = 'uploads') {
+  const client = getS3Client();
+  if (!client) return null; // fallback to base64
+
+  const ext = file.originalname?.split('.').pop() || 'jpg';
+  const key = `${folder}/${uuidv4()}.${ext}`;
+
+  await client.send(new PutObjectCommand({
+    Bucket: config.r2.bucketName,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+
+  // Return public URL if bucket has public access, otherwise return the key
+  if (config.r2.publicUrl) {
+    return `${config.r2.publicUrl}/${key}`;
+  }
+  return key;
+}
+
+async function uploadAvatar(file, playerId) {
+  const client = getS3Client();
+  if (!client) {
+    // Fallback: store as base64 data URL (dev/no-R2 mode)
+    const base64 = file.buffer.toString('base64');
+    return `data:${file.mimetype};base64,${base64}`;
+  }
+
+  const ext = file.originalname?.split('.').pop() || 'jpg';
+  const key = `avatars/${playerId}/${uuidv4()}.${ext}`;
+
+  await client.send(new PutObjectCommand({
+    Bucket: config.r2.bucketName,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    CacheControl: 'public, max-age=31536000',
+  }));
+
+  if (config.r2.publicUrl) {
+    return `${config.r2.publicUrl}/${key}`;
+  }
+  return key;
+}
+
+async function uploadGalleryPhoto(file, clubId) {
+  const client = getS3Client();
+  if (!client) {
+    const base64 = file.buffer.toString('base64');
+    return `data:${file.mimetype};base64,${base64}`;
+  }
+
+  const ext = file.originalname?.split('.').pop() || 'jpg';
+  const key = `gallery/${clubId}/${uuidv4()}.${ext}`;
+
+  await client.send(new PutObjectCommand({
+    Bucket: config.r2.bucketName,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    CacheControl: 'public, max-age=86400',
+  }));
+
+  if (config.r2.publicUrl) {
+    return `${config.r2.publicUrl}/${key}`;
+  }
+  return key;
+}
+
 async function uploadScorecard(file, matchId) {
   const client = getS3Client();
   if (!client) throw new Error('Storage not configured');
@@ -36,7 +110,7 @@ async function uploadScorecard(file, matchId) {
   return key;
 }
 
-async function getScorecardUrl(key) {
+async function getSignedFileUrl(key) {
   const client = getS3Client();
   if (!client) throw new Error('Storage not configured');
 
@@ -48,4 +122,26 @@ async function getScorecardUrl(key) {
   return getSignedUrl(client, command, { expiresIn: 3600 });
 }
 
-module.exports = { uploadScorecard, getScorecardUrl };
+async function deleteFile(key) {
+  const client = getS3Client();
+  if (!client) return;
+
+  await client.send(new DeleteObjectCommand({
+    Bucket: config.r2.bucketName,
+    Key: key,
+  }));
+}
+
+// Alias for backwards compat
+const getScorecardUrl = getSignedFileUrl;
+
+module.exports = {
+  isStorageConfigured,
+  uploadFile,
+  uploadAvatar,
+  uploadGalleryPhoto,
+  uploadScorecard,
+  getScorecardUrl,
+  getSignedFileUrl,
+  deleteFile,
+};

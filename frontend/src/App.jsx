@@ -21,6 +21,7 @@ import SponsorManagement from './pages/admin/SponsorManagement';
 import PricingManagement from './pages/admin/PricingManagement';
 import ClubManagement from './pages/admin/ClubManagement';
 import SettingsPage from './pages/admin/SettingsPage';
+import UserManagement from './pages/admin/UserManagement';
 import ClubPortal from './pages/club-portal/ClubPortal';
 import ClubPublicPage from './pages/club-public/ClubPublicPage';
 import MarketplacePage from './pages/marketplace/MarketplacePage';
@@ -157,6 +158,11 @@ function AppRoutes() {
             <Route path="/admin/settings" element={
               <ProtectedRoute roles={['ADMIN']}>
                 <SettingsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <UserManagement />
               </ProtectedRoute>
             } />
 
