@@ -37,8 +37,8 @@ export default function Navbar() {
               <>
                 {user.role === 'ADMIN' && (
                   <div className="relative group">
-                    <button className="hover:text-green-200 transition text-sm">Admin</button>
-                    <div className="absolute right-0 top-full mt-1 bg-white text-gray-800 rounded-lg shadow-lg py-2 w-48 hidden group-hover:block z-50">
+                    <button className="hover:text-green-200 transition text-sm py-5">Admin</button>
+                    <div className="absolute right-0 top-full bg-white text-gray-800 rounded-lg shadow-lg py-2 w-48 hidden group-hover:block z-50">
                       <Link to="/admin" className="block px-4 py-2 hover:bg-gray-100 text-sm">Dashboard</Link>
                       <Link to="/admin/tournaments/new" className="block px-4 py-2 hover:bg-gray-100 text-sm">New Tournament</Link>
                       <Link to="/admin/sponsors" className="block px-4 py-2 hover:bg-gray-100 text-sm">Sponsors</Link>
@@ -59,10 +59,10 @@ export default function Navbar() {
 
                 {/* Profile dropdown */}
                 <div className="relative group">
-                  <button className="bg-green-700 hover:bg-green-600 p-2 rounded-full transition">
+                  <button className="bg-green-700 hover:bg-green-600 p-2 rounded-full transition my-3">
                     <User className="w-4 h-4" />
                   </button>
-                  <div className="absolute right-0 top-full mt-1 bg-white text-gray-800 rounded-lg shadow-lg py-2 w-44 hidden group-hover:block z-50">
+                  <div className="absolute right-0 top-full bg-white text-gray-800 rounded-lg shadow-lg py-2 w-44 hidden group-hover:block z-50">
                     <p className="px-4 py-1 text-xs text-gray-500 truncate">{user.email}</p>
                     <hr className="my-1" />
                     {user.role === 'PLAYER' && (
