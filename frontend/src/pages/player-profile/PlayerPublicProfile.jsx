@@ -53,57 +53,61 @@ export default function PlayerPublicProfile() {
   if (!profile) return <div className="text-center py-12 text-gray-500">Player not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-6 mb-6">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="relative max-w-4xl mx-auto px-4 py-10">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-2xl font-bold text-green-700 dark:text-green-300 overflow-hidden">
+          <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
             {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" /> : `${profile.firstName[0]}${profile.lastName[0]}`}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.firstName} {profile.lastName}</h1>
+            <h1 className="text-2xl font-extrabold text-white">{profile.firstName} {profile.lastName}</h1>
             {profile.homeClub && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                <MapPin className="w-3 h-3" /> <Link to={`/clubs/${profile.homeClub.slug || profile.homeClub.id}`} className="hover:text-green-600">{profile.homeClub.name}</Link>
+              <p className="text-sm text-green-200 flex items-center gap-1 mt-1">
+                <MapPin className="w-3 h-3" /> <Link to={`/clubs/${profile.homeClub.slug || profile.homeClub.id}`} className="hover:text-white">{profile.homeClub.name}</Link>
               </p>
             )}
-            <div className="flex gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {profile.handicapIndex && <span>Handicap: <strong>{String(profile.handicapIndex)}</strong></span>}
+            <div className="flex gap-4 mt-2 text-sm text-green-200">
+              {profile.handicapIndex && <span>Handicap: <strong className="text-white">{String(profile.handicapIndex)}</strong></span>}
               <span><Calendar className="w-3 h-3 inline" /> Member since {new Date(profile.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</span>
             </div>
           </div>
           {user && (
-            <button onClick={handleFollow} className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium ${isFollowing ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-green-700 text-white hover:bg-green-800'}`}>
+            <button onClick={handleFollow} className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-medium ${isFollowing ? 'bg-white/15 text-white' : 'bg-white text-green-800 hover:bg-green-50'}`}>
               {isFollowing ? <><UserMinus className="w-4 h-4" /> Unfollow</> : <><UserPlus className="w-4 h-4" /> Follow</>}
             </button>
           )}
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 pt-6 border-t dark:border-gray-700">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6 pt-6 border-t border-white/20">
           <div className="text-center">
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{profile.stats.matchesPlayed}</p>
-            <p className="text-xs text-gray-500">Matches</p>
+            <p className="text-xl font-bold text-white">{profile.stats.matchesPlayed}</p>
+            <p className="text-xs text-green-200">Matches</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-green-600">{profile.stats.matchesWon}</p>
-            <p className="text-xs text-gray-500">Wins</p>
+            <p className="text-xl font-bold text-green-300">{profile.stats.matchesWon}</p>
+            <p className="text-xs text-green-200">Wins</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{profile.stats.winRate}%</p>
-            <p className="text-xs text-gray-500">Win Rate</p>
+            <p className="text-xl font-bold text-white">{profile.stats.winRate}%</p>
+            <p className="text-xs text-green-200">Win Rate</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{profile.stats.followersCount}</p>
-            <p className="text-xs text-gray-500">Followers</p>
+            <p className="text-xl font-bold text-white">{profile.stats.followersCount}</p>
+            <p className="text-xs text-green-200">Followers</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{profile.stats.followingCount}</p>
-            <p className="text-xs text-gray-500">Following</p>
+            <p className="text-xl font-bold text-white">{profile.stats.followingCount}</p>
+            <p className="text-xs text-green-200">Following</p>
           </div>
+        </div>
         </div>
       </div>
 
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Tabs */}
       <div className="flex gap-4 mb-4 border-b dark:border-gray-700">
         <button onClick={() => setTab('posts')} className={`pb-2 px-1 text-sm font-medium ${tab === 'posts' ? 'border-b-2 border-green-600 text-green-700 dark:text-green-400' : 'text-gray-500'}`}>Posts ({profile.stats.postsCount})</button>
@@ -175,6 +179,7 @@ export default function PlayerPublicProfile() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

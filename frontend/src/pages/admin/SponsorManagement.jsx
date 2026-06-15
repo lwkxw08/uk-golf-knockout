@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
-import { Plus, Edit2, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, Edit2, Trash2, ExternalLink, Megaphone } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function SponsorManagement() {
   const [sponsors, setSponsors] = useState([]);
@@ -44,11 +45,11 @@ export default function SponsorManagement() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Sponsor Management</h1>
-        <button onClick={openCreate} className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"><Plus className="w-4 h-4" /> Add Sponsor</button>
-      </div>
+    <div>
+      <PageHeader title="Sponsor Management" subtitle="Manage sponsor ads and partnerships" icon={Megaphone} gradient="amber" compact
+        actions={<button onClick={openCreate} className="bg-white text-green-800 hover:bg-green-50 px-4 py-2 rounded-lg font-semibold flex items-center gap-2"><Plus className="w-4 h-4" /> Add Sponsor</button>}
+      />
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
       <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
@@ -116,6 +117,7 @@ export default function SponsorManagement() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

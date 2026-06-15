@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { Users, Search, Shield, ShieldOff, UserCheck, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 const ROLES = ['PLAYER', 'CLUB_MANAGER', 'ADMIN'];
 const ROLE_COLORS = {
@@ -75,14 +76,9 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Users className="w-7 h-7 text-green-700" />
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <span className="bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full text-sm">{total} users</span>
-        </div>
-      </div>
+    <div>
+      <PageHeader title="User Management" subtitle={`${total} registered users`} icon={Users} gradient="blue" compact />
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       {success && (
         <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm">{success}</div>
@@ -276,6 +272,7 @@ export default function UserManagement() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

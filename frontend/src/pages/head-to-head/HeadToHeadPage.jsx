@@ -23,9 +23,11 @@ export default function HeadToHeadPage() {
   const { player, opponent, summary, matchDetails, holeAnalysis } = data;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div>
       {/* H2H Header */}
-      <div className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white rounded-xl p-8 mb-6">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900" />
+        <div className="relative max-w-4xl mx-auto px-4 py-10 text-white">
         <div className="flex items-center justify-center gap-2 mb-4">
           <Swords className="w-5 h-5" />
           <h1 className="text-lg font-medium">Head-to-Head Record</h1>
@@ -66,8 +68,10 @@ export default function HeadToHeadPage() {
             <p className="text-blue-200 text-sm">{opponent?.homeClub?.name}</p>
           </div>
         </div>
+        </div>
       </div>
 
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Match History */}
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b bg-gray-50">
@@ -145,6 +149,7 @@ export default function HeadToHeadPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

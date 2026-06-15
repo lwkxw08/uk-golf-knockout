@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { Settings, Save, Eye, EyeOff, Mail, CreditCard, Globe, CheckCircle } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState([]);
@@ -91,11 +92,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="w-7 h-7 text-green-700" />
-        <h1 className="text-2xl font-bold text-gray-900">Platform Settings</h1>
-      </div>
+    <div>
+      <PageHeader title="Platform Settings" subtitle="Configure email, payments, and platform options" icon={Settings} gradient="gray" compact />
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
       {success && (
         <div className="bg-green-50 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm flex items-center gap-2">
@@ -181,6 +180,7 @@ export default function SettingsPage() {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

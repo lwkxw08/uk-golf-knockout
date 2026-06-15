@@ -25,8 +25,9 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+      <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 text-center relative">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
           <p className="text-gray-600 mb-6">
@@ -42,8 +43,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 relative">
         <Link to="/login" className="inline-flex items-center text-sm text-gray-500 hover:text-green-700 mb-6">
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to Login
         </Link>

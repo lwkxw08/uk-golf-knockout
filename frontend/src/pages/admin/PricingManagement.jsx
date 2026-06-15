@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { Plus, Edit2, Trash2, DollarSign } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function PricingManagement() {
   const [pricing, setPricing] = useState([]);
@@ -84,8 +85,9 @@ export default function PricingManagement() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><DollarSign className="w-7 h-7 text-green-700" /> Pricing Management</h1>
+    <div>
+      <PageHeader title="Pricing Management" subtitle="Manage platform pricing and club subscription plans" icon={DollarSign} gradient="green" compact />
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
       {/* Platform Pricing */}
       <div className="mb-10">
@@ -188,6 +190,7 @@ export default function PricingManagement() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

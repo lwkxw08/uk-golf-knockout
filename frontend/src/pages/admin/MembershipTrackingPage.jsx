@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { Users, Clock, AlertTriangle, Settings, RefreshCw, ChevronLeft, ChevronRight, Search, XCircle, Plus } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function MembershipTrackingPage() {
   const [stats, setStats] = useState(null);
@@ -107,21 +108,20 @@ export default function MembershipTrackingPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Membership Tracking</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Monitor player memberships, expiries, and renewals</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={handleSendReminders} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700">
-            <RefreshCw className="w-4 h-4" /> Send Reminders
-          </button>
-          <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-1 text-sm bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700">
-            <Settings className="w-4 h-4" /> Settings
-          </button>
-        </div>
-      </div>
+    <div>
+      <PageHeader title="Membership Tracking" subtitle="Monitor player memberships, expiries, and renewals" icon={Users} gradient="purple" compact
+        actions={
+          <div className="flex gap-2">
+            <button onClick={handleSendReminders} className="flex items-center gap-1 text-sm bg-white text-green-800 px-3 py-2 rounded-lg hover:bg-green-50">
+              <RefreshCw className="w-4 h-4" /> Send Reminders
+            </button>
+            <button onClick={() => setShowSettings(!showSettings)} className="flex items-center gap-1 text-sm bg-white/15 text-white px-3 py-2 rounded-lg hover:bg-white/25">
+              <Settings className="w-4 h-4" /> Settings
+            </button>
+          </div>
+        }
+      />
+      <div className="max-w-7xl mx-auto p-4 md:p-6">
 
       {msg && <div className={`mb-4 px-4 py-2 rounded text-sm ${msg.includes('Failed') ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'}`}>{msg}</div>}
 
@@ -303,6 +303,7 @@ export default function MembershipTrackingPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { Shield, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState([]);
@@ -59,12 +60,9 @@ export default function AuditLogPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield className="w-8 h-8 text-green-700 dark:text-green-400" />
-        <h1 className="text-2xl font-bold dark:text-white">Audit Log</h1>
-        <span className="text-sm text-gray-500 dark:text-gray-400">({total} entries)</span>
-      </div>
+    <div>
+      <PageHeader title="Audit Log" subtitle={`${total} logged events`} icon={Shield} gradient="red" compact />
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-6">
@@ -176,6 +174,7 @@ export default function AuditLogPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

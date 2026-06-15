@@ -78,9 +78,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8">
-        <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 relative py-12">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="w-full max-w-md relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 p-8">
+        <h1 className="text-2xl font-extrabold text-center text-gray-900 dark:text-white mb-2">
           {isClub ? 'Register Your Club' : 'Create Account'}
         </h1>
 
@@ -200,6 +202,7 @@ export default function RegisterPage() {
             Already have an account? <a href="/login" className="text-green-700 hover:underline font-medium">Log in</a>
           </p>
         )}
+      </div>
       </div>
     </div>
   );

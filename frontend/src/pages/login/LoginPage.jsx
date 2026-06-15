@@ -26,46 +26,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 bg-gray-50">
-      <div className="w-full max-w-md">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="absolute inset-0 opacity-30" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2316a34a' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }} />
+      <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <Trophy className="w-12 h-12 text-green-700 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">Sign In</h1>
-          <p className="text-gray-600 mt-1">Welcome back to UK Golf Knockout</p>
+          <div className="w-16 h-16 bg-green-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-700/30">
+            <Trophy className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Sign In</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back to UK Golf Knockout</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-xl border p-8 space-y-5">
-          {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border dark:border-gray-700 p-8 space-y-5">
+          {error && <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
               type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
             <input
               type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition"
             />
           </div>
 
           <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-sm text-green-700 hover:underline">Forgot password?</Link>
+            <Link to="/forgot-password" className="text-sm text-green-700 dark:text-green-400 hover:underline">Forgot password?</Link>
           </div>
 
           <button
             type="submit" disabled={loading}
-            className="w-full bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+            className="w-full bg-green-700 hover:bg-green-800 text-white py-3 rounded-xl font-semibold transition disabled:opacity-50 shadow-lg shadow-green-700/20"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
 
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account? <Link to="/register" className="text-green-700 font-medium hover:underline">Register</Link>
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            Don't have an account? <Link to="/register" className="text-green-700 dark:text-green-400 font-semibold hover:underline">Register</Link>
           </p>
         </form>
       </div>

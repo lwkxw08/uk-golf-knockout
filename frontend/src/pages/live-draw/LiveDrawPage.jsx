@@ -131,11 +131,12 @@ export default function LiveDrawPage() {
   const scheduledTime = draw ? new Date(draw.scheduledAt) : null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white rounded-xl p-8 mb-8 text-center relative overflow-hidden">
+      <div className="relative overflow-hidden text-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22rgba(255%2C255%2C255%2C0.05)%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
-        <div className="relative">
+        <div className="relative max-w-5xl mx-auto px-4 py-10">
           <Eye className="w-12 h-12 mx-auto mb-4 text-blue-300" />
           <h1 className="text-3xl font-bold mb-2">
             {isLeague ? 'Live League Draw' : 'Live Draw'}
@@ -149,6 +150,7 @@ export default function LiveDrawPage() {
         </div>
       </div>
 
+      <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Status Indicators */}
       {status === 'waiting' && countdown && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center mb-8">
@@ -249,6 +251,7 @@ export default function LiveDrawPage() {
       {!isLeague && matches.length === 0 && Object.keys(weekFixtures).length === 0 && status === 'live' && (
         <p className="text-gray-500 text-center py-8 animate-pulse">Waiting for fixtures to be revealed...</p>
       )}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { Crown, Check, Star } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function MembershipPage() {
   const { user } = useAuth();
@@ -76,12 +77,9 @@ export default function MembershipPage() {
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <Crown className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Player Membership</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Join the UK Golf Knockout Network and compete nationally.</p>
-      </div>
+    <div>
+      <PageHeader title="Player Membership" subtitle="Join the UK Golf Knockout Network and compete nationally" icon={Crown} gradient="amber" compact />
+      <div className="max-w-3xl mx-auto px-4 py-10">
 
       {/* Expired — renew prompt */}
       {isExpired && membership?.hasMembership === false && (
@@ -149,6 +147,7 @@ export default function MembershipPage() {
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">Secure payment via Stripe. Cancel anytime.</p>
+      </div>
     </div>
   );
 }

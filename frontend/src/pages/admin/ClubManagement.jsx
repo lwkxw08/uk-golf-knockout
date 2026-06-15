@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { MapPin, Plus, Pencil, X, ChevronDown, ChevronUp } from 'lucide-react';
 import CourseSearch from '../../components/ui/CourseSearch';
+import PageHeader from '../../components/layout/PageHeader';
 
 // Map API county/state codes to region names for auto-matching
 const COUNTY_REGION_MAP = {
@@ -63,13 +64,11 @@ export default function ClubManagement() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Club Management</h1>
-        <button onClick={() => setModal('create')} className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-          <Plus className="w-4 h-4" /> Add Club
-        </button>
-      </div>
+    <div>
+      <PageHeader title="Club Management" subtitle="Manage affiliated golf clubs" icon={MapPin} gradient="teal" compact
+        actions={<button onClick={() => setModal('create')} className="bg-white text-green-800 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition"><Plus className="w-4 h-4" /> Add Club</button>}
+      />
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       <div className="bg-white border rounded-xl overflow-hidden">
         <table className="w-full text-sm">
@@ -127,6 +126,7 @@ export default function ClubManagement() {
           onSaved={() => { setModal(null); refreshClubs(); }}
         />
       )}
+      </div>
     </div>
   );
 }

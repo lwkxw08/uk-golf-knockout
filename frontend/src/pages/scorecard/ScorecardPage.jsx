@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
+import PageHeader from '../../components/layout/PageHeader';
 import { ArrowLeft, MapPin } from 'lucide-react';
 
 export default function ScorecardPage() {
@@ -30,15 +31,11 @@ export default function ScorecardPage() {
   const sum = (arr, key) => arr.reduce((s, h) => s + (h[key] || 0), 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <Link to={`/clubs/${slug}`} className="text-green-700 hover:underline text-sm flex items-center gap-1 mb-6">
-        <ArrowLeft className="w-4 h-4" /> Back to {club.name}
-      </Link>
-
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">{club.name}</h1>
-        <p className="text-gray-500 text-sm">Course Scorecard</p>
-      </div>
+    <div>
+      <PageHeader title={club.name} subtitle="Course Scorecard" icon={ArrowLeft} gradient="green" compact
+        breadcrumbs={[{ label: 'Clubs', to: '/clubs' }, { label: club.name, to: `/clubs/${slug}` }, { label: 'Scorecard' }]}
+      />
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       {(!club.tees || club.tees.length === 0) ? (
         <div className="bg-gray-50 border rounded-xl p-8 text-center">
@@ -143,6 +140,7 @@ export default function ScorecardPage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -87,9 +87,11 @@ export default function LiveMatchPage() {
   const isLive = match.status === 'IN_PROGRESS';
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div>
       {/* Match Header */}
-      <div className={`rounded-xl p-6 mb-6 ${isLive ? 'bg-gradient-to-r from-red-700 to-red-900' : 'bg-gradient-to-r from-green-800 to-green-900'} text-white`}>
+      <div className={`relative overflow-hidden ${isLive ? '' : ''}`}>
+        <div className={`absolute inset-0 ${isLive ? 'bg-gradient-to-br from-red-900 via-red-800 to-red-900' : 'bg-gradient-to-br from-green-900 via-green-800 to-emerald-900'}`} />
+        <div className="relative max-w-4xl mx-auto px-4 py-8 text-white">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             {isLive && (
@@ -145,8 +147,10 @@ export default function LiveMatchPage() {
             </span>
           )}
         </div>
+        </div>
       </div>
 
+      <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hole-by-Hole Scorecard */}
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
@@ -285,6 +289,7 @@ export default function LiveMatchPage() {
 
       {/* Sponsor Banner */}
       <SponsorBanner placement="match_page" tournamentId={match.tournamentId} matchId={matchId} className="mt-4" />
+      </div>
     </div>
   );
 }

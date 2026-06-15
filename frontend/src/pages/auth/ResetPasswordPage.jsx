@@ -36,8 +36,9 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+      <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 text-center relative">
           <h1 className="text-xl font-bold text-red-600 mb-4">Invalid Reset Link</h1>
           <p className="text-gray-600 mb-6">This password reset link is invalid or has expired.</p>
           <Link to="/forgot-password" className="text-green-700 hover:underline font-medium">
@@ -50,8 +51,9 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+      <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 text-center relative">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Reset</h1>
           <p className="text-gray-600 mb-6">Your password has been successfully reset.</p>
@@ -64,10 +66,11 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 relative">
         <div className="flex items-center gap-3 mb-6">
-          <div className="bg-green-100 p-3 rounded-full">
+          <div className="bg-green-100 dark:bg-green-900 p-3 rounded-full">
             <Lock className="w-6 h-6 text-green-700" />
           </div>
           <div>

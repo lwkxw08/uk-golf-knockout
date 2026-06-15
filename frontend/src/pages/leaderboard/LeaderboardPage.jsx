@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { BarChart3, Trophy } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState(null);
@@ -44,8 +45,9 @@ export default function LeaderboardPage() {
   }, [selectedTournament, tournaments]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3 mb-6"><BarChart3 className="w-8 h-8 text-green-700" /> Overall Leaderboard</h1>
+    <div>
+      <PageHeader title="Leaderboard" subtitle="Rankings and standings across all competitions" icon={BarChart3} gradient="blue" compact />
+      <div className="max-w-5xl mx-auto px-4 py-8">
 
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         {!isLeague && (
@@ -70,6 +72,7 @@ export default function LeaderboardPage() {
           {tab === 'rankings' && <RankingsTable />}
         </>
       )}
+      </div>
     </div>
   );
 }

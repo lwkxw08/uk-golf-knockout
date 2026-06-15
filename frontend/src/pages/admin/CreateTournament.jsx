@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { Trophy, Plus, X, ChevronRight } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 const FORMAT_OPTIONS = [
   { value: 'SINGLES_MATCHPLAY', label: 'Singles Matchplay' },
@@ -198,11 +199,9 @@ export default function CreateTournament() {
   const label = 'block text-sm font-medium text-gray-700 mb-1';
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Trophy className="w-8 h-8 text-green-700" />
-        <h1 className="text-2xl font-bold text-gray-900">Create Tournament</h1>
-      </div>
+    <div>
+      <PageHeader title="Create Tournament" subtitle="Set up a new tournament competition" icon={Trophy} gradient="green" compact />
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
       {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg mb-6">{error}</div>}
 
@@ -642,6 +641,7 @@ export default function CreateTournament() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { QrCode, CheckCircle2, MapPin, Clock, Users, Loader2, Camera, AlertTriangle } from 'lucide-react';
 import { api } from '../../api/client';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function QRCheckInPage() {
   const { matchId } = useParams();
@@ -102,15 +103,9 @@ export default function QRCheckInPage() {
   if (loading) return <div className="flex items-center justify-center h-screen text-gray-500"><Loader2 className="w-6 h-6 animate-spin" /></div>;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-          <QrCode className="w-8 h-8 text-green-700" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900">Match Check-In</h1>
-        <p className="text-sm text-gray-500 mt-1">Confirm your arrival at the club</p>
-      </div>
+    <div>
+      <PageHeader title="Match Check-In" subtitle="QR code check-in for matches" icon={QrCode} gradient="blue" compact />
+      <div className="max-w-lg mx-auto px-4 py-6">
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
@@ -239,6 +234,7 @@ export default function QRCheckInPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

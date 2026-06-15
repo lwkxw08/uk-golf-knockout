@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
+import PageHeader from '../../components/layout/PageHeader';
 import { User, Search, Camera, Lock, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -152,8 +153,9 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">My Profile</h1>
+    <div>
+      <PageHeader title="My Profile" subtitle="Update your details, handicap, and preferences" icon={User} gradient="green" compact />
+      <div className="max-w-3xl mx-auto px-4 py-8">
 
       {/* Email verification banner */}
       {user && !user.emailVerified && (
@@ -378,6 +380,7 @@ export default function ProfilePage() {
           </button>
         </form>
       )}
+      </div>
     </div>
   );
 }

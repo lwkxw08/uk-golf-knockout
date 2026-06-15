@@ -143,12 +143,15 @@ export default function TournamentDetailPage() {
   const stageLabels = { CLUB_QUALIFIER: 'Club Qualifier', REGIONAL: 'Regional', NATIONAL_FINAL: 'National Final' };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-8">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="absolute inset-0 opacity-10" />
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3"><Trophy className="w-8 h-8" /> {tournament.name}</h1>
+            <h1 className="text-3xl font-extrabold text-white flex items-center gap-3"><Trophy className="w-8 h-8" /> {tournament.name}</h1>
             <div className="flex flex-wrap gap-4 mt-3 text-green-200 text-sm">
               <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {tournament.season}</span>
               <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {tournament._count?.entries || 0} entries</span>
@@ -178,8 +181,10 @@ export default function TournamentDetailPage() {
             )}
           </div>
         </div>
+        </div>
       </div>
 
+      <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="grid md:grid-cols-3 gap-8 mb-8">
         {/* Info */}
         <div className="md:col-span-2 space-y-6">
@@ -589,6 +594,7 @@ export default function TournamentDetailPage() {
 
       {/* Sponsor Banner */}
       <SponsorBanner placement="bracket" tournamentId={id} className="mt-6" />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
+import { Shield } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function PrivacyPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Privacy Policy</h1>
-      <p className="text-sm text-gray-500 mb-8">Last updated: June 2026</p>
+    <div>
+      <PageHeader title="Privacy Policy" subtitle="Last updated: June 2026" icon={Shield} gradient="gray" compact />
+      <div className="max-w-3xl mx-auto px-4 py-10">
 
       <div className="prose prose-green max-w-none space-y-6 text-gray-700">
         <section>
@@ -111,6 +113,7 @@ export default function PrivacyPage() {
 
       <div className="mt-8 pt-6 border-t text-sm text-gray-500">
         See also: <Link to="/terms" className="text-green-700 hover:underline">Terms of Service</Link>
+      </div>
       </div>
     </div>
   );

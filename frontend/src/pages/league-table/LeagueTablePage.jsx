@@ -124,18 +124,21 @@ export default function LeagueTablePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <Link to="/tournaments" className="text-emerald-600 hover:underline text-sm mb-2 block">← Back to Tournaments</Link>
-        <h1 className="text-3xl font-bold text-gray-900">{tournament?.name || 'Regional League'}</h1>
-        <p className="text-gray-600 mt-1">{tournament?.description}</p>
-        <div className="flex gap-4 mt-3 text-sm text-gray-500">
-          <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">Regional League</span>
-          <span>{matchCount} matches per player (3 home / 3 away)</span>
-          <span>Top 4 qualify for National Final</span>
+    <div>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900" />
+        <div className="relative max-w-7xl mx-auto px-4 py-8">
+          <Link to="/tournaments" className="text-green-200 hover:text-white text-sm mb-3 block">← Back to Tournaments</Link>
+          <h1 className="text-3xl font-extrabold text-white">{tournament?.name || 'Regional League'}</h1>
+          <p className="text-green-200 mt-1">{tournament?.description}</p>
+          <div className="flex flex-wrap gap-3 mt-3">
+            <span className="bg-white/15 backdrop-blur text-white px-3 py-1 rounded-lg text-sm font-medium">Regional League</span>
+            <span className="text-green-200 text-sm">{matchCount} matches per player (3 home / 3 away)</span>
+            <span className="text-green-200 text-sm">Top 4 qualify for National Final</span>
+          </div>
         </div>
       </div>
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
       {/* Draw Countdown — next scheduled week */}
       {drawCountdown && (
@@ -276,6 +279,7 @@ export default function LeagueTablePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

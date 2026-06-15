@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { MessageSquare, Heart, Flame, Trophy, Megaphone, Tag, Send, ChevronDown, Clock, MapPin } from 'lucide-react';
 import { api } from '../../api/client';
 import SponsorBanner from '../../components/sponsors/SponsorBanner';
+import PageHeader from '../../components/layout/PageHeader';
 
 const REACTION_ICONS = { like: '👍', clap: '👏', fire: '🔥' };
 
@@ -93,11 +94,9 @@ export default function SocialFeedPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <div className="flex items-center gap-3 mb-6">
-        <MessageSquare className="w-7 h-7 text-green-700" />
-        <h1 className="text-2xl font-bold text-gray-900">Activity Feed</h1>
-      </div>
+    <div>
+      <PageHeader title="Activity Feed" subtitle="Latest matches, results, and announcements" icon={MessageSquare} gradient="green" compact />
+      <div className="max-w-2xl mx-auto px-4 py-6">
 
       {loading && posts.length === 0 ? (
         <div className="text-center py-12 text-gray-500">Loading feed...</div>
@@ -217,6 +216,7 @@ export default function SocialFeedPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

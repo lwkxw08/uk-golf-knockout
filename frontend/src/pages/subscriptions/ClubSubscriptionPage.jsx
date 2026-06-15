@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
+import PageHeader from '../../components/layout/PageHeader';
 import { Building2, Check, Star, Crown } from 'lucide-react';
 
 export default function ClubSubscriptionPage() {
@@ -35,12 +36,9 @@ export default function ClubSubscriptionPage() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <Building2 className="w-12 h-12 text-green-700 mx-auto mb-3" />
-        <h1 className="text-3xl font-bold text-gray-900">Club Subscriptions</h1>
-        <p className="text-gray-600 mt-2">Choose the plan that's right for your club.</p>
-      </div>
+    <div>
+      <PageHeader title="Club Subscriptions" subtitle="Choose the plan that's right for your club" icon={Building2} gradient="green" compact />
+      <div className="max-w-5xl mx-auto px-4 py-12">
 
       {currentSub && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8 text-center">
@@ -90,6 +88,7 @@ export default function ClubSubscriptionPage() {
           <p className="text-sm mt-1">Contact the platform administrator.</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

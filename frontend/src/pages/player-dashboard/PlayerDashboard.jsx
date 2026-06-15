@@ -97,31 +97,37 @@ export default function PlayerDashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen">
       {/* Profile Header */}
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-8">
-        <div className="flex items-center gap-6">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-            <User className="w-8 h-8" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{player.firstName} {player.lastName}</h1>
-            <div className="flex flex-wrap gap-4 mt-2 text-green-200 text-sm">
-              {player.homeClub && <span>Home Club: {player.homeClub.name}</span>}
-              {player.handicapIndex && <span>Handicap: {Number(player.handicapIndex).toFixed(1)}</span>}
-              <span>Ranking Points: {player.rankingPoints}</span>
-              <span className="capitalize">Membership: {player.membershipType}</span>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
+              <User className="w-8 h-8 text-white" />
             </div>
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-white">{player.firstName} {player.lastName}</h1>
+              <div className="flex flex-wrap gap-4 mt-2 text-green-200 text-sm">
+                {player.homeClub && <span>Home Club: {player.homeClub.name}</span>}
+                {player.handicapIndex && <span>Handicap: {Number(player.handicapIndex).toFixed(1)}</span>}
+                <span>Ranking Points: {player.rankingPoints}</span>
+                <span className="capitalize">Membership: {player.membershipType}</span>
+              </div>
+            </div>
+            <Link to="/profile" className="bg-white/15 hover:bg-white/25 backdrop-blur text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition">
+              Edit Profile
+            </Link>
           </div>
-          <Link to="/dashboard/profile" className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
-            Edit Profile
-          </Link>
         </div>
       </div>
 
+      <div className="max-w-6xl mx-auto px-4 py-8">
+
       {/* Action Required */}
       {needsAction.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 mb-6">
           <h2 className="font-semibold text-amber-800 flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5" /> Action Required — Confirm Results
           </h2>
@@ -151,21 +157,21 @@ export default function PlayerDashboard() {
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border rounded-xl p-5 text-center">
-          <p className="text-3xl font-bold text-green-700">{player.entries?.length || 0}</p>
-          <p className="text-sm text-gray-500">Tournaments</p>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg transition">
+          <p className="text-3xl font-extrabold text-green-700 dark:text-green-400">{player.entries?.length || 0}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Tournaments</p>
         </div>
-        <div className="bg-white border rounded-xl p-5 text-center">
-          <p className="text-3xl font-bold text-green-700">{completedMatches.filter(m => m.winnerId === player.id).length}</p>
-          <p className="text-sm text-gray-500">Wins</p>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg transition">
+          <p className="text-3xl font-extrabold text-green-700 dark:text-green-400">{completedMatches.filter(m => m.winnerId === player.id).length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Wins</p>
         </div>
-        <div className="bg-white border rounded-xl p-5 text-center">
-          <p className="text-3xl font-bold text-green-700">{player.rankingPoints}</p>
-          <p className="text-sm text-gray-500">Ranking Points</p>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg transition">
+          <p className="text-3xl font-extrabold text-green-700 dark:text-green-400">{player.rankingPoints}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Ranking Points</p>
         </div>
-        <Link to="/my-stats" className="bg-white border rounded-xl p-5 text-center hover:border-green-300 transition">
-          <BarChart3 className="w-7 h-7 text-green-700 mx-auto mb-1" />
-          <p className="text-sm text-green-700 font-medium">My Stats</p>
+        <Link to="/my-stats" className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg hover:border-green-300 transition group">
+          <BarChart3 className="w-7 h-7 text-green-700 dark:text-green-400 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+          <p className="text-sm text-green-700 dark:text-green-400 font-semibold">My Stats</p>
         </Link>
       </div>
 
@@ -214,9 +220,9 @@ export default function PlayerDashboard() {
 
       <div className="grid md:grid-cols-2 gap-8 mb-8">
         {/* Upcoming Matches */}
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-green-700" /> Upcoming Matches
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+          <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+            <Calendar className="w-5 h-5 text-green-700 dark:text-green-400" /> Upcoming Matches
           </h2>
           {upcomingMatches.length > 0 ? (
             <div className="space-y-3">
@@ -289,9 +295,9 @@ export default function PlayerDashboard() {
         </div>
 
         {/* My Tournaments */}
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-green-700" /> My Tournaments
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+          <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+            <Trophy className="w-5 h-5 text-green-700 dark:text-green-400" /> My Tournaments
           </h2>
           {player.entries?.length > 0 ? (
             <div className="space-y-3">
@@ -318,9 +324,9 @@ export default function PlayerDashboard() {
       </div>
 
       {/* Match History */}
-      <div className="bg-white border rounded-xl p-6">
-        <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-green-700" /> Match History
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6 shadow-sm">
+        <h2 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+          <Trophy className="w-5 h-5 text-green-700 dark:text-green-400" /> Match History
         </h2>
         {completedMatches.length > 0 ? (
           <div className="overflow-x-auto">
@@ -359,6 +365,8 @@ export default function PlayerDashboard() {
           <p className="text-gray-500 text-sm">No completed matches yet</p>
         )}
       </div>
+
+      </div>{/* end max-w container */}
 
       {/* Submit Result Modal */}
       {submitModal && <SubmitResultModal match={submitModal} player={player} onClose={() => setSubmitModal(null)} onSubmitted={() => {

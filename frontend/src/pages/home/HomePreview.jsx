@@ -32,25 +32,29 @@ function AnimatedCounter({ end, suffix = '', duration = 2000 }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-export default function HomePage() {
+export default function HomePreview() {
   const [tournaments, setTournaments] = useState([]);
   const [teeTimes, setTeeTimes] = useState([]);
   const [posts, setPosts] = useState([]);
   const [stats, setStats] = useState({ players: 0, clubs: 0, matches: 0, tournaments: 0 });
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const loadData = async () => {
     try {
-      const [tourns, tt, feed] = await Promise.all([
+      const [tourns, tt, feed, health] = await Promise.all([
         api.get('/tournaments').catch(() => []),
         api.get('/social/tee-times').catch(() => ({ teeTimes: [] })),
         api.get('/social/posts/discover?limit=4').catch(() => ({ posts: [] })),
+        api.get('/health').catch(() => ({})),
       ]);
-      setTournaments(Array.isArray(tourns) ? tourns.slice(0, 3) : (tourns?.tournaments || []).slice(0, 3));
+      setTournaments(Array.isArray(tourns) ? tourns.slice(0, 3) : []);
       setTeeTimes(tt.teeTimes?.slice(0, 3) || []);
       setPosts(feed.posts?.slice(0, 4) || []);
 
+      // Get real counts from existing data
       const [playersResp, clubsResp] = await Promise.all([
         api.get('/players?limit=1').catch(() => ({ total: 24 })),
         api.get('/clubs').catch(() => []),
@@ -59,23 +63,24 @@ export default function HomePage() {
         players: playersResp?.total || 24,
         clubs: Array.isArray(clubsResp) ? clubsResp.length : (clubsResp?.clubs?.length || 8),
         matches: 156,
-        tournaments: Array.isArray(tourns) ? tourns.length : (tourns?.tournaments?.length || 4),
+        tournaments: Array.isArray(tourns) ? tourns.length : 4,
       });
     } catch {}
   };
 
   return (
-    <div className="-mt-16 min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-950">
 
-      {/* HERO */}
+      {/* ═══════════════════════ HERO ═══════════════════════ */}
       <section className="relative overflow-hidden">
+        {/* Golf course background with overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
         <div className="absolute inset-0 opacity-20" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }} />
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-gray-950" />
 
-        <div className="relative max-w-7xl mx-auto px-4 pt-32 pb-28 md:pt-40 md:pb-36">
+        <div className="relative max-w-7xl mx-auto px-4 py-24 md:py-36">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-1.5 mb-6">
@@ -88,7 +93,7 @@ export default function HomePage() {
                 Play.
               </h1>
               <p className="text-lg text-green-100 mb-8 max-w-lg leading-relaxed">
-                The UK's premier matchplay knockout platform. Enter through your local club,
+                The UK's premier matchplay knockout platform. Enter through your local club, 
                 compete through regional rounds, and battle your way to the national finals.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -101,6 +106,7 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Hero card stack */}
             <div className="hidden md:block relative">
               <div className="absolute -top-4 -left-4 w-full h-full bg-amber-400/20 rounded-2xl rotate-3" />
               <div className="relative bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8">
@@ -112,17 +118,22 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  {[
-                    { val: stats.players, label: 'Players Entered' },
-                    { val: stats.clubs, label: 'Clubs' },
-                    { val: '£500', label: 'Prize Pool' },
-                    { val: '6', label: 'Game Weeks' },
-                  ].map(({ val, label }) => (
-                    <div key={label} className="bg-white/10 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-white">{val}</p>
-                      <p className="text-xs text-green-200">{label}</p>
-                    </div>
-                  ))}
+                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-white">24</p>
+                    <p className="text-xs text-green-200">Players Entered</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-white">8</p>
+                    <p className="text-xs text-green-200">Clubs</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-white">£500</p>
+                    <p className="text-xs text-green-200">Prize Pool</p>
+                  </div>
+                  <div className="bg-white/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-white">6</p>
+                    <p className="text-xs text-green-200">Game Weeks</p>
+                  </div>
                 </div>
                 <Link to="/tournaments" className="block w-full text-center bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-semibold transition">
                   View Bracket & Fixtures
@@ -133,28 +144,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* STATS BAR */}
+      {/* ═══════════════════════ STATS BAR ═══════════════════════ */}
       <section className="relative -mt-16 z-10 max-w-5xl mx-auto px-4">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 p-6 md:p-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { val: stats.players, label: 'Registered Players' },
-              { val: stats.clubs, label: 'Partner Clubs' },
-              { val: stats.matches, label: 'Matches Played', suffix: '+' },
-              { val: stats.tournaments, label: 'Active Tournaments' },
-            ].map(({ val, label, suffix }) => (
-              <div key={label}>
-                <p className="text-3xl md:text-4xl font-extrabold text-green-700 dark:text-green-400">
-                  <AnimatedCounter end={val} suffix={suffix} />
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{label}</p>
-              </div>
-            ))}
+            <div>
+              <p className="text-3xl md:text-4xl font-extrabold text-green-700 dark:text-green-400">
+                <AnimatedCounter end={stats.players} />
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Registered Players</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-extrabold text-green-700 dark:text-green-400">
+                <AnimatedCounter end={stats.clubs} />
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Partner Clubs</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-extrabold text-green-700 dark:text-green-400">
+                <AnimatedCounter end={stats.matches} suffix="+" />
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Matches Played</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-extrabold text-green-700 dark:text-green-400">
+                <AnimatedCounter end={stats.tournaments} />
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active Tournaments</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FEATURED TOURNAMENTS */}
+      {/* ═══════════════════════ FEATURED TOURNAMENTS ═══════════════════════ */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-10">
@@ -179,12 +201,12 @@ export default function HomePage() {
                     <Trophy className="w-32 h-32 text-white" />
                   </div>
                   <div className="absolute top-4 right-4">
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${t.status === 'ACTIVE' || t.status === 'IN_PROGRESS' ? 'bg-green-500 text-white' : 'bg-white/90 text-gray-700'}`}>
-                      {t.status === 'ACTIVE' || t.status === 'IN_PROGRESS' ? 'LIVE' : t.status?.replace(/_/g, ' ') || 'UPCOMING'}
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${t.status === 'ACTIVE' ? 'bg-green-500 text-white' : 'bg-white/90 text-gray-700'}`}>
+                      {t.status === 'ACTIVE' ? 'LIVE' : t.status || 'UPCOMING'}
                     </span>
                   </div>
                   <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{t.formatType || t.format || 'KNOCKOUT'} • {t.season || '2027'}</p>
+                    <p className="text-white/70 text-xs uppercase tracking-wider mb-1">{t.format || 'KNOCKOUT'} • {t.season || '2027'}</p>
                     <h3 className="text-white font-bold text-xl leading-tight">{t.name}</h3>
                   </div>
                 </div>
@@ -194,12 +216,12 @@ export default function HomePage() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex -space-x-2">
-                      {['TF','MW','JR','PH'].map(initials => (
-                        <div key={initials} className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-green-700">
-                          {initials}
+                      {[0,1,2,3].map(j => (
+                        <div key={j} className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs font-bold text-green-700">
+                          {['TF','MW','JR','PH'][j]}
                         </div>
                       ))}
-                      <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs text-gray-500">+{(t._count?.entries || 12) + i * 3}</div>
+                      <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-gray-800 flex items-center justify-center text-xs text-gray-500">+{12 + i * 3}</div>
                     </div>
                     <span className="text-green-700 dark:text-green-400 font-semibold text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
                       Enter <ArrowRight className="w-4 h-4" />
@@ -209,10 +231,14 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
+
+          <Link to="/tournaments" className="md:hidden flex items-center justify-center gap-1 text-green-700 font-semibold mt-6">
+            View All Tournaments <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* ═══════════════════════ HOW IT WORKS ═══════════════════════ */}
       <section className="py-20 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
@@ -239,7 +265,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SHARE A ROUND */}
+      {/* ═══════════════════════ SHARE A ROUND ═══════════════════════ */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="bg-gradient-to-br from-green-700 to-emerald-900 rounded-3xl p-8 md:p-12 relative overflow-hidden">
@@ -250,7 +276,7 @@ export default function HomePage() {
               <div>
                 <h2 className="text-3xl font-extrabold text-white mb-4">Need a Playing Partner?</h2>
                 <p className="text-green-100 text-lg mb-6 leading-relaxed">
-                  Post your spare tee time and let other members join you. Browse open rounds near you,
+                  Post your spare tee time and let other members join you. Browse open rounds near you, 
                   express interest, and tee it up with new playing partners.
                 </p>
                 <Link to="/tee-times" className="inline-flex items-center gap-2 bg-white text-green-800 hover:bg-amber-50 px-6 py-3 rounded-xl font-bold transition">
@@ -288,7 +314,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SOCIAL FEED PREVIEW */}
+      {/* ═══════════════════════ SOCIAL FEED PREVIEW ═══════════════════════ */}
       <section className="py-20 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-10">
@@ -321,15 +347,19 @@ export default function HomePage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-3">{post.content}</p>
                 <div className="flex items-center gap-4 text-xs text-gray-400">
                   <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {post.likesCount}</span>
-                  <span>{post.commentsCount} comments</span>
+                  <span className="flex items-center gap-1">{post.commentsCount} comments</span>
                 </div>
               </div>
             ))}
           </div>
+
+          <Link to="/social" className="md:hidden flex items-center justify-center gap-1 text-green-700 font-semibold mt-6">
+            View All Posts <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 
-      {/* FEATURES GRID */}
+      {/* ═══════════════════════ FEATURES GRID ═══════════════════════ */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
@@ -360,7 +390,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CLUB CTA */}
+      {/* ═══════════════════════ CLUB CTA ═══════════════════════ */}
       <section className="py-20 px-4 bg-gray-900">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-green-900/50 rounded-full px-4 py-1.5 mb-6">
@@ -369,7 +399,7 @@ export default function HomePage() {
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Golf Club? Join the Network</h2>
           <p className="text-gray-400 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-            Generate additional revenue through entry fees, visitor traffic, sponsorship
+            Generate additional revenue through entry fees, visitor traffic, sponsorship 
             and increased F&B spend — without organising the tournament yourself.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-10">
@@ -390,6 +420,47 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* ═══════════════════════ FOOTER ═══════════════════════ */}
+      <footer className="bg-gray-950 text-gray-400 py-12 px-4">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-8">
+          <div>
+            <div className="flex items-center gap-2 text-white font-bold text-lg mb-4">
+              <Trophy className="w-6 h-6 text-green-500" />
+              UK Golf Knockout
+            </div>
+            <p className="text-sm leading-relaxed">The national matchplay competition platform connecting golf clubs, players and sponsors across the UK.</p>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-3">Players</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/tournaments" className="hover:text-white transition">Tournaments</Link></li>
+              <li><Link to="/leaderboard" className="hover:text-white transition">Leaderboard</Link></li>
+              <li><Link to="/social" className="hover:text-white transition">Social</Link></li>
+              <li><Link to="/tee-times" className="hover:text-white transition">Share a Round</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-3">Clubs</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/register?role=club" className="hover:text-white transition">Register Your Club</Link></li>
+              <li><Link to="/marketplace" className="hover:text-white transition">Marketplace</Link></li>
+              <li><Link to="/subscriptions" className="hover:text-white transition">Club Subscriptions</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-white font-semibold mb-3">Legal</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/terms" className="hover:text-white transition">Terms of Service</Link></li>
+              <li><Link to="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
+              <li><Link to="/membership" className="hover:text-white transition">Membership</Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto mt-10 pt-8 border-t border-gray-800 text-center text-xs text-gray-500">
+          &copy; {new Date().getFullYear()} UK Golf Club Knockout Network. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 }

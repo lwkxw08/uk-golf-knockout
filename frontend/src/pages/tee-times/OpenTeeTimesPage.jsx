@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { Clock, MapPin, Users, MessageCircle, Check, X, Plus, Calendar, PoundSterling } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function OpenTeeTimesPage() {
   const { user } = useAuth();
@@ -90,10 +91,11 @@ export default function OpenTeeTimesPage() {
   const formatTime = (d) => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div>
+      <PageHeader title="Share a Round" subtitle="Find playing partners and post open tee times" icon={Calendar} gradient="teal" compact />
+      <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Share a Round</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Post a spare spot in your group or find someone to play with</p>
         </div>
         {user && (
@@ -289,6 +291,7 @@ export default function OpenTeeTimesPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { Heart, MessageCircle, Send, Image, Video, Trash2, Users, Search, X } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function SocialTimelinePage() {
   const { user } = useAuth();
@@ -143,9 +144,11 @@ export default function SocialTimelinePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div>
+      <PageHeader title="Social" subtitle="Share updates, follow players, and connect with the community" icon={Users} gradient="purple" compact />
+      <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Social</h1>
+        <div></div>
         <button onClick={() => setShowSearch(!showSearch)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200">
           <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         </button>
@@ -323,6 +326,7 @@ export default function SocialTimelinePage() {
             )}
           </div>
         ))}
+      </div>
       </div>
     </div>
   );

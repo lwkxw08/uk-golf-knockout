@@ -27,8 +27,9 @@ export default function VerifyEmailPage() {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-8 text-center">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border dark:border-gray-700 max-w-md w-full p-8 text-center relative">
         {status === 'loading' && (
           <>
             <Loader className="w-16 h-16 text-green-600 mx-auto mb-4 animate-spin" />

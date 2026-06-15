@@ -31,20 +31,23 @@ export default function PlayerStatsPage() {
   const tabs = ['overview', 'matches', 'holes', 'trends'];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Player Header */}
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold">
-            {player?.firstName?.[0]}{player?.lastName?.[0]}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{player?.firstName} {player?.lastName}</h1>
-            <p className="text-green-200 text-sm">{player?.homeClub?.name}</p>
-            {player?.handicapIndex && <p className="text-green-300 text-sm mt-1">Handicap Index: {Number(player.handicapIndex).toFixed(1)}</p>}
+    <div>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center text-3xl font-bold text-white">
+              {player?.firstName?.[0]}{player?.lastName?.[0]}
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-white">{player?.firstName} {player?.lastName}</h1>
+              <p className="text-green-200 text-sm">{player?.homeClub?.name}</p>
+              {player?.handicapIndex && <p className="text-green-300 text-sm mt-1">Handicap Index: {Number(player.handicapIndex).toFixed(1)}</p>}
+            </div>
           </div>
         </div>
       </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -226,6 +229,7 @@ export default function PlayerStatsPage() {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

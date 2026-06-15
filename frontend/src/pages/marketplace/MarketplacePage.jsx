@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { ShoppingBag, MapPin, Tag, Search, Navigation } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 const TYPES = [
   { value: '', label: 'All Offers' },
@@ -75,10 +76,10 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
+      <PageHeader title="Course Marketplace" subtitle="Discover green fee discounts, society packages, and special offers" icon={ShoppingBag} gradient="amber" compact />
+      <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3"><ShoppingBag className="w-8 h-8 text-green-700" /> Course Marketplace</h1>
-        <p className="text-gray-600 mt-2">Discover green fee discounts, society packages, and special offers from participating clubs.</p>
       </div>
 
       {/* Search bar */}
@@ -186,6 +187,7 @@ export default function MarketplacePage() {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }

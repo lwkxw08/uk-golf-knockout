@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
+import PageHeader from '../../components/layout/PageHeader';
 import { Gift, Copy, Check, Users, PoundSterling, Share2 } from 'lucide-react';
 
 export default function ReferralPage() {
@@ -36,14 +37,9 @@ export default function ReferralPage() {
   if (!data) return <div className="text-center py-12 text-red-500">Failed to load referral data</div>;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <Gift className="w-8 h-8 text-green-700" />
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900">Refer a Friend</h1>
-        <p className="text-gray-600 mt-2">Invite friends to UK Golf Knockout. You both get <strong>\u00a35 off</strong> your next entry fee!</p>
-      </div>
+    <div>
+      <PageHeader title="Refer a Friend" subtitle="Invite friends to UK Golf Knockout. You both get \u00a35 off your next entry fee!" icon={Gift} gradient="green" compact />
+      <div className="max-w-2xl mx-auto px-4 py-8">
 
       {/* Referral Code Card */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6 text-white mb-6">
@@ -132,6 +128,7 @@ export default function ReferralPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

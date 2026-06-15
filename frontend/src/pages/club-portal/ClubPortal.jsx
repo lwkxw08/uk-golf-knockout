@@ -209,19 +209,23 @@ export default function ClubPortal() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-3"><Building2 className="w-7 h-7" /> {dashboard.club.name}</h1>
-            <p className="text-green-200 mt-1">{dashboard.club.region?.name || ''} &bull; Club Portal</p>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-extrabold text-white flex items-center gap-3"><Building2 className="w-7 h-7" /> {dashboard.club.name}</h1>
+              <p className="text-green-200 mt-1">{dashboard.club.region?.name || ''} &bull; Club Portal</p>
+            </div>
+            <Link to={`/clubs/${dashboard.club.slug}`} className="bg-white/15 hover:bg-white/25 backdrop-blur text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+              View Public Page <ChevronRight className="w-4 h-4 inline" />
+            </Link>
           </div>
-          <Link to={`/clubs/${dashboard.club.slug}`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
-            View Public Page <ChevronRight className="w-4 h-4 inline" />
-          </Link>
         </div>
       </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -791,6 +795,7 @@ export default function ClubPortal() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

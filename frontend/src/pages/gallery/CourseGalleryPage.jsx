@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
+import PageHeader from '../../components/layout/PageHeader';
 import { useAuth } from '../../contexts/AuthContext';
 import { Camera, Heart, Star, ChevronLeft, ChevronRight, Upload, X } from 'lucide-react';
 
@@ -62,15 +63,10 @@ export default function CourseGalleryPage() {
   const totalPages = Math.ceil(total / 20);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Camera className="w-6 h-6 text-green-600" />
-            {club?.name || 'Course'} Photo Gallery
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">{total} photos</p>
-        </div>
+    <div>
+      <PageHeader title={`${club?.name || 'Course'} Photo Gallery`} subtitle={`${total} photos`} icon={Camera} gradient="teal" compact />
+      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-end mb-6">
         <div className="flex gap-2">
           <button onClick={() => setViewMode('grid')}
             className={`px-3 py-1.5 rounded text-sm ${viewMode === 'grid' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}>
@@ -273,6 +269,7 @@ export default function CourseGalleryPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

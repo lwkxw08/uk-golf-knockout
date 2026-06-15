@@ -97,17 +97,17 @@ export default function MatchChatPage() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-gradient-to-r from-green-800 to-emerald-900 border-b border-green-700 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link to="/dashboard" className="text-gray-500 hover:text-gray-700"><ArrowLeft className="w-5 h-5" /></Link>
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <MessageCircle className="w-5 h-5 text-green-700" />
+          <Link to="/dashboard" className="text-green-200 hover:text-white"><ArrowLeft className="w-5 h-5" /></Link>
+          <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
+            <MessageCircle className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900 text-sm">
+            <h2 className="font-semibold text-white text-sm">
               {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'Match Chat'}
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-green-200">
               {match?.tournament?.name}
               {match?.match?.scheduledDate && ` • ${new Date(match.match.scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`}
             </p>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { BarChart3, Users, Trophy, MapPin, Banknote, Activity, AlertTriangle, Calendar, TrendingUp, Shield, Clock } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -33,30 +34,24 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 mt-1">Platform overview and management</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link to="/admin/tournaments/new" className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-            New Tournament
-          </Link>
-          <Link to="/admin/clubs" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-            Clubs
-          </Link>
-          <Link to="/admin/sponsors" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-            Sponsors
-          </Link>
-          <Link to="/admin/pricing" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-            Pricing
-          </Link>
-          <Link to="/club-portal" className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
-            Club Portal
-          </Link>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="Admin Dashboard"
+        subtitle="Platform overview and management"
+        icon={Shield}
+        gradient="gray"
+        compact
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Link to="/admin/tournaments/new" className="bg-white text-green-800 hover:bg-green-50 px-4 py-2 rounded-lg text-sm font-semibold transition">New Tournament</Link>
+            <Link to="/admin/clubs" className="bg-white/15 text-white hover:bg-white/25 px-4 py-2 rounded-lg text-sm font-medium transition">Clubs</Link>
+            <Link to="/admin/sponsors" className="bg-white/15 text-white hover:bg-white/25 px-4 py-2 rounded-lg text-sm font-medium transition">Sponsors</Link>
+            <Link to="/admin/pricing" className="bg-white/15 text-white hover:bg-white/25 px-4 py-2 rounded-lg text-sm font-medium transition">Pricing</Link>
+            <Link to="/club-portal" className="bg-white/15 text-white hover:bg-white/25 px-4 py-2 rounded-lg text-sm font-medium transition">Club Portal</Link>
+          </div>
+        }
+      />
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
       {/* Disputes alert */}
       {(stats?.disputes || 0) > 0 && (
@@ -73,12 +68,12 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {statCards.map(({ icon: Icon, label, value, color, link }) => {
           const Card = (
-            <div className="bg-white border rounded-xl p-4 hover:shadow-md transition">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg transition">
               <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-bold text-gray-900">{value}</p>
-              <p className="text-sm text-gray-500">{label}</p>
+              <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{value}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
             </div>
           );
           return link ? <Link key={label} to={link}>{Card}</Link> : <div key={label}>{Card}</div>;
@@ -259,6 +254,7 @@ export default function AdminDashboard() {
             <p className="text-sm text-gray-500">Disputed</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

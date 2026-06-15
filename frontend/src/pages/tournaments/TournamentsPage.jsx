@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { Trophy, Users, Calendar, Search, Navigation } from 'lucide-react';
+import { Trophy, Users, Calendar, Search, Navigation, ArrowRight } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 const FORMAT_LABELS = {
   SINGLES_MATCHPLAY: 'Singles Matchplay',
@@ -89,23 +90,29 @@ export default function TournamentsPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Tournaments</h1>
-        <div className="flex gap-2">
-          {['', 'OPEN', 'JUNIOR', 'SENIOR'].map((val) => (
-            <button key={val} onClick={() => setFilter(val)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === val ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}>
-              {val || 'All'}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="Tournaments"
+        subtitle="Find and enter competitions across the UK"
+        icon={Trophy}
+        gradient="green"
+        actions={
+          <div className="flex gap-2">
+            {['', 'OPEN', 'JUNIOR', 'SENIOR'].map((val) => (
+              <button key={val} onClick={() => setFilter(val)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  filter === val ? 'bg-white text-green-800' : 'bg-white/15 text-white hover:bg-white/25'
+                }`}>
+                {val || 'All'}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
+      <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Search bar */}
-      <div className="bg-white border rounded-xl p-4 mb-6 space-y-3">
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-4 mb-6 space-y-3 shadow-sm">
         <div className="flex flex-wrap gap-3">
           {/* Free text search */}
           <div className="flex-1 min-w-[200px] relative">
@@ -115,7 +122,7 @@ export default function TournamentsPage() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search tournaments by name or description..."
-              className="w-full border rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
 
@@ -128,7 +135,7 @@ export default function TournamentsPage() {
                 value={postcode}
                 onChange={(e) => setPostcode(e.target.value.toUpperCase())}
                 placeholder="Postcode (e.g. HP9 2SE)"
-                className="border rounded-lg pl-9 pr-3 py-2 text-sm w-44 focus:ring-2 focus:ring-green-500 outline-none"
+                className="border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm w-44 focus:ring-2 focus:ring-green-500 outline-none"
               />
             </div>
             <select value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="border rounded-lg px-2 py-2 text-sm">
@@ -165,54 +172,60 @@ export default function TournamentsPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.tournaments.map((t) => {
+          {data.tournaments.map((t, i) => {
             const isLeague = t.leagueMatchCount > 0;
             const linkTo = isLeague ? `/league/${t.id}` : `/tournaments/${t.id}`;
             return (
             <Link key={t.id} to={linkTo}
-              className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 block">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="font-semibold text-lg text-gray-900">{t.name}</h3>
-                <div className="flex gap-1">
-                  {isLeague && <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">League</span>}
-                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[t.status] || ''}`}>
+              className="group bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 block">
+              <div className={`h-32 relative ${['bg-gradient-to-br from-green-600 to-emerald-800', 'bg-gradient-to-br from-blue-600 to-indigo-800', 'bg-gradient-to-br from-amber-600 to-orange-800'][i % 3]}`}>
+                <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                  <Trophy className="w-24 h-24 text-white" />
+                </div>
+                <div className="absolute top-3 right-3 flex gap-1">
+                  {isLeague && <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500 text-white">League</span>}
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${STATUS_COLORS[t.status] || 'bg-white/90 text-gray-700'}`}>
                     {t.status.replace(/_/g, ' ')}
                   </span>
                 </div>
+                <div className="absolute bottom-3 left-4 right-4">
+                  <h3 className="font-bold text-lg text-white leading-tight">{t.name}</h3>
+                </div>
               </div>
+              <div className="p-5">
+                <p className="text-sm text-green-700 dark:text-green-400 font-medium mb-3">
+                  {isLeague ? 'Regional League — Matchplay' : (FORMAT_LABELS[t.formatType] || t.formatType)}
+                </p>
 
-              <p className="text-sm text-green-700 font-medium mb-3">
-                {isLeague ? 'Regional League — Matchplay' : (FORMAT_LABELS[t.formatType] || t.formatType)}
-              </p>
-
-              {t.ageCategory !== 'OPEN' && (
-                <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full mb-3">
-                  {t.ageCategory}
-                </span>
-              )}
-
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" /> {t._count.entries} entries
-                </span>
-                {t.pricing[0] && (
-                  <span className="flex items-center gap-1 font-medium text-gray-700">
-                    &pound;{(t.pricing[0].amountPence / 100).toFixed(2)}
+                {t.ageCategory !== 'OPEN' && (
+                  <span className="inline-block text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full mb-3">
+                    {t.ageCategory}
                   </span>
                 )}
-              </div>
 
-              {t.registrationDeadline && (
-                <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
-                  <Calendar className="w-3 h-3" />
-                  Deadline: {new Date(t.registrationDeadline).toLocaleDateString('en-GB')}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {t._count.entries} entries</span>
+                    {t.pricing[0] && <span className="font-semibold text-gray-700 dark:text-gray-300">&pound;{(t.pricing[0].amountPence / 100).toFixed(2)}</span>}
+                  </div>
+                  <span className="text-green-700 dark:text-green-400 font-semibold text-sm group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                    View <ArrowRight className="w-4 h-4" />
+                  </span>
                 </div>
-              )}
+
+                {t.registrationDeadline && (
+                  <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
+                    <Calendar className="w-3 h-3" />
+                    Deadline: {new Date(t.registrationDeadline).toLocaleDateString('en-GB')}
+                  </div>
+                )}
+              </div>
             </Link>
             );
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

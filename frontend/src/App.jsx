@@ -71,7 +71,7 @@ function AppRoutes() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 pt-16">
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<HomePage />} />

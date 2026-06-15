@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import { Trophy, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import PageHeader from '../../components/layout/PageHeader';
 
 const FORMAT_OPTIONS = [
   { value: 'SINGLES_MATCHPLAY', label: 'Singles Matchplay' },
@@ -160,14 +161,9 @@ export default function EditTournament() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <Trophy className="w-7 h-7 text-green-700" />
-        <h1 className="text-2xl font-bold text-gray-900">Edit Tournament</h1>
-      </div>
+    <div>
+      <PageHeader title="Edit Tournament" subtitle={tournament?.name || ''} icon={Trophy} gradient="green" compact />
+      <div className="max-w-4xl mx-auto px-4 py-8">
 
       {tournament && (
         <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6 text-sm text-green-800">
@@ -330,6 +326,7 @@ export default function EditTournament() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

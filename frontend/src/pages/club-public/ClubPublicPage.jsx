@@ -16,30 +16,34 @@ export default function ClubPublicPage() {
   if (!club) return <div className="text-center py-12 text-gray-500">Club not found</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div>
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-800 to-green-900 text-white rounded-xl p-8 mb-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3"><Building2 className="w-8 h-8" /> {club.name}</h1>
-            <div className="flex flex-wrap gap-4 mt-3 text-green-200 text-sm">
-              {club.region && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {club.region.name}</span>}
-              <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {club._count?.players || 0} members</span>
-              {club.city && <span>{club.city}{club.county ? `, ${club.county}` : ''}{club.postcode ? ` ${club.postcode}` : ''}</span>}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900" />
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold text-white flex items-center gap-3"><Building2 className="w-8 h-8" /> {club.name}</h1>
+              <div className="flex flex-wrap gap-4 mt-3 text-green-200 text-sm">
+                {club.region && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {club.region.name}</span>}
+                <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {club._count?.players || 0} members</span>
+                {club.city && <span>{club.city}{club.county ? `, ${club.county}` : ''}{club.postcode ? ` ${club.postcode}` : ''}</span>}
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Link to={`/clubs/${slug}/scorecard`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
-              View Scorecard
-            </Link>
-            {club.id && (
-              <Link to={`/clubs/${club.id}/gallery`} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
-                <Camera className="w-4 h-4" /> Gallery
+            <div className="flex gap-2">
+              <Link to={`/clubs/${slug}/scorecard`} className="bg-white/15 hover:bg-white/25 backdrop-blur px-4 py-2 rounded-xl text-sm font-medium text-white transition">
+                View Scorecard
               </Link>
-            )}
+              {club.id && (
+                <Link to={`/clubs/${club.id}/gallery`} className="bg-white/15 hover:bg-white/25 backdrop-blur px-4 py-2 rounded-xl text-sm font-medium text-white transition flex items-center gap-1">
+                  <Camera className="w-4 h-4" /> Gallery
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
@@ -235,6 +239,7 @@ export default function ClubPublicPage() {
             <p className="text-xs text-green-600 mt-2">Contact us for sponsorship opportunities.</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
