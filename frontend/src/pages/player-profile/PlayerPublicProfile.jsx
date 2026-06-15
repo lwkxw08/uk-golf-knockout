@@ -127,8 +127,16 @@ export default function PlayerPublicProfile() {
               </div>
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{post.content}</p>
               {post.images && post.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  {post.images.map((img, i) => <img key={i} src={img} className="rounded-lg w-full h-40 object-cover" />)}
+                <div className={`grid gap-2 mt-3 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {post.images.map((item, i) => {
+                    const url = typeof item === 'string' ? item : item.url;
+                    const type = typeof item === 'string' ? 'image' : (item.type || 'image');
+                    return type === 'video' ? (
+                      <video key={i} src={url} controls className="rounded-lg w-full max-h-80 object-cover bg-black" />
+                    ) : (
+                      <img key={i} src={url} className="rounded-lg w-full h-48 object-cover" />
+                    );
+                  })}
                 </div>
               )}
               <div className="flex items-center gap-4 mt-3 pt-3 border-t dark:border-gray-700">

@@ -1,10 +1,61 @@
 const express = require('express');
+const multer = require('multer');
 const { body, param, query } = require('express-validator');
 const validate = require('../middleware/validate');
 const { authenticate } = require('../middleware/auth');
 const prisma = require('../config/prisma');
+const { uploadFile, isStorageConfigured } = require('../services/uploadService');
 
 const router = express.Router();
+
+// Multer config for media uploads (images: 5MB, videos: 50MB)
+const mediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max for videos
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/quicktime', 'video/webm'];
+    if (allowedTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Unsupported file type. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM'));
+  },
+});
+
+// ─── MEDIA UPLOAD ENDPOINT ────────────────────────────────────────────────
+
+router.post('/upload-media', authenticate, mediaUpload.array('media', 6), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const urls = [];
+    for (const file of req.files) {
+      const isVideo = file.mimetype.startsWith('video/');
+      const folder = isVideo ? 'social/videos' : 'social/images';
+
+      // Try R2 first, fallback to base64
+      let url;
+      if (isStorageConfigured()) {
+        url = await uploadFile(file, folder);
+      } else {
+        // Base64 fallback for dev mode
+        const base64 = file.buffer.toString('base64');
+        url = `data:${file.mimetype};base64,${base64}`;
+      }
+
+      urls.push({
+        url,
+        type: isVideo ? 'video' : 'image',
+        name: file.originalname,
+        size: file.size,
+      });
+    }
+
+    res.json({ media: urls });
+  } catch (err) {
+    console.error('Media upload error:', err);
+    res.status(500).json({ error: err.message || 'Failed to upload media' });
+  }
+});
 
 // ─── PLAYER POSTS ─────────────────────────────────────────────────────────
 
@@ -13,6 +64,7 @@ router.post('/posts',
   authenticate,
   body('content').isString().isLength({ min: 1, max: 2000 }),
   body('images').optional().isArray(),
+  body('media').optional().isArray(),
   body('taggedClubId').optional().isUUID(),
   body('taggedTournamentId').optional().isUUID(),
   validate,
@@ -21,11 +73,19 @@ router.post('/posts',
       const player = await prisma.player.findUnique({ where: { userId: req.user.id } });
       if (!player) return res.status(400).json({ error: 'Player profile required' });
 
+      // Support both legacy 'images' (array of URLs) and new 'media' (array of {url, type})
+      let mediaData = null;
+      if (req.body.media && req.body.media.length > 0) {
+        mediaData = req.body.media; // [{url, type, name, size}]
+      } else if (req.body.images && req.body.images.length > 0) {
+        mediaData = req.body.images.map(url => ({ url, type: 'image' }));
+      }
+
       const post = await prisma.playerPost.create({
         data: {
           playerId: player.id,
           content: req.body.content,
-          images: req.body.images || null,
+          images: mediaData,
           taggedClubId: req.body.taggedClubId || null,
           taggedTournamentId: req.body.taggedTournamentId || null,
         },

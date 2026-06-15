@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Heart, MessageCircle, Send, Image, Trash2, Users, Search } from 'lucide-react';
+import { Heart, MessageCircle, Send, Image, Video, Trash2, Users, Search, X } from 'lucide-react';
 
 export default function SocialTimelinePage() {
   const { user } = useAuth();
@@ -10,6 +10,10 @@ export default function SocialTimelinePage() {
   const [tab, setTab] = useState(user ? 'following' : 'discover');
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [mediaPreviews, setMediaPreviews] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
   const [commentText, setCommentText] = useState({});
   const [showComments, setShowComments] = useState({});
   const [allComments, setAllComments] = useState({});
@@ -27,14 +31,67 @@ export default function SocialTimelinePage() {
     } catch {}
   };
 
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + mediaFiles.length > 6) {
+      alert('Maximum 6 files per post');
+      return;
+    }
+    const newFiles = [...mediaFiles, ...files];
+    setMediaFiles(newFiles);
+
+    // Generate previews
+    const previews = newFiles.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+      name: file.name,
+    }));
+    setMediaPreviews(previews);
+  };
+
+  const removeMedia = (index) => {
+    const newFiles = mediaFiles.filter((_, i) => i !== index);
+    setMediaFiles(newFiles);
+    setMediaPreviews(mediaPreviews.filter((_, i) => i !== index));
+  };
+
   const handlePost = async () => {
-    if (!newPost.trim()) return;
+    if (!newPost.trim() && mediaFiles.length === 0) return;
     setPosting(true);
     try {
-      await api.post('/social/posts', { content: newPost.trim() });
+      let media = [];
+
+      // Upload media files first
+      if (mediaFiles.length > 0) {
+        setUploading(true);
+        const formData = new FormData();
+        mediaFiles.forEach(f => formData.append('media', f));
+
+        const token = localStorage.getItem('token');
+        const resp = await fetch('/api/social/upload-media', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error || 'Upload failed');
+        media = data.media;
+        setUploading(false);
+      }
+
+      await api.post('/social/posts', {
+        content: newPost.trim() || '📸',
+        media: media.length > 0 ? media : undefined,
+      });
       setNewPost('');
+      setMediaFiles([]);
+      setMediaPreviews([]);
       loadPosts();
-    } catch {}
+    } catch (err) {
+      console.error('Post error:', err);
+      setUploading(false);
+    }
     setPosting(false);
   };
 
@@ -132,12 +189,41 @@ export default function SocialTimelinePage() {
             className="w-full border-0 resize-none text-sm text-gray-900 dark:text-white dark:bg-gray-800 placeholder:text-gray-400 focus:ring-0"
             rows={3}
           />
-          <div className="flex items-center justify-between pt-3 border-t dark:border-gray-700">
-            <div className="flex gap-2 text-gray-400">
-              <Image className="w-5 h-5 cursor-pointer hover:text-green-600" title="Coming soon" />
+
+          {/* Media previews */}
+          {mediaPreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              {mediaPreviews.map((m, i) => (
+                <div key={i} className="relative group">
+                  {m.type === 'video' ? (
+                    <video src={m.url} className="w-full h-24 object-cover rounded-lg" />
+                  ) : (
+                    <img src={m.url} className="w-full h-24 object-cover rounded-lg" />
+                  )}
+                  <button onClick={() => removeMedia(i)} className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition">
+                    <X className="w-3 h-3" />
+                  </button>
+                  {m.type === 'video' && (
+                    <span className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1 rounded">Video</span>
+                  )}
+                </div>
+              ))}
             </div>
-            <button onClick={handlePost} disabled={!newPost.trim() || posting} className="flex items-center gap-1 bg-green-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-green-800 disabled:opacity-50">
-              <Send className="w-4 h-4" /> Post
+          )}
+
+          <div className="flex items-center justify-between pt-3 border-t dark:border-gray-700">
+            <div className="flex gap-2">
+              <input ref={fileInputRef} type="file" multiple accept="image/*,video/*" onChange={handleFileSelect} className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 text-gray-500 hover:text-green-600 text-sm" title="Add photos">
+                <Image className="w-5 h-5" /> <span className="hidden sm:inline">Photo</span>
+              </button>
+              <button onClick={() => { fileInputRef.current.accept = 'video/*'; fileInputRef.current?.click(); }} className="flex items-center gap-1 text-gray-500 hover:text-blue-600 text-sm" title="Add video">
+                <Video className="w-5 h-5" /> <span className="hidden sm:inline">Video</span>
+              </button>
+              {mediaFiles.length > 0 && <span className="text-xs text-gray-400 self-center">{mediaFiles.length}/6 files</span>}
+            </div>
+            <button onClick={handlePost} disabled={(!newPost.trim() && mediaFiles.length === 0) || posting} className="flex items-center gap-1 bg-green-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-green-800 disabled:opacity-50">
+              {uploading ? 'Uploading...' : posting ? 'Posting...' : <><Send className="w-4 h-4" /> Post</>}
             </button>
           </div>
         </div>
@@ -181,8 +267,16 @@ export default function SocialTimelinePage() {
             <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm">{post.content}</p>
 
             {post.images && post.images.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                {post.images.map((img, i) => <img key={i} src={img} className="rounded-lg w-full h-40 object-cover" />)}
+              <div className={`grid gap-2 mt-3 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {post.images.map((item, i) => {
+                  const url = typeof item === 'string' ? item : item.url;
+                  const type = typeof item === 'string' ? 'image' : (item.type || 'image');
+                  return type === 'video' ? (
+                    <video key={i} src={url} controls className="rounded-lg w-full max-h-80 object-cover bg-black" />
+                  ) : (
+                    <img key={i} src={url} className="rounded-lg w-full h-48 object-cover cursor-pointer hover:opacity-90" />
+                  );
+                })}
               </div>
             )}
 
