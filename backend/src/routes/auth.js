@@ -8,6 +8,7 @@ const { authenticate } = require('../middleware/auth');
 const prisma = require('../config/prisma');
 const config = require('../config');
 const { sendEmail, emailWrapper } = require('../services/emailService');
+const { logAudit } = require('../services/auditService');
 
 const router = express.Router();
 
@@ -287,6 +288,7 @@ router.post('/login',
         { expiresIn: config.jwtExpiresIn }
       );
 
+      logAudit({ userId: user.id, userEmail: user.email, action: 'USER_LOGIN', entity: 'User', entityId: user.id, ipAddress: req.ip });
       res.json({
         token,
         user: { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified },

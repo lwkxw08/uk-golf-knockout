@@ -3,6 +3,7 @@ const { body, param } = require('express-validator');
 const validate = require('../middleware/validate');
 const { authenticate, requireRole } = require('../middleware/auth');
 const prisma = require('../config/prisma');
+const { logAudit } = require('../services/auditService');
 
 const router = express.Router();
 
@@ -660,6 +661,7 @@ router.post('/users/:id/suspend',
         data: { isActive: false },
         select: { id: true, email: true, isActive: true },
       });
+      logAudit({ userId: req.user.id, userEmail: req.user.email, action: 'USER_SUSPENDED', entity: 'User', entityId: req.params.id, details: { targetEmail: user.email }, ipAddress: req.ip });
       res.json({ message: 'User suspended', user });
     } catch (err) {
       res.status(500).json({ error: 'Failed to suspend user' });
@@ -680,6 +682,7 @@ router.post('/users/:id/reactivate',
         data: { isActive: true },
         select: { id: true, email: true, isActive: true },
       });
+      logAudit({ userId: req.user.id, userEmail: req.user.email, action: 'USER_REACTIVATED', entity: 'User', entityId: req.params.id, details: { targetEmail: user.email }, ipAddress: req.ip });
       res.json({ message: 'User reactivated', user });
     } catch (err) {
       res.status(500).json({ error: 'Failed to reactivate user' });
@@ -704,6 +707,7 @@ router.post('/users/:id/role',
         data: { role: req.body.role },
         select: { id: true, email: true, role: true },
       });
+      logAudit({ userId: req.user.id, userEmail: req.user.email, action: 'USER_ROLE_CHANGED', entity: 'User', entityId: req.params.id, details: { targetEmail: user.email, newRole: req.body.role }, ipAddress: req.ip });
       res.json({ message: 'Role updated', user });
     } catch (err) {
       res.status(500).json({ error: 'Failed to update role' });

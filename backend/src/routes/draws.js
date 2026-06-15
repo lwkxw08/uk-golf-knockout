@@ -45,7 +45,7 @@ router.post('/:tournamentId/execute',
   async (req, res) => {
     try {
       const { tournamentId } = req.params;
-      const { stage, clubId } = req.body;
+      const { stage, clubId, useSeeding = false } = req.body;
 
       // Get active entries for this stage
       const where = { tournamentId, status: 'ACTIVE', stage };
@@ -71,8 +71,8 @@ router.post('/:tournamentId/execute',
       // Get Socket.io instance from app
       const io = req.app.get('io');
 
-      // Generate the draw
-      const result = await generateKnockoutDraw(tournamentId, stage, entries, io);
+      // Generate the draw (with optional handicap-based seeding)
+      const result = await generateKnockoutDraw(tournamentId, stage, entries, io, { useSeeding });
 
       // Update draw status
       if (draw) {

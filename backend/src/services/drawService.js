@@ -19,11 +19,78 @@ function totalRoundsForBracket(numPlayers) {
   return Math.ceil(Math.log2(numPlayers));
 }
 
-async function generateKnockoutDraw(tournamentId, stage, entries, io) {
-  const shuffled = shuffle(entries);
-  const bracketSize = nextPowerOf2(shuffled.length);
+/**
+ * Handicap-based seeding: places players so top seeds are distributed evenly.
+ * Seed 1 vs last seed in first round, seed 2 vs second-last, etc.
+ * Lower handicap = better seed (seed 1 = lowest handicap).
+ */
+function seedByHandicap(entries) {
+  // Sort by handicap index (lower = better). Null handicaps go to end.
+  const sorted = [...entries].sort((a, b) => {
+    const hA = a.handicapIndex ?? 999;
+    const hB = b.handicapIndex ?? 999;
+    return hA - hB;
+  });
+
+  // Assign seed numbers
+  sorted.forEach((entry, i) => { entry.seed = i + 1; });
+
+  const n = sorted.length;
+  const bracketSize = nextPowerOf2(n);
+
+  // Standard seeding placement for knockout brackets
+  // Positions are 0-indexed slots in round 1
+  function getSeededPositions(size) {
+    if (size === 1) return [0];
+    const half = getSeededPositions(size / 2);
+    return half.reduce((acc, pos) => {
+      acc.push(pos);
+      acc.push(size - 1 - pos);
+      return acc;
+    }, []);
+  }
+
+  const positions = getSeededPositions(bracketSize);
+  const seeded = new Array(bracketSize).fill(null);
+
+  for (let i = 0; i < sorted.length; i++) {
+    seeded[positions[i]] = sorted[i];
+  }
+
+  return seeded;
+}
+
+async function generateKnockoutDraw(tournamentId, stage, entries, io, options = {}) {
+  const { useSeeding = false } = options;
+
+  let orderedEntries;
+  if (useSeeding) {
+    // Fetch handicap data for entries
+    const playerIds = entries.map(e => e.playerId);
+    const players = await prisma.player.findMany({
+      where: { id: { in: playerIds } },
+      select: { id: true, handicapIndex: true },
+    });
+    const handicapMap = {};
+    players.forEach(p => { handicapMap[p.id] = p.handicapIndex ? Number(p.handicapIndex) : null; });
+
+    // Attach handicap to entries
+    const entriesWithHandicap = entries.map(e => ({
+      ...e,
+      handicapIndex: handicapMap[e.playerId] ?? null,
+    }));
+
+    orderedEntries = seedByHandicap(entriesWithHandicap);
+  } else {
+    // Random shuffle (existing behavior)
+    const shuffled = shuffle(entries);
+    const bracketSize = nextPowerOf2(shuffled.length);
+    orderedEntries = new Array(bracketSize).fill(null);
+    shuffled.forEach((entry, i) => { orderedEntries[i] = entry; });
+  }
+
+  const bracketSize = orderedEntries.length;
   const numRounds = totalRoundsForBracket(bracketSize);
-  const numByes = bracketSize - shuffled.length;
 
   const allMatches = [];
 
@@ -73,13 +140,14 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io) {
 
   // Populate round 1 with players and emit live draw events
   const round1Matches = bracketSize / 2;
-  let playerIdx = 0;
+  let seedings = [];
 
   for (let matchNum = 1; matchNum <= round1Matches; matchNum++) {
     const match = matchMap[`1-${matchNum}`];
-    const playerA = shuffled[playerIdx] || null;
-    const playerB = shuffled[playerIdx + 1] || null;
-    playerIdx += 2;
+    const slotA = (matchNum - 1) * 2;
+    const slotB = slotA + 1;
+    const playerA = orderedEntries[slotA] || null;
+    const playerB = orderedEntries[slotB] || null;
 
     const updateData = {};
     if (playerA) updateData.playerAId = playerA.playerId;
@@ -95,10 +163,15 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io) {
       where: { id: match.id },
       data: updateData,
       include: {
-        playerA: { select: { id: true, firstName: true, lastName: true } },
-        playerB: { select: { id: true, firstName: true, lastName: true } },
+        playerA: { select: { id: true, firstName: true, lastName: true, handicapIndex: true } },
+        playerB: { select: { id: true, firstName: true, lastName: true, handicapIndex: true } },
       },
     });
+
+    if (useSeeding) {
+      if (playerA) seedings.push({ playerId: playerA.playerId, seed: playerA.seed, handicap: playerA.handicapIndex });
+      if (playerB) seedings.push({ playerId: playerB.playerId, seed: playerB.seed, handicap: playerB.handicapIndex });
+    }
 
     // Emit live draw event for each match populated
     if (io) {
@@ -109,6 +182,8 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io) {
         playerA: updated.playerA,
         playerB: updated.playerB,
         isBye: !playerB,
+        seedA: playerA?.seed,
+        seedB: playerB?.seed,
       });
       // Stagger for dramatic effect
       await new Promise(r => setTimeout(r, 1500));
@@ -116,7 +191,6 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io) {
 
     // Auto-advance byes to next round
     if (playerA && !playerB && updated.nextMatchId) {
-      const nextMatch = await prisma.match.findUnique({ where: { id: updated.nextMatchId } });
       const slot = matchNum % 2 === 1 ? 'playerAId' : 'playerBId';
       await prisma.match.update({
         where: { id: updated.nextMatchId },
@@ -125,7 +199,7 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io) {
     }
   }
 
-  return { totalMatches: createdMatches.length, numRounds, bracketSize };
+  return { totalMatches: createdMatches.length, numRounds, bracketSize, seeded: useSeeding, seedings };
 }
 
 async function getBracket(tournamentId, stage) {
@@ -150,4 +224,4 @@ async function getBracket(tournamentId, stage) {
   return { rounds, totalRounds: Object.keys(rounds).length };
 }
 
-module.exports = { generateKnockoutDraw, getBracket };
+module.exports = { generateKnockoutDraw, getBracket, seedByHandicap };

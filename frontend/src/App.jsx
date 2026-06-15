@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/home/HomePage';
@@ -42,6 +44,7 @@ import CourseGalleryPage from './pages/gallery/CourseGalleryPage';
 import TournamentProgrammePage from './pages/programme/TournamentProgrammePage';
 import TermsPage from './pages/legal/TermsPage';
 import PrivacyPage from './pages/legal/PrivacyPage';
+import AuditLogPage from './pages/admin/AuditLogPage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 
 function ProtectedRoute({ children, roles }) {
@@ -62,7 +65,7 @@ function AppRoutes() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors">
       <Navbar />
       <main className="flex-1">
         <ErrorBoundary>
@@ -171,6 +174,11 @@ function AppRoutes() {
                 <EditTournament />
               </ProtectedRoute>
             } />
+            <Route path="/admin/audit-log" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <AuditLogPage />
+              </ProtectedRoute>
+            } />
 
             {/* 404 catch-all */}
             <Route path="*" element={<NotFoundPage />} />
@@ -179,6 +187,7 @@ function AppRoutes() {
       </main>
       <Footer />
       <CookieConsent />
+      <PWAInstallPrompt />
     </div>
   );
 }
@@ -186,9 +195,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

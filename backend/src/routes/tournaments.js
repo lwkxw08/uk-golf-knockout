@@ -5,6 +5,7 @@ const { authenticate, requireRole } = require('../middleware/auth');
 const prisma = require('../config/prisma');
 
 const { geocodePostcode, haversineDistanceMiles } = require('../services/geocodeService');
+const { logAudit } = require('../services/auditService');
 
 const router = express.Router();
 
@@ -320,6 +321,7 @@ router.put('/:id',
           pricing: true, prizes: true,
         },
       });
+      logAudit({ userId: req.user.id, userEmail: req.user.email, action: 'TOURNAMENT_UPDATED', entity: 'Tournament', entityId: req.params.id, details: { name: tournament.name, fields: Object.keys(data) }, ipAddress: req.ip });
       res.json(tournament);
     } catch (err) {
       res.status(500).json({ error: 'Failed to update tournament' });

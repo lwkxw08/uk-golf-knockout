@@ -1009,3 +1009,23 @@ model SystemSetting {
 
   @@map("system_settings")
 }
+
+// ── Audit Log ────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  userEmail   String?  @map("user_email")
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
