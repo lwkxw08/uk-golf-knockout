@@ -194,6 +194,13 @@ model Player {
   referralsReceived  Referral[]       @relation("ReferralsReceived")
   photosUploaded     CoursePhoto[]    @relation("PhotosUploaded")
   videosUploaded     VideoHighlight[] @relation("VideosUploaded")
+  posts              PlayerPost[]     @relation("PlayerPosts")
+  postLikes          PostLike[]       @relation("PostLikes")
+  postComments       PostComment[]    @relation("PostComments")
+  following          PlayerFollow[]   @relation("Following")
+  followers          PlayerFollow[]   @relation("Followers")
+  postedTeeTimes     OpenTeeTime[]    @relation("PostedTeeTimes")
+  teeTimeInterests   TeeTimeInterest[] @relation("TeeTimeInterests")
 
   @@map("players")
 }
@@ -240,6 +247,7 @@ model Club {
   matchCheckIns        MatchCheckIn[]     @relation("CheckInClub")
   coursePhotos         CoursePhoto[]      @relation("CoursePhotos")
   videoHighlights     VideoHighlight[]   @relation("ClubVideoHighlights")
+  openTeeTimes        OpenTeeTime[]      @relation("ClubTeeTimes")
 
   @@map("clubs")
 }
@@ -1033,4 +1041,120 @@ model AuditLog {
   @@index([entity])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── PLAYER POSTS (Social Timeline) ────────────────────────────────────────
+
+model PlayerPost {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  content     String
+  images      Json?    // Array of image URLs
+  taggedClubId    String?  @map("tagged_club_id")
+  taggedTournamentId String? @map("tagged_tournament_id")
+  likesCount  Int      @default(0) @map("likes_count")
+  commentsCount Int    @default(0) @map("comments_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  player   Player  @relation("PlayerPosts", fields: [playerId], references: [id])
+  likes    PostLike[]
+  comments PostComment[]
+
+  @@index([playerId, createdAt])
+  @@map("player_posts")
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post   PlayerPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player Player     @relation("PostLikes", fields: [playerId], references: [id])
+
+  @@unique([postId, playerId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post   PlayerPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player Player     @relation("PostComments", fields: [playerId], references: [id])
+
+  @@index([postId, createdAt])
+  @@map("post_comments")
+}
+
+// ─── FOLLOW SYSTEM ──────────────────────────────────────────────────────────
+
+model PlayerFollow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  Player @relation("Following", fields: [followerId], references: [id])
+  following Player @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("player_follows")
+}
+
+// ─── SHARE A ROUND / OPEN TEE TIMES ────────────────────────────────────────
+
+model OpenTeeTime {
+  id            String   @id @default(uuid())
+  posterId      String   @map("poster_id")
+  clubId        String?  @map("club_id")
+  courseName    String?  @map("course_name")
+  teeTime       DateTime @map("tee_time")
+  spotsAvailable Int     @default(1) @map("spots_available")
+  greenFeePence  Int?    @map("green_fee_pence")
+  notes         String?
+  status        TeeTimeStatus @default(OPEN)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  poster    Player  @relation("PostedTeeTimes", fields: [posterId], references: [id])
+  club      Club?   @relation("ClubTeeTimes", fields: [clubId], references: [id])
+  interests TeeTimeInterest[]
+
+  @@index([status, teeTime])
+  @@index([posterId])
+  @@map("open_tee_times")
+}
+
+model TeeTimeInterest {
+  id          String   @id @default(uuid())
+  teeTimeId   String   @map("tee_time_id")
+  playerId    String   @map("player_id")
+  message     String?
+  status      InterestStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  teeTime OpenTeeTime @relation(fields: [teeTimeId], references: [id], onDelete: Cascade)
+  player  Player      @relation("TeeTimeInterests", fields: [playerId], references: [id])
+
+  @@unique([teeTimeId, playerId])
+  @@map("tee_time_interests")
+}
+
+enum TeeTimeStatus {
+  OPEN
+  FILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

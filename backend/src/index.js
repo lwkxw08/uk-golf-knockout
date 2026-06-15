@@ -143,6 +143,7 @@ app.use('/api/video-highlights', require('./routes/videoHighlights'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/search', require('./routes/search'));
 app.use('/api/audit-log', require('./routes/auditLog'));
+app.use('/api/social', require('./routes/social'));
 
 // Enhanced health check
 app.get('/api/health', async (req, res) => {

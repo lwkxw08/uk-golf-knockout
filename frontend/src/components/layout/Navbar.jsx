@@ -29,9 +29,9 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-5">
             <Link to="/tournaments" className="hover:text-green-200 transition text-sm">Tournaments</Link>
             <Link to="/leaderboard" className="hover:text-green-200 transition text-sm">Leaderboard</Link>
-            <Link to="/feed" className="hover:text-green-200 transition text-sm">Feed</Link>
+            <Link to="/social" className="hover:text-green-200 transition text-sm">Social</Link>
+            <Link to="/tee-times" className="hover:text-green-200 transition text-sm">Share a Round</Link>
             <Link to="/marketplace" className="hover:text-green-200 transition text-sm">Marketplace</Link>
-            <Link to="/membership" className="hover:text-green-200 transition text-sm">Membership</Link>
 
             <SearchBar />
 
@@ -105,7 +105,8 @@ export default function Navbar() {
             </button>
             <Link to="/tournaments" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Tournaments</Link>
             <Link to="/leaderboard" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Leaderboard</Link>
-            <Link to="/feed" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Feed</Link>
+            <Link to="/social" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Social</Link>
+            <Link to="/tee-times" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Share a Round</Link>
             <Link to="/marketplace" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Marketplace</Link>
             <Link to="/membership" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Membership</Link>
             {user ? (

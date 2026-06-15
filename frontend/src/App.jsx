@@ -46,6 +46,9 @@ import TournamentProgrammePage from './pages/programme/TournamentProgrammePage';
 import TermsPage from './pages/legal/TermsPage';
 import PrivacyPage from './pages/legal/PrivacyPage';
 import AuditLogPage from './pages/admin/AuditLogPage';
+import PlayerPublicProfile from './pages/player-profile/PlayerPublicProfile';
+import OpenTeeTimesPage from './pages/tee-times/OpenTeeTimesPage';
+import SocialTimelinePage from './pages/social/SocialTimelinePage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 
 function ProtectedRoute({ children, roles }) {
@@ -115,6 +118,9 @@ function AppRoutes() {
             <Route path="/tournaments/:tournamentId/programme" element={<TournamentProgrammePage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/membership" element={<MembershipPage />} />
+            <Route path="/player/:playerId" element={<PlayerPublicProfile />} />
+            <Route path="/tee-times" element={<OpenTeeTimesPage />} />
+            <Route path="/social" element={<SocialTimelinePage />} />
             <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
 
             <Route path="/profile" element={
