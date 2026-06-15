@@ -9,6 +9,7 @@ const config = require('./config');
 const { validateEnv } = require('./config/validateEnv');
 const { startDrawScheduler } = require('./services/drawScheduler');
 const { startNotificationScheduler } = require('./services/notificationScheduler');
+const { startMembershipScheduler } = require('./services/membershipScheduler');
 
 // Validate environment variables
 const envStatus = validateEnv();
@@ -224,6 +225,7 @@ server.listen(config.port, () => {
   logger.info({ ...envStatus }, 'Service status');
   startDrawScheduler(io);
   startNotificationScheduler();
+  startMembershipScheduler();
 });
 
 module.exports = { app, server, io };

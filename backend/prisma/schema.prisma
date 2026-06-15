@@ -707,11 +707,16 @@ model PlayerMembership {
   currentPeriodStart DateTime           @map("current_period_start")
   currentPeriodEnd   DateTime           @map("current_period_end")
   cancelledAt        DateTime?          @map("cancelled_at")
+  reminder30Sent     Boolean            @default(false) @map("reminder_30_sent")
+  reminder7Sent      Boolean            @default(false) @map("reminder_7_sent")
+  expiryNotifSent    Boolean            @default(false) @map("expiry_notif_sent")
+  renewedFromId      String?            @map("renewed_from_id")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 
   player Player @relation(fields: [playerId], references: [id])
 
+  @@index([status, currentPeriodEnd])
   @@map("player_memberships")
 }
 

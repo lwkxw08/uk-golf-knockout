@@ -51,8 +51,9 @@ export default function Navbar() {
                       <Link to="/admin/pricing" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Pricing</Link>
                       <Link to="/admin/clubs" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Clubs</Link>
                       <Link to="/admin/users" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Users</Link>
-                            <Link to="/admin/audit-log" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Audit Log</Link>
-                <Link to="/admin/settings" className="block px-4 py-2 hover:bg-gray-100 text-sm">Settings</Link>
+                      <Link to="/admin/memberships" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Memberships</Link>
+                      <Link to="/admin/audit-log" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Audit Log</Link>
+                      <Link to="/admin/settings" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">Settings</Link>
                       <Link to="/club-portal" className="block px-4 py-2 hover:bg-gray-100 text-sm">Club Portal</Link>
                     </div>
                   </div>
@@ -114,6 +115,7 @@ export default function Navbar() {
                     <Link to="/admin" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Admin Dashboard</Link>
                     <Link to="/admin/sponsors" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Sponsors</Link>
                     <Link to="/admin/pricing" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Pricing</Link>
+                    <Link to="/admin/memberships" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Memberships</Link>
                     <Link to="/admin/audit-log" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Audit Log</Link>
                     <Link to="/admin/settings" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Settings</Link>
                     <Link to="/club-portal" className="block py-2 hover:text-green-200" onClick={() => setMenuOpen(false)}>Club Portal</Link>

@@ -24,6 +24,7 @@ import PricingManagement from './pages/admin/PricingManagement';
 import ClubManagement from './pages/admin/ClubManagement';
 import SettingsPage from './pages/admin/SettingsPage';
 import UserManagement from './pages/admin/UserManagement';
+import MembershipTrackingPage from './pages/admin/MembershipTrackingPage';
 import EditTournament from './pages/admin/EditTournament';
 import ClubPortal from './pages/club-portal/ClubPortal';
 import ClubPublicPage from './pages/club-public/ClubPublicPage';
@@ -177,6 +178,11 @@ function AppRoutes() {
             <Route path="/admin/audit-log" element={
               <ProtectedRoute roles={['ADMIN']}>
                 <AuditLogPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/memberships" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <MembershipTrackingPage />
               </ProtectedRoute>
             } />
 
