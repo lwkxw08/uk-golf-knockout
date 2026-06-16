@@ -197,6 +197,57 @@ async function main() {
     });
   }
   console.log('Platform pricing created');
+
+  // Seed demo news articles
+  const demoArticles = [
+    {
+      title: 'Luna Golf Platform Launch — Welcome to the Future of Knockout Golf',
+      summary: 'We\'re thrilled to announce the official launch of the Luna Golf platform. Register now and find your first tournament.',
+      content: 'After months of development and testing with our founding partner clubs, Luna Golf is officially live.\n\nThe platform brings everything you need for organised matchplay knockout competitions — from automated seeded draws to live scoring, league tables, and a thriving social community.\n\nKey features at launch:\n• Handicap-seeded knockout draws\n• Regional league format with points tables\n• Live hole-by-hole match tracking\n• Social feed and player profiles\n• Share a Round — find playing partners\n• Club marketplace for member offers\n• Full dark mode support\n• Mobile-first PWA (install on your home screen)\n\nRegister today and enter your first tournament. Welcome to Luna Golf.',
+      category: 'Announcement',
+      published: true,
+      publishedAt: new Date('2026-06-01'),
+      authorId: admin.id,
+    },
+    {
+      title: '2027 Buckinghamshire Regional League — Entries Open',
+      summary: 'The flagship regional league is now accepting entries. 20 players, round-robin format, top 4 qualify for the National Final.',
+      content: 'Entries are now open for the 2027 Buckinghamshire Regional League — our flagship competition format.\n\nFormat:\n• 20 players from clubs across Buckinghamshire\n• Round-robin matchplay within your group\n• Points: 10 for a win, 5 for a draw, 2 for a loss, plus bonus points\n• Top 4 qualify for the National Final\n\nParticipating clubs include Stoke Park, Beaconsfield, Denham, and Burnham Beeches.\n\nEntry fee: £25 per player. All matches to be completed by October 2027.\n\nEnter through the Tournaments page — search for "Buckinghamshire Regional League".',
+      category: 'Tournament Update',
+      published: true,
+      publishedAt: new Date('2026-06-03'),
+      authorId: admin.id,
+    },
+    {
+      title: 'New Feature: Share a Round — Never Play Alone Again',
+      summary: 'Post your available tee times and find playing partners from the Luna Golf community. Fill your 4-ball in seconds.',
+      content: 'We\'ve launched Share a Round — a simple way to find playing partners from the Luna Golf community.\n\nHow it works:\n1. Post your tee time (course, date, time, green fee, available spots)\n2. Other members see your post and express interest\n3. Accept a player to fill your group\n4. Play together, make new connections\n\nPerfect for:\n• Filling a 4-ball when someone drops out\n• Playing a new course with company\n• Meeting other competitive golfers in your area\n\nFind it in the navbar under "Share a Round" or browse open tee times from the homepage.',
+      category: 'Feature Release',
+      published: true,
+      publishedAt: new Date('2026-06-05'),
+      authorId: admin.id,
+    },
+    {
+      title: 'Tips: How to Win Your First Knockout Match',
+      summary: 'New to matchplay? Here are 5 practical tips to help you win your first Luna Golf knockout match.',
+      content: 'Matchplay is a different beast to strokeplay. Here are 5 tips for your first knockout match:\n\n1. Play the player, not the course\nIn matchplay you only need to beat one person. If your opponent makes bogey, you don\'t need birdie — just make par.\n\n2. Never give up a hole\nEven 3 down with 4 to play is very recoverable in matchplay. Keep fighting every hole.\n\n3. Know your strokes\nCheck which holes you receive (or give) shots BEFORE the round. Strokes at the hard holes are a huge advantage.\n\n4. Concede short putts early\nBeing generous with gimmes early on builds goodwill and puts pressure on your opponent to do the same when it matters.\n\n5. Focus on your own game\nDon\'t watch your opponent too closely. Play your game, trust your swing, and let the scorecard do the talking.\n\nGood luck in your first match!',
+      category: 'Tips & Advice',
+      published: true,
+      publishedAt: new Date('2026-06-07'),
+      authorId: admin.id,
+    },
+  ];
+
+  // Only seed if no articles exist
+  const existingArticles = await prisma.newsArticle.count();
+  if (existingArticles === 0) {
+    for (const article of demoArticles) {
+      await prisma.newsArticle.create({ data: article });
+    }
+    console.log('Demo news articles created');
+  } else {
+    console.log('News articles already exist, skipping');
+  }
 }
 
 main()

@@ -49,6 +49,13 @@ import AuditLogPage from './pages/admin/AuditLogPage';
 import PlayerPublicProfile from './pages/player-profile/PlayerPublicProfile';
 import OpenTeeTimesPage from './pages/tee-times/OpenTeeTimesPage';
 import SocialTimelinePage from './pages/social/SocialTimelinePage';
+import AboutPage from './pages/about/AboutPage';
+import FAQPage from './pages/faq/FAQPage';
+import HowItWorksPage from './pages/how-it-works/HowItWorksPage';
+import ContactPage from './pages/contact/ContactPage';
+import NewsPage from './pages/news/NewsPage';
+import NewsArticlePage from './pages/news/NewsArticlePage';
+import AdminNewsPage from './pages/admin/AdminNewsPage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 
 function ProtectedRoute({ children, roles }) {
@@ -123,6 +130,12 @@ function AppRoutes() {
             <Route path="/tee-times" element={<OpenTeeTimesPage />} />
             <Route path="/social" element={<SocialTimelinePage />} />
             <Route path="/subscriptions" element={<ClubSubscriptionPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/:id" element={<NewsArticlePage />} />
 
             <Route path="/profile" element={
               <ProtectedRoute>
@@ -190,6 +203,11 @@ function AppRoutes() {
             <Route path="/admin/memberships" element={
               <ProtectedRoute roles={['ADMIN']}>
                 <MembershipTrackingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/news" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <AdminNewsPage />
               </ProtectedRoute>
             } />
 

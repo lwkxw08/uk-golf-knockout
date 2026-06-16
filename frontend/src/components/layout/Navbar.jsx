@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Trophy, Menu, X, User, Moon, Sun, ChevronDown, LogOut, Settings, Shield, Users, CreditCard, Megaphone, BarChart3, FileText, ClipboardList } from 'lucide-react';
+import { Trophy, Menu, X, User, Moon, Sun, ChevronDown, LogOut, Settings, Shield, Users, CreditCard, Megaphone, BarChart3, FileText, ClipboardList, Newspaper } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import SearchBar from './SearchBar';
 
@@ -67,6 +67,7 @@ export default function Navbar() {
     { to: '/admin/clubs', icon: Shield, label: 'Clubs' },
     { to: '/admin/users', icon: Users, label: 'Users' },
     { to: '/admin/memberships', icon: ClipboardList, label: 'Memberships' },
+    { to: '/admin/news', icon: Newspaper, label: 'News / Blog' },
     { to: '/admin/audit-log', icon: FileText, label: 'Audit Log' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
     { to: '/club-portal', icon: Shield, label: 'Club Portal' },

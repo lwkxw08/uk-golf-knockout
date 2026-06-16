@@ -148,8 +148,9 @@ model User {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  player      Player?
-  clubManager ClubManager?
+  player       Player?
+  clubManager  ClubManager?
+  newsArticles NewsArticle[] @relation("NewsAuthor")
 
   @@map("users")
 }
@@ -1041,6 +1042,26 @@ model AuditLog {
   @@index([entity])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── NEWS ARTICLES (Blog/CMS) ────────────────────────────────────────────────
+
+model NewsArticle {
+  id          String    @id @default(uuid())
+  title       String
+  summary     String?
+  content     String    @db.Text
+  category    String    @default("Announcement")
+  published   Boolean   @default(true)
+  publishedAt DateTime? @map("published_at")
+  authorId    String?   @map("author_id")
+  author      User?     @relation("NewsAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([published])
+  @@index([createdAt])
+  @@map("news_articles")
 }
 
 // ─── PLAYER POSTS (Social Timeline) ────────────────────────────────────────
