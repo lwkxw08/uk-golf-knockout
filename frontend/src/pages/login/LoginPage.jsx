@@ -33,8 +33,8 @@ export default function LoginPage() {
       }} />
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-700/30">
-            <Trophy className="w-8 h-8 text-white" />
+          <div className="mx-auto mb-4">
+            <img src="/logo.svg" alt="UK Golf Knockout" className="h-16 w-auto mx-auto" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Sign In</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back to UK Golf Knockout</p>

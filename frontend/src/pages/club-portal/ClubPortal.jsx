@@ -165,10 +165,10 @@ export default function ClubPortal() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2"><Building2 className="w-7 h-7 text-green-700" /> Club Management</h1>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {clubs.map(club => (
-            <Link key={club.id} to={`/clubs/${club.slug}`} className="bg-white border rounded-xl p-6 hover:shadow-md transition">
+            <Link key={club.id} to={`/clubs/${club.slug}`} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition">
               <h3 className="font-bold text-lg">{club.name}</h3>
               <p className="text-sm text-gray-500 mt-1">{club.region?.name || 'No region'}</p>
-              <div className="flex gap-4 mt-3 text-sm text-gray-600">
+              <div className="flex gap-4 mt-3 text-sm text-gray-600 dark:text-gray-400">
                 <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {club._count?.players || 0} members</span>
               </div>
               <span className={`mt-3 inline-block px-2 py-0.5 rounded text-xs font-medium ${club.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -185,7 +185,7 @@ export default function ClubPortal() {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 text-center">
         <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700">No Club Dashboard Available</h2>
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No Club Dashboard Available</h2>
         <p className="text-gray-500 mt-2">{error || 'You are not assigned as a manager of any club.'}</p>
       </div>
     );
@@ -236,7 +236,7 @@ export default function ClubPortal() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b mb-6">
+      <div className="border-b dark:border-gray-700 mb-6">
         <div className="flex gap-1 overflow-x-auto">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
@@ -253,14 +253,14 @@ export default function ClubPortal() {
       {activeTab === 'overview' && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Club Info */}
-          <div className="bg-white border rounded-xl p-6">
-            <h2 className="font-semibold text-lg mb-4">Club Information</h2>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+            <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Information</h2>
             {dashboard.club.description && <p className="text-gray-700 text-sm mb-4">{dashboard.club.description}</p>}
             <div className="space-y-2 text-sm">
-              {dashboard.club.address && <p className="flex items-center gap-2 text-gray-600"><MapPin className="w-4 h-4 text-gray-400" /> {dashboard.club.address}{dashboard.club.postcode ? `, ${dashboard.club.postcode}` : ''}</p>}
-              {dashboard.club.phone && <p className="flex items-center gap-2 text-gray-600"><Phone className="w-4 h-4 text-gray-400" /> {dashboard.club.phone}</p>}
-              {dashboard.club.email && <p className="flex items-center gap-2 text-gray-600"><Mail className="w-4 h-4 text-gray-400" /> {dashboard.club.email}</p>}
-              {dashboard.club.website && <p className="flex items-center gap-2 text-gray-600"><Globe className="w-4 h-4 text-gray-400" /> <a href={dashboard.club.website} target="_blank" rel="noreferrer" className="text-green-600 hover:underline">{dashboard.club.website}</a></p>}
+              {dashboard.club.address && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 text-gray-400" /> {dashboard.club.address}{dashboard.club.postcode ? `, ${dashboard.club.postcode}` : ''}</p>}
+              {dashboard.club.phone && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><Phone className="w-4 h-4 text-gray-400" /> {dashboard.club.phone}</p>}
+              {dashboard.club.email && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><Mail className="w-4 h-4 text-gray-400" /> {dashboard.club.email}</p>}
+              {dashboard.club.website && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><Globe className="w-4 h-4 text-gray-400" /> <a href={dashboard.club.website} target="_blank" rel="noreferrer" className="text-green-600 hover:underline">{dashboard.club.website}</a></p>}
             </div>
             {dashboard.club.slopeRating && (
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
@@ -282,7 +282,7 @@ export default function ClubPortal() {
 
           {/* Recent Activity */}
           <div className="space-y-6">
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
               {(dashboard.fixtures || []).length > 0 ? (
                 <div className="space-y-2">
@@ -299,7 +299,7 @@ export default function ClubPortal() {
               ) : <p className="text-gray-500 text-sm">No upcoming fixtures</p>}
             </div>
 
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
               {(dashboard.results || []).length > 0 ? (
                 <div className="space-y-2">
@@ -309,7 +309,7 @@ export default function ClubPortal() {
                         <p className="font-medium">{r.winner?.firstName} {r.winner?.lastName} <span className="text-green-600">won</span></p>
                         <p className="text-xs text-gray-500">{r.playerA?.firstName} {r.playerA?.lastName} vs {r.playerB?.firstName} {r.playerB?.lastName}</p>
                       </div>
-                      <span className="text-sm font-medium text-gray-600">{r.result?.resultText}</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{r.result?.resultText}</span>
                     </div>
                   ))}
                 </div>
@@ -323,7 +323,7 @@ export default function ClubPortal() {
         <div className="space-y-6">
           {/* Club Championship Position */}
           {(dashboard.regionChampionship || []).length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-600" /> Club Championship Standings
               </h2>
@@ -333,11 +333,11 @@ export default function ClubPortal() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">#</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Club</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Players</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Matches</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Wins</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">#</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Club</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Players</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Matches</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Wins</th>
                     <th className="px-3 py-2 text-center font-semibold text-amber-700 bg-amber-50">Points</th>
                   </tr>
                 </thead>
@@ -346,15 +346,15 @@ export default function ClubPortal() {
                     const isOurClub = c.clubId === dashboard.club.id;
                     return (
                       <tr key={c.id} className={`${isOurClub ? 'bg-green-50 font-medium' : ''} hover:bg-gray-50`}>
-                        <td className="px-3 py-3 font-bold text-gray-700">{c.position || i + 1}</td>
+                        <td className="px-3 py-3 font-bold text-gray-700 dark:text-gray-300">{c.position || i + 1}</td>
                         <td className="px-3 py-3">
                           <span className={isOurClub ? 'text-green-700 font-semibold' : 'text-gray-900'}>
                             {c.club?.name} {isOurClub && '(You)'}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-center text-gray-600">{c.playerCount}</td>
-                        <td className="px-3 py-3 text-center text-gray-600">{c.matchesPlayed}</td>
-                        <td className="px-3 py-3 text-center text-gray-600">{c.matchesWon}</td>
+                        <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.playerCount}</td>
+                        <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.matchesPlayed}</td>
+                        <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.matchesWon}</td>
                         <td className="px-3 py-3 text-center font-bold text-amber-700 bg-amber-50">{c.totalPoints}</td>
                       </tr>
                     );
@@ -366,7 +366,7 @@ export default function ClubPortal() {
 
           {/* Individual Player League Standings */}
           {(dashboard.leagueStandings || []).length > 0 ? (
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-green-700" /> Your Players' League Standings
               </h2>
@@ -376,37 +376,37 @@ export default function ClubPortal() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Pos</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">Player</th>
-                    <th className="px-3 py-2 text-left font-semibold text-gray-600">League</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">P</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">W</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">D</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">L</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">Bonus</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Pos</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Player</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">League</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">P</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">W</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">D</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">L</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Bonus</th>
                     <th className="px-3 py-2 text-center font-semibold text-emerald-700 bg-emerald-50">Pts</th>
-                    <th className="px-3 py-2 text-center font-semibold text-gray-600">+/-</th>
+                    <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">+/-</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {dashboard.leagueStandings
                     .sort((a, b) => b.totalPoints - a.totalPoints)
                     .map((s, i) => (
-                    <tr key={s.id} className="hover:bg-gray-50">
+                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-3 py-3">
                         <span className={`font-bold ${s.position <= 4 ? 'text-emerald-700' : 'text-gray-700'}`}>
                           {s.position || '-'}
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <div className="font-medium text-gray-900">{s.player?.firstName} {s.player?.lastName}</div>
+                        <div className="font-medium text-gray-900 dark:text-white">{s.player?.firstName} {s.player?.lastName}</div>
                         <div className="text-xs text-gray-500">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
                       </td>
                       <td className="px-3 py-3 text-xs text-gray-500">{s.tournament?.name}</td>
-                      <td className="px-3 py-3 text-center text-gray-700">{s.played}</td>
-                      <td className="px-3 py-3 text-center font-medium text-gray-900">{s.wins}</td>
-                      <td className="px-3 py-3 text-center text-gray-600">{s.draws}</td>
-                      <td className="px-3 py-3 text-center text-gray-600">{s.losses}</td>
+                      <td className="px-3 py-3 text-center text-gray-700 dark:text-gray-300">{s.played}</td>
+                      <td className="px-3 py-3 text-center font-medium text-gray-900 dark:text-white">{s.wins}</td>
+                      <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.draws}</td>
+                      <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.losses}</td>
                       <td className="px-3 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
                       <td className="px-3 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
                       <td className="px-3 py-3 text-center">
@@ -420,7 +420,7 @@ export default function ClubPortal() {
               </table>
             </div>
           ) : (
-            <div className="bg-white border rounded-xl p-6 text-center py-12">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 text-center py-12">
               <Trophy className="w-10 h-10 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500">No league data yet</p>
               <p className="text-sm text-gray-400 mt-1">Player standings will appear here once league matches are played</p>
@@ -452,7 +452,7 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'members' && (
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Members ({filteredMembers.length})</h2>
             <div className="relative">
@@ -463,7 +463,7 @@ export default function ClubPortal() {
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-gray-500">
+              <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                 <th className="pb-3 font-medium">Name</th>
                 <th className="pb-3 font-medium">Email</th>
                 <th className="pb-3 font-medium">Handicap</th>
@@ -473,9 +473,9 @@ export default function ClubPortal() {
             </thead>
             <tbody>
               {filteredMembers.map(m => (
-                <tr key={m.id} className="border-b last:border-0 hover:bg-gray-50">
+                <tr key={m.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="py-3 font-medium">{m.firstName} {m.lastName}</td>
-                  <td className="py-3 text-gray-600">{m.user?.email || '-'}</td>
+                  <td className="py-3 text-gray-600 dark:text-gray-400">{m.user?.email || '-'}</td>
                   <td className="py-3">{m.handicapIndex ? Number(m.handicapIndex).toFixed(1) : '-'}</td>
                   <td className="py-3"><span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">{m.rankingPoints}</span></td>
                   <td className="py-3 text-gray-400">{new Date(m.createdAt).toLocaleDateString('en-GB')}</td>
@@ -490,12 +490,12 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'fixtures' && (
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4">Upcoming Fixtures</h2>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Upcoming Fixtures</h2>
           {(dashboard.fixtures || []).length > 0 ? (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-gray-500">
+                <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                   <th className="pb-3 font-medium">Tournament</th>
                   <th className="pb-3 font-medium">Player A</th>
                   <th className="pb-3 font-medium">Player B</th>
@@ -505,14 +505,14 @@ export default function ClubPortal() {
               </thead>
               <tbody>
                 {dashboard.fixtures.map(f => (
-                  <tr key={f.id} className="border-b last:border-0 hover:bg-gray-50">
-                    <td className="py-3 font-medium">{f.tournament?.name}</td>
-                    <td className="py-3">{f.playerA?.firstName} {f.playerA?.lastName} {f.playerA?.handicapIndex ? `(${Number(f.playerA.handicapIndex).toFixed(1)})` : ''}</td>
-                    <td className="py-3">{f.playerB ? `${f.playerB.firstName} ${f.playerB.lastName} ${f.playerB.handicapIndex ? `(${Number(f.playerB.handicapIndex).toFixed(1)})` : ''}` : 'TBD'}</td>
-                    <td className="py-3 text-gray-600">{f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}</td>
+                  <tr key={f.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="py-3 font-medium text-gray-900 dark:text-white">{f.tournament?.name}</td>
+                    <td className="py-3 text-gray-700 dark:text-gray-300">{f.playerA?.firstName} {f.playerA?.lastName} {f.playerA?.handicapIndex ? `(${Number(f.playerA.handicapIndex).toFixed(1)})` : ''}</td>
+                    <td className="py-3 text-gray-700 dark:text-gray-300">{f.playerB ? `${f.playerB.firstName} ${f.playerB.lastName} ${f.playerB.handicapIndex ? `(${Number(f.playerB.handicapIndex).toFixed(1)})` : ''}` : 'TBD'}</td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">{f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set'}</td>
                     <td className="py-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        f.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                        f.status === 'SCHEDULED' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                       }`}>{f.status}</span>
                     </td>
                   </tr>
@@ -524,12 +524,12 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'results' && (
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4">Match Results</h2>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Match Results</h2>
           {(dashboard.results || []).length > 0 ? (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-gray-500">
+                <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                   <th className="pb-3 font-medium">Tournament</th>
                   <th className="pb-3 font-medium">Player A</th>
                   <th className="pb-3 font-medium">Player B</th>
@@ -539,7 +539,7 @@ export default function ClubPortal() {
               </thead>
               <tbody>
                 {dashboard.results.map(r => (
-                  <tr key={r.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <tr key={r.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="py-3 font-medium">{r.tournament?.name}</td>
                     <td className="py-3">{r.playerA?.firstName} {r.playerA?.lastName}</td>
                     <td className="py-3">{r.playerB?.firstName} {r.playerB?.lastName}</td>
@@ -554,7 +554,7 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'offers' && (
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Marketplace Offers</h2>
             <button onClick={() => setOfferForm({ ...newOfferTemplate })}
@@ -573,7 +573,7 @@ export default function ClubPortal() {
             <div className="mb-6 border rounded-xl p-5 bg-gray-50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium">{offerForm.id ? 'Edit Offer' : 'New Offer'}</h3>
-                <button onClick={() => setOfferForm(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                <button onClick={() => setOfferForm(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-400"><X className="w-5 h-5" /></button>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -700,8 +700,8 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'sponsors' && (
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4">Club Sponsors</h2>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Sponsors</h2>
           {(dashboard.sponsors || []).length > 0 ? (
             <div className="grid md:grid-cols-2 gap-4">
               {dashboard.sponsors.map(s => (
@@ -733,8 +733,8 @@ export default function ClubPortal() {
       )}
 
       {activeTab === 'settings' && settingsForm && (
-        <div className="bg-white border rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4">Club Settings</h2>
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Settings</h2>
           {saveMsg && (
             <div className={`mb-4 px-4 py-2 rounded text-sm ${saveMsg.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               {saveMsg}
@@ -802,9 +802,9 @@ export default function ClubPortal() {
 
 function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="bg-white border rounded-xl p-5 text-center">
+    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-5 text-center">
       <Icon className="w-6 h-6 text-green-700 mx-auto mb-2" />
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
     </div>
   );
