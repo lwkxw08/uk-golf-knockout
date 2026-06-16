@@ -77,7 +77,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className={`flex items-center gap-2 font-bold text-lg ${textColor} transition`}>
-            <img src={scrolled && !dark ? '/logo.svg' : '/logo-white.svg'} alt="Luna Golf" className="h-12 w-auto" />
+            <img src={!scrolled && !dark ? '/logo-white.svg' : '/logo.svg'} alt="Luna Golf" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop nav */}
