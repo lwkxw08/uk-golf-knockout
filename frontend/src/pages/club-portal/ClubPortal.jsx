@@ -338,24 +338,24 @@ export default function ClubPortal() {
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Players</th>
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Matches</th>
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Wins</th>
-                    <th className="px-3 py-2 text-center font-semibold text-amber-700 bg-amber-50">Points</th>
+                    <th className="px-3 py-2 text-center font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20">Points</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {dashboard.regionChampionship.map((c, i) => {
                     const isOurClub = c.clubId === dashboard.club.id;
                     return (
-                      <tr key={c.id} className={`${isOurClub ? 'bg-green-50 font-medium' : ''} hover:bg-gray-50`}>
+                      <tr key={c.id} className={`${isOurClub ? 'bg-green-50 dark:bg-green-900/20 font-medium' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
                         <td className="px-3 py-3 font-bold text-gray-700 dark:text-gray-300">{c.position || i + 1}</td>
                         <td className="px-3 py-3">
-                          <span className={isOurClub ? 'text-green-700 font-semibold' : 'text-gray-900'}>
+                          <span className={isOurClub ? 'text-green-700 dark:text-green-400 font-semibold' : 'text-gray-900 dark:text-white'}>
                             {c.club?.name} {isOurClub && '(You)'}
                           </span>
                         </td>
                         <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.playerCount}</td>
                         <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.matchesPlayed}</td>
                         <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{c.matchesWon}</td>
-                        <td className="px-3 py-3 text-center font-bold text-amber-700 bg-amber-50">{c.totalPoints}</td>
+                        <td className="px-3 py-3 text-center font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20">{c.totalPoints}</td>
                       </tr>
                     );
                   })}
@@ -384,17 +384,17 @@ export default function ClubPortal() {
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">D</th>
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">L</th>
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">Bonus</th>
-                    <th className="px-3 py-2 text-center font-semibold text-emerald-700 bg-emerald-50">Pts</th>
+                    <th className="px-3 py-2 text-center font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20">Pts</th>
                     <th className="px-3 py-2 text-center font-semibold text-gray-600 dark:text-gray-400">+/-</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {dashboard.leagueStandings
                     .sort((a, b) => b.totalPoints - a.totalPoints)
                     .map((s, i) => (
-                    <tr key={s.id} className="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
+                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-3 py-3">
-                        <span className={`font-bold ${s.position <= 4 ? 'text-emerald-700' : 'text-gray-700'}`}>
+                        <span className={`font-bold ${s.position <= 4 ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`}>
                           {s.position || '-'}
                         </span>
                       </td>
@@ -408,7 +408,7 @@ export default function ClubPortal() {
                       <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.draws}</td>
                       <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.losses}</td>
                       <td className="px-3 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
-                      <td className="px-3 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
+                      <td className="px-3 py-3 text-center font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20">{s.totalPoints}</td>
                       <td className="px-3 py-3 text-center">
                         <span className={`font-medium ${s.holesDifferential > 0 ? 'text-emerald-600' : s.holesDifferential < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                           {s.holesDifferential > 0 ? '+' : ''}{s.holesDifferential}
@@ -429,16 +429,16 @@ export default function ClubPortal() {
 
           {/* Club Championship Summary Card */}
           {(dashboard.clubChampionship || []).length > 0 && (
-            <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-6">
-              <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+              <h3 className="font-semibold text-amber-900 dark:text-amber-300 mb-3 flex items-center gap-2">
                 <Award className="w-5 h-5" /> Season Summary
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {dashboard.clubChampionship.map(cp => (
                   <div key={cp.id} className="text-center">
-                    <p className="text-xs text-amber-700 font-medium">{cp.season} Season</p>
-                    <p className="text-3xl font-bold text-amber-900">{cp.totalPoints}</p>
-                    <p className="text-xs text-amber-600">points</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">{cp.season} Season</p>
+                    <p className="text-3xl font-bold text-amber-900 dark:text-amber-200">{cp.totalPoints}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">points</p>
                     <div className="mt-2 text-xs text-amber-700 space-y-0.5">
                       <p>{cp.playerCount} players • {cp.matchesWon}/{cp.matchesPlayed} wins</p>
                       {cp.position && <p className="font-semibold">Position: #{cp.position}</p>}
@@ -633,7 +633,7 @@ export default function ClubPortal() {
           {(dashboard.offerings || []).length > 0 ? (
             <div className="space-y-3">
               {dashboard.offerings.map(o => (
-                <div key={o.id} className={`border rounded-xl p-5 ${o.isActive ? 'bg-white' : 'bg-gray-50 dark:bg-gray-900 opacity-70'}`}>
+                <div key={o.id} className={`border dark:border-gray-700 rounded-xl p-5 ${o.isActive ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900 opacity-70'}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -648,7 +648,7 @@ export default function ClubPortal() {
                         )}
                       </div>
                       <h3 className="font-bold text-lg text-gray-900 dark:text-white">{o.title}</h3>
-                      {o.description && <p className="text-sm text-gray-600 mt-1">{o.description}</p>}
+                      {o.description && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{o.description}</p>}
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                         {o.pricePence != null && (
                           <span className="font-semibold text-green-700 text-lg">&pound;{(o.pricePence / 100).toFixed(2)}
