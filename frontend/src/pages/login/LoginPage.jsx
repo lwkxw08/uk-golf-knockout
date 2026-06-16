@@ -27,17 +27,17 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800" />
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 dark:from-gray-900 dark:to-gray-800" />
       <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2316a34a' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
       }} />
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4">
             <img src="/logo.svg" alt="Luna Golf" className="h-20 w-auto mx-auto" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Sign In</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back to UK Golf Knockout</p>
+          <h1 className="text-2xl font-extrabold text-white">Sign In</h1>
+          <p className="text-green-200 mt-1">Welcome back to Luna Golf</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border dark:border-gray-700 p-8 space-y-5">
