@@ -12,8 +12,8 @@ export default function ClubPublicPage() {
     api.get(`/clubs/${slug}`).then(setClub).catch(console.error).finally(() => setLoading(false));
   }, [slug]);
 
-  if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
-  if (!club) return <div className="text-center py-12 text-gray-500">Club not found</div>;
+  if (loading) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading...</div>;
+  if (!club) return <div className="text-center py-12 text-gray-500 dark:text-gray-400">Club not found</div>;
 
   return (
     <div>
@@ -49,33 +49,33 @@ export default function ClubPublicPage() {
         <div className="md:col-span-2 space-y-6">
           {/* About */}
           {club.description && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-3">About</h2>
-              <p className="text-gray-700 text-sm whitespace-pre-wrap">{club.description}</p>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 text-gray-900 dark:text-white">About</h2>
+              <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap">{club.description}</p>
             </div>
           )}
 
           {/* Course Data */}
           {(club.slopeRating || club.courseRating || club.par) && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-3">Course Information</h2>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-3 text-gray-900 dark:text-white">Course Information</h2>
               <div className="grid grid-cols-3 gap-4">
                 {club.slopeRating && (
-                  <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-gray-500">Slope Rating</p>
-                    <p className="text-2xl font-bold text-green-800">{club.slopeRating}</p>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Slope Rating</p>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-300">{club.slopeRating}</p>
                   </div>
                 )}
                 {club.courseRating && (
-                  <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-gray-500">Course Rating</p>
-                    <p className="text-2xl font-bold text-green-800">{Number(club.courseRating).toFixed(1)}</p>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Course Rating</p>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-300">{Number(club.courseRating).toFixed(1)}</p>
                   </div>
                 )}
                 {club.par && (
-                  <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <p className="text-xs text-gray-500">Par</p>
-                    <p className="text-2xl font-bold text-green-800">{club.par}</p>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Par</p>
+                    <p className="text-2xl font-bold text-green-800 dark:text-green-300">{club.par}</p>
                   </div>
                 )}
               </div>
@@ -83,15 +83,15 @@ export default function ClubPublicPage() {
           )}
 
           {/* Fixtures */}
-          <div className="bg-white border rounded-xl p-6">
-            <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+            <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
             {club.fixtures?.length > 0 ? (
               <div className="space-y-3">
                 {club.fixtures.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between border rounded-lg p-3">
+                  <div key={i} className="flex items-center justify-between border dark:border-gray-700 rounded-lg p-3">
                     <div>
-                      <p className="font-medium text-sm">{f.tournament?.name}</p>
-                      <p className="text-xs text-gray-500">{f.playerA?.firstName} {f.playerA?.lastName} vs {f.playerB?.firstName || 'TBD'} {f.playerB?.lastName || ''}</p>
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{f.tournament?.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{f.playerA?.firstName} {f.playerA?.lastName} vs {f.playerB?.firstName || 'TBD'} {f.playerB?.lastName || ''}</p>
                     </div>
                     {f.scheduledDate && <span className="text-xs text-gray-400">{new Date(f.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
                   </div>
@@ -101,15 +101,15 @@ export default function ClubPublicPage() {
           </div>
 
           {/* Recent Results */}
-          <div className="bg-white border rounded-xl p-6">
-            <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+            <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
             {club.results?.length > 0 ? (
               <div className="space-y-3">
                 {club.results.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between border rounded-lg p-3">
+                  <div key={i} className="flex items-center justify-between border dark:border-gray-700 rounded-lg p-3">
                     <div>
-                      <p className="font-medium text-sm">{r.tournament?.name}</p>
-                      <p className="text-xs text-gray-500">{r.playerA?.firstName} {r.playerA?.lastName} vs {r.playerB?.firstName} {r.playerB?.lastName}</p>
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{r.tournament?.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{r.playerA?.firstName} {r.playerA?.lastName} vs {r.playerB?.firstName} {r.playerB?.lastName}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-green-700">{r.winner?.firstName} {r.winner?.lastName}</p>
@@ -122,15 +122,15 @@ export default function ClubPublicPage() {
           </div>
 
           {/* Rankings */}
-          <div className="bg-white border rounded-xl p-6">
-            <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Club Rankings</h2>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+            <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Club Rankings</h2>
             {club.rankings?.length > 0 ? (
-              <table className="w-full text-sm">
-                <thead><tr className="border-b text-left text-gray-500"><th className="pb-2">#</th><th className="pb-2">Player</th><th className="pb-2">Handicap</th><th className="pb-2">Points</th></tr></thead>
+              <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+                <thead><tr className="border-b dark:border-gray-700 text-left text-gray-500 dark:text-gray-400"><th className="pb-2">#</th><th className="pb-2">Player</th><th className="pb-2">Handicap</th><th className="pb-2">Points</th></tr></thead>
                 <tbody>{club.rankings.map((p, i) => (
-                  <tr key={p.id} className="border-b last:border-0">
+                  <tr key={p.id} className="border-b dark:border-gray-700 last:border-0">
                     <td className="py-2 font-bold text-gray-400">{i + 1}</td>
-                    <td className="py-2 font-medium">{p.firstName} {p.lastName}</td>
+                    <td className="py-2 font-medium text-gray-900 dark:text-white">{p.firstName} {p.lastName}</td>
                     <td className="py-2">{p.handicapIndex ? Number(p.handicapIndex).toFixed(1) : '-'}</td>
                     <td className="py-2 font-semibold text-green-700">{p.rankingPoints}</td>
                   </tr>
@@ -141,12 +141,12 @@ export default function ClubPublicPage() {
 
           {/* Course Offerings */}
           {club.offerings?.length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-green-700" /> Offers & Packages</h2>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-green-700" /> Offers & Packages</h2>
               <div className="grid md:grid-cols-2 gap-3">
                 {club.offerings.map(o => (
-                  <div key={o.id} className="border rounded-lg p-4">
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded capitalize">{o.offeringType.replace(/_/g, ' ')}</span>
+                  <div key={o.id} className="border dark:border-gray-700 rounded-lg p-4">
+                    <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded capitalize">{o.offeringType.replace(/_/g, ' ')}</span>
                     <h3 className="font-medium mt-2">{o.title}</h3>
                     {o.description && <p className="text-sm text-gray-600 mt-1">{o.description}</p>}
                     <div className="mt-2 flex items-center gap-2">
@@ -164,11 +164,11 @@ export default function ClubPublicPage() {
         <div className="space-y-6">
           {/* Contact Info */}
           {(club.phone || club.email || club.website || club.address) && (
-            <div className="bg-white border rounded-xl p-6">
-              <h3 className="font-semibold mb-4">Contact</h3>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Contact</h3>
               <div className="space-y-3 text-sm">
                 {club.address && (
-                  <div className="flex items-start gap-2 text-gray-600">
+                  <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
                     <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                     <div>
                       <p>{club.address}</p>
@@ -178,19 +178,19 @@ export default function ClubPublicPage() {
                   </div>
                 )}
                 {club.phone && (
-                  <p className="flex items-center gap-2 text-gray-600">
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Phone className="w-4 h-4 text-gray-400" />
                     <a href={`tel:${club.phone}`} className="hover:text-green-600">{club.phone}</a>
                   </p>
                 )}
                 {club.email && (
-                  <p className="flex items-center gap-2 text-gray-600">
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Mail className="w-4 h-4 text-gray-400" />
                     <a href={`mailto:${club.email}`} className="hover:text-green-600">{club.email}</a>
                   </p>
                 )}
                 {club.website && (
-                  <p className="flex items-center gap-2 text-gray-600">
+                  <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <Globe className="w-4 h-4 text-gray-400" />
                     <a href={club.website} target="_blank" rel="noreferrer" className="text-green-600 hover:underline">{club.website.replace(/^https?:\/\//, '')}</a>
                   </p>
@@ -201,13 +201,13 @@ export default function ClubPublicPage() {
 
           {/* Sponsors */}
           {club.sponsors?.length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
-              <h3 className="font-semibold mb-4">Our Sponsors</h3>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Our Sponsors</h3>
               <div className="space-y-4">
                 {club.sponsors.map(s => (
-                  <div key={s.id} className="border rounded-lg p-4 text-center">
+                  <div key={s.id} className="border dark:border-gray-700 rounded-lg p-4 text-center">
                     {s.logoUrl && <img src={s.logoUrl} alt={s.name} className="max-h-12 mx-auto mb-2 object-contain" />}
-                    <p className="font-medium text-sm">{s.name}</p>
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">{s.name}</p>
                     <p className="text-xs text-gray-500 capitalize">{s.tier.toLowerCase()} sponsor</p>
                     {s.websiteUrl && (
                       <a href={s.websiteUrl} target="_blank" rel="noreferrer" className="text-green-600 text-xs hover:underline flex items-center justify-center gap-1 mt-1">
@@ -222,19 +222,19 @@ export default function ClubPublicPage() {
 
           {/* Map placeholder */}
           {club.latitude && club.longitude && (
-            <div className="bg-white border rounded-xl p-6">
-              <h3 className="font-semibold mb-3">Location</h3>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h3 className="font-semibold mb-3 text-gray-900 dark:text-white">Location</h3>
               <a href={`https://www.google.com/maps/search/?api=1&query=${club.latitude},${club.longitude}`}
                 target="_blank" rel="noreferrer"
-                className="block bg-gray-100 rounded-lg p-8 text-center hover:bg-gray-200 transition">
+                className="block bg-gray-100 dark:bg-gray-700 rounded-lg p-8 text-center hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                 <MapPin className="w-8 h-8 text-green-700 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">View on Google Maps</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">View on Google Maps</p>
               </a>
             </div>
           )}
 
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-            <h3 className="font-semibold text-green-800">Advertise Here</h3>
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center">
+            <h3 className="font-semibold text-green-800 dark:text-green-300">Advertise Here</h3>
             <p className="text-sm text-green-700 mt-2">Promote your business to golfers at {club.name}.</p>
             <p className="text-xs text-green-600 mt-2">Contact us for sponsorship opportunities.</p>
           </div>

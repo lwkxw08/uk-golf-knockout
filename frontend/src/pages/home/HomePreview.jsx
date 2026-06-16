@@ -113,7 +113,7 @@ export default function HomePreview() {
                 <div className="flex items-center gap-3 mb-6">
                   <Trophy className="w-10 h-10 text-amber-400" />
                   <div>
-                    <p className="text-white font-bold text-lg">2027 National Knockout</p>
+                    <p className="text-white font-bold text-lg text-gray-900 dark:text-white">2027 National Knockout</p>
                     <p className="text-green-200 text-sm">Entries closing soon</p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export default function HomePreview() {
               <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Featured Tournaments</h2>
               <p className="text-gray-500 dark:text-gray-400 mt-1">Find your next competition</p>
             </div>
-            <Link to="/tournaments" className="hidden md:flex items-center gap-1 text-green-700 dark:text-green-400 font-semibold hover:text-green-800">
+            <Link to="/tournaments" className="hidden md:flex items-center gap-1 text-green-700 dark:text-green-400 font-semibold hover:text-green-800 dark:text-green-300">
               View All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -322,7 +322,7 @@ export default function HomePreview() {
               <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">From the Community</h2>
               <p className="text-gray-500 dark:text-gray-400 mt-1">See what players are talking about</p>
             </div>
-            <Link to="/social" className="hidden md:flex items-center gap-1 text-green-700 dark:text-green-400 font-semibold hover:text-green-800">
+            <Link to="/social" className="hidden md:flex items-center gap-1 text-green-700 dark:text-green-400 font-semibold hover:text-green-800 dark:text-green-300">
               View Feed <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
@@ -370,7 +370,7 @@ export default function HomePreview() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               { icon: Target, title: 'Live Match Tracking', desc: 'Real-time scoring with hole-by-hole updates', color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
-              { icon: TrendingUp, title: 'WHS Handicap Sync', desc: 'Auto-pulls from WHS — always up to date', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' },
+              { icon: TrendingUp, title: 'WHS Handicap Sync', desc: 'Auto-pulls from WHS — always up to date', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/30' },
               { icon: Users, title: 'Social Community', desc: 'Follow players, share rounds, post updates', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30' },
               { icon: Calendar, title: 'Calendar Sync', desc: 'Export fixtures to Google/Apple Calendar', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' },
               { icon: MapPin, title: 'Course Weather', desc: 'Live forecast for every course you play', color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/30' },

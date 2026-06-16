@@ -32,7 +32,7 @@ export default function RegisterPage() {
   }, []);
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
 
   const handleStep1 = async (e) => {
     e.preventDefault();

@@ -167,7 +167,7 @@ export default function SocialTimelinePage() {
           {searchResults.length > 0 && (
             <div className="mt-3 space-y-2">
               {searchResults.map(p => (
-                <Link key={p.id} to={`/player/${p.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750">
+                <Link key={p.id} to={`/player/${p.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-750">
                   <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-xs font-bold text-green-700">
                     {p.firstName[0]}{p.lastName[0]}
                   </div>
@@ -298,10 +298,10 @@ export default function SocialTimelinePage() {
               <div className="mt-3 pt-3 border-t dark:border-gray-700 space-y-2">
                 {(allComments[post.id] || post.comments || []).map(c => (
                   <div key={c.id} className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-400">
                       {c.player.firstName[0]}
                     </div>
-                    <div className="flex-1 bg-gray-50 dark:bg-gray-750 rounded-lg px-3 py-1.5">
+                    <div className="flex-1 bg-gray-50 dark:bg-gray-900 dark:bg-gray-750 rounded-lg px-3 py-1.5">
                       <p className="text-xs font-medium text-gray-900 dark:text-white">{c.player.firstName} {c.player.lastName}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">{c.content}</p>
                     </div>
@@ -317,7 +317,7 @@ export default function SocialTimelinePage() {
                       placeholder="Write a comment..."
                       className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-1.5 text-xs"
                     />
-                    <button onClick={() => handleComment(post.id)} className="text-green-700 hover:text-green-800">
+                    <button onClick={() => handleComment(post.id)} className="text-green-700 hover:text-green-800 dark:text-green-300">
                       <Send className="w-4 h-4" />
                     </button>
                   </div>

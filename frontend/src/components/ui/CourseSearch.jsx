@@ -68,7 +68,7 @@ export default function CourseSearch({ onSelect, selectedCourse }) {
     }
   };
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -88,13 +88,13 @@ export default function CourseSearch({ onSelect, selectedCourse }) {
 
       {/* Search results dropdown */}
       {showResults && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           {results.map((course) => (
             <button
               key={`${course.courseId}-${course.courseName}`}
               type="button"
               onClick={() => selectCourse(course)}
-              className="w-full text-left px-4 py-3 hover:bg-green-50 border-b last:border-0 transition"
+              className="w-full text-left px-4 py-3 hover:bg-green-50 dark:bg-green-900/20 border-b last:border-0 transition"
             >
               <p className="font-medium text-gray-900 text-sm">{course.clubName}</p>
               <p className="text-xs text-gray-500">{course.courseName}</p>
@@ -108,18 +108,18 @@ export default function CourseSearch({ onSelect, selectedCourse }) {
       )}
 
       {showResults && results.length === 0 && query.length >= 2 && !loading && (
-        <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg p-4 text-center text-sm text-gray-500">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-4 text-center text-sm text-gray-500 dark:text-gray-400">
           No courses found for "{query}"
         </div>
       )}
 
       {/* Course detail card */}
       {loadingDetail && (
-        <div className="mt-3 bg-gray-50 rounded-lg p-4 text-sm text-gray-500 animate-pulse">Loading course data...</div>
+        <div className="mt-3 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm text-gray-500 animate-pulse">Loading course data...</div>
       )}
 
       {courseDetail && !loadingDetail && (
-        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="mt-3 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg p-4">
           <div className="flex justify-between items-start">
             <div>
               <p className="font-semibold text-green-900">{courseDetail.clubName}</p>
@@ -131,7 +131,7 @@ export default function CourseSearch({ onSelect, selectedCourse }) {
                 </p>
               )}
             </div>
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+            <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
               {courseDetail.provider === 'englandgolf' ? 'England Golf' : 'GolfCourseAPI'}
             </span>
           </div>

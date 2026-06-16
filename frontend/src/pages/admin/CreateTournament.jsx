@@ -195,7 +195,7 @@ export default function CreateTournament() {
     }
   };
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
   const label = 'block text-sm font-medium text-gray-700 mb-1';
 
   return (
@@ -207,7 +207,7 @@ export default function CreateTournament() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -262,7 +262,7 @@ export default function CreateTournament() {
         </div>
 
         {/* Format */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Playing Format</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -292,11 +292,11 @@ export default function CreateTournament() {
             <div className="flex items-center gap-4 pt-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.isKnockout} onChange={update('isKnockout')} className="w-4 h-4 text-green-600 rounded" />
-                <span className="text-sm font-medium text-gray-700">Knockout Format</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Knockout Format</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.enableLeaderboard} onChange={update('enableLeaderboard')} className="w-4 h-4 text-green-600 rounded" />
-                <span className="text-sm font-medium text-gray-700">Overall Leaderboard</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Leaderboard</span>
               </label>
             </div>
           </div>
@@ -310,7 +310,7 @@ export default function CreateTournament() {
                 onChange={(e) => setForm(prev => ({ ...prev, useCustomStableford: e.target.checked }))}
                 className="w-4 h-4 text-green-600 rounded"
               />
-              <span className="text-sm font-medium text-gray-700">Custom Stableford Points</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Custom Stableford Points</span>
               <span className="text-xs text-gray-400">(default: standard stableford)</span>
             </label>
             {form.useCustomStableford && (
@@ -336,7 +336,7 @@ export default function CreateTournament() {
                           ...prev,
                           stablefordConfig: { ...prev.stablefordConfig, [item.key]: Number(e.target.value) },
                         }))}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                        className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
                       />
                     </div>
                   ))}
@@ -351,7 +351,7 @@ export default function CreateTournament() {
         </div>
 
         {/* Tournament Stages (Tree Structure) */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
               <h2 className="text-lg font-semibold">Tournament Stages</h2>
@@ -434,7 +434,7 @@ export default function CreateTournament() {
                   ) : (
                     <div>
                       <label className={label}>Champion + Runner-up</label>
-                      <div className="bg-white border rounded-lg px-3 py-2 text-sm text-gray-500">Final stage — determines winner</div>
+                      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Final stage — determines winner</div>
                     </div>
                   )}
 
@@ -526,7 +526,7 @@ export default function CreateTournament() {
 
           {/* Visual pathway summary */}
           {stages.length > 1 && (
-            <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+            <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
               <p className="text-xs font-medium text-gray-500 mb-2">Tournament Pathway</p>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {stages.map((s, i) => {
@@ -534,9 +534,9 @@ export default function CreateTournament() {
                   return (
                     <span key={s.tempId || i} className="flex items-center gap-1">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        s.stage === 'CLUB_QUALIFIER' ? 'bg-blue-100 text-blue-700' :
+                        s.stage === 'CLUB_QUALIFIER' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
                         s.stage === 'REGIONAL_LEAGUE' ? 'bg-emerald-100 text-emerald-700' :
-                        s.stage === 'REGIONAL' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
+                        s.stage === 'REGIONAL' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       }`}>{s.name}{s.maxParticipants ? ` (${s.maxParticipants})` : ''}</span>
                       {target && <ChevronRight className="w-3 h-3 text-gray-400" />}
                       {target && <span className="text-xs text-gray-500">{target.name}</span>}
@@ -551,7 +551,7 @@ export default function CreateTournament() {
 
         {/* Overall Prizes (e.g. leaderboard prize) */}
         {form.enableLeaderboard && (
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold">Overall Leaderboard Prizes</h2>
@@ -577,7 +577,7 @@ export default function CreateTournament() {
         )}
 
         {/* Dates */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Dates</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -600,7 +600,7 @@ export default function CreateTournament() {
         </div>
 
         {/* Pricing */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Entry Fee & Revenue Split</h2>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
@@ -623,8 +623,8 @@ export default function CreateTournament() {
               }} className={input} />
             </div>
           </div>
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-600">
+          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               For a &pound;{(form.entryFeePence / 100).toFixed(2)} entry: Club receives &pound;{((form.entryFeePence * form.clubSharePct / 100) / 100).toFixed(2)} | Platform receives &pound;{((form.entryFeePence * form.platformSharePct / 100) / 100).toFixed(2)}
             </p>
           </div>

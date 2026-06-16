@@ -79,28 +79,28 @@ export default function SearchBar() {
 
       {/* Results dropdown */}
       {query.length >= 2 && (
-        <div className="absolute top-full mt-2 right-0 w-80 bg-white rounded-xl shadow-xl border max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full mt-2 right-0 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border max-h-96 overflow-y-auto z-50">
           {loading && (
-            <div className="px-4 py-3 text-sm text-gray-500">Searching...</div>
+            <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">Searching...</div>
           )}
           {!loading && !hasResults && (
-            <div className="px-4 py-3 text-sm text-gray-500">No results for "{query}"</div>
+            <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No results for "{query}"</div>
           )}
 
           {results.players.length > 0 && (
             <div className="border-b">
-              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50">Players</p>
+              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">Players</p>
               {results.players.map(p => (
                 <button
                   key={p.id}
                   onClick={() => goTo(`/players/${p.id}/stats`)}
-                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 text-left"
+                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 dark:bg-gray-900 text-left"
                 >
                   <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-700 text-xs font-bold">
                     {p.firstName?.[0]}{p.lastName?.[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{p.firstName} {p.lastName}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{p.firstName} {p.lastName}</p>
                     <p className="text-xs text-gray-500">{p.homeClub?.name || 'No club'} {p.handicapIndex ? `• HI ${p.handicapIndex}` : ''}</p>
                   </div>
                 </button>
@@ -110,18 +110,18 @@ export default function SearchBar() {
 
           {results.clubs.length > 0 && (
             <div className="border-b">
-              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50">Clubs</p>
+              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">Clubs</p>
               {results.clubs.map(c => (
                 <button
                   key={c.id}
                   onClick={() => goTo(`/clubs/${c.slug}`)}
-                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 text-left"
+                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 dark:bg-gray-900 text-left"
                 >
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                     <MapPin className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{c.name}</p>
                     <p className="text-xs text-gray-500">{[c.city, c.county].filter(Boolean).join(', ')}</p>
                   </div>
                 </button>
@@ -131,18 +131,18 @@ export default function SearchBar() {
 
           {results.tournaments.length > 0 && (
             <div>
-              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50">Tournaments</p>
+              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">Tournaments</p>
               {results.tournaments.map(t => (
                 <button
                   key={t.id}
                   onClick={() => goTo(`/tournaments/${t.id}`)}
-                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 text-left"
+                  className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 dark:bg-gray-900 text-left"
                 >
                   <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
                     <Trophy className="w-4 h-4 text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{t.name}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</p>
                     <p className="text-xs text-gray-500">{t.status} • {t.formatType?.replace(/_/g, ' ')}</p>
                   </div>
                 </button>

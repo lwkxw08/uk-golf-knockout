@@ -147,7 +147,7 @@ export default function PlayerPublicProfile() {
                 <button onClick={() => handleLike(post.id)} className={`flex items-center gap-1 text-sm ${post.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}>
                   <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} /> {post.likesCount}
                 </button>
-                <span className="flex items-center gap-1 text-sm text-gray-500">
+                <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                   <MessageCircle className="w-4 h-4" /> {post.commentsCount}
                 </span>
               </div>

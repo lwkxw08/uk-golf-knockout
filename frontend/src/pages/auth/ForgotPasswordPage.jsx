@@ -55,8 +55,8 @@ export default function ForgotPasswordPage() {
             <Mail className="w-6 h-6 text-green-700" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Forgot Password</h1>
-            <p className="text-sm text-gray-500">Enter your email to receive a reset link</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Forgot Password</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Enter your email to receive a reset link</p>
           </div>
         </div>
 
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
           <button

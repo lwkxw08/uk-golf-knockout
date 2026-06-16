@@ -50,9 +50,9 @@ export default function Footer() {
           <p className="text-xs">&copy; {new Date().getFullYear()} UK Golf Knockout Network. All rights reserved.</p>
           <div className="flex items-center gap-4 text-xs">
             <Link to="/terms" className="hover:text-green-400 transition">Terms</Link>
-            <span className="text-gray-700">•</span>
+            <span className="text-gray-700 dark:text-gray-300">•</span>
             <Link to="/privacy" className="hover:text-green-400 transition">Privacy</Link>
-            <span className="text-gray-700">•</span>
+            <span className="text-gray-700 dark:text-gray-300">•</span>
             <a href="mailto:support@ukgolfknockout.com" className="hover:text-green-400 transition">Support</a>
           </div>
         </div>

@@ -117,7 +117,7 @@ export default function MembershipPage() {
       )}
 
       {/* Pricing card */}
-      <div className="bg-white border-2 border-green-200 rounded-2xl overflow-hidden shadow-lg">
+      <div className="bg-white dark:bg-gray-800 border-2 border-green-200 dark:border-green-800 rounded-2xl overflow-hidden shadow-lg">
         <div className="bg-gradient-to-r from-green-700 to-green-800 text-white p-8 text-center">
           <p className="text-green-200 text-sm font-medium">ANNUAL MEMBERSHIP</p>
           <p className="text-5xl font-bold mt-2">&pound;39</p>
@@ -126,7 +126,7 @@ export default function MembershipPage() {
         <div className="p-8">
           <ul className="space-y-3 mb-8">
             {features.map((f, i) => (
-              <li key={i} className="flex items-center gap-3 text-gray-700">
+              <li key={i} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
                 <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span>{f}</span>
               </li>

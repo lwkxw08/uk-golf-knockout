@@ -38,7 +38,7 @@ export default function ScorecardPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
 
       {(!club.tees || club.tees.length === 0) ? (
-        <div className="bg-gray-50 border rounded-xl p-8 text-center">
+        <div className="bg-gray-50 dark:bg-gray-900 border rounded-xl p-8 text-center">
           <p className="text-gray-500">No scorecard data available for this club yet.</p>
           <p className="text-gray-400 text-sm mt-1">Scorecard data is loaded when the club is linked to the course database.</p>
         </div>
@@ -63,7 +63,7 @@ export default function ScorecardPage() {
 
           {/* Tee summary */}
           {tee && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-xl p-4 mb-6 grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
               <div>
                 <p className="text-green-600 text-xs">Tee</p>
                 <p className="font-bold text-green-900">{tee.teeName}</p>
@@ -89,7 +89,7 @@ export default function ScorecardPage() {
 
           {/* Scorecard table */}
           {tee?.holes?.length > 0 ? (
-            <div className="bg-white border rounded-xl overflow-x-auto">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-x-auto">
               <table className="w-full text-sm border-collapse min-w-[700px]">
                 <thead>
                   <tr className="bg-green-700 text-white">
@@ -107,34 +107,34 @@ export default function ScorecardPage() {
                 </thead>
                 <tbody>
                   <tr className="border-b">
-                    <td className="px-3 py-2 font-medium text-gray-700">Par</td>
+                    <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">Par</td>
                     {front.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center">{h.par}</td>)}
-                    <td className="px-2 py-2 text-center font-bold bg-gray-50">{sum(front, 'par')}</td>
+                    <td className="px-2 py-2 text-center font-bold bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">{sum(front, 'par')}</td>
                     {back.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center">{h.par}</td>)}
-                    <td className="px-2 py-2 text-center font-bold bg-gray-50">{sum(back, 'par')}</td>
-                    <td className="px-2 py-2 text-center font-bold bg-gray-100">{sum(front, 'par') + sum(back, 'par')}</td>
+                    <td className="px-2 py-2 text-center font-bold bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">{sum(back, 'par')}</td>
+                    <td className="px-2 py-2 text-center font-bold bg-gray-100 dark:bg-gray-700">{sum(front, 'par') + sum(back, 'par')}</td>
                   </tr>
                   <tr className="border-b">
-                    <td className="px-3 py-2 font-medium text-gray-700">Yards</td>
+                    <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">Yards</td>
                     {front.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center text-xs">{h.yards}</td>)}
-                    <td className="px-2 py-2 text-center font-bold bg-gray-50 text-xs">{sum(front, 'yards')}</td>
+                    <td className="px-2 py-2 text-center font-bold bg-gray-50 dark:bg-gray-900 text-xs">{sum(front, 'yards')}</td>
                     {back.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center text-xs">{h.yards}</td>)}
-                    <td className="px-2 py-2 text-center font-bold bg-gray-50 text-xs">{sum(back, 'yards')}</td>
+                    <td className="px-2 py-2 text-center font-bold bg-gray-50 dark:bg-gray-900 text-xs">{sum(back, 'yards')}</td>
                     <td className="px-2 py-2 text-center font-bold bg-gray-100 text-xs">{sum(front, 'yards') + sum(back, 'yards')}</td>
                   </tr>
                   <tr>
-                    <td className="px-3 py-2 font-medium text-gray-700">S.I.</td>
+                    <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300">S.I.</td>
                     {front.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center text-gray-500">{h.strokeIndex || '—'}</td>)}
-                    <td className="px-2 py-2 bg-gray-50"></td>
+                    <td className="px-2 py-2 bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50"></td>
                     {back.map(h => <td key={h.holeNumber} className="px-2 py-2 text-center text-gray-500">{h.strokeIndex || '—'}</td>)}
-                    <td className="px-2 py-2 bg-gray-50"></td>
-                    <td className="px-2 py-2 bg-gray-100"></td>
+                    <td className="px-2 py-2 bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50"></td>
+                    <td className="px-2 py-2 bg-gray-100 dark:bg-gray-700"></td>
                   </tr>
                 </tbody>
               </table>
             </div>
           ) : (
-            <div className="bg-gray-50 border rounded-xl p-8 text-center">
+            <div className="bg-gray-50 dark:bg-gray-900 border rounded-xl p-8 text-center">
               <p className="text-gray-500">No hole-by-hole data available for {tee?.teeName} tees.</p>
             </div>
           )}

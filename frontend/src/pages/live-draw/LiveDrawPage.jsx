@@ -174,7 +174,7 @@ export default function LiveDrawPage() {
       )}
 
       {status === 'waiting' && !countdown && !draw && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center mb-8">
+        <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 rounded-xl p-8 text-center mb-8">
           <Clock className="w-10 h-10 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-700 mb-2">Draw Not Yet Scheduled</h2>
           <p className="text-gray-500 text-sm">The draw date and time will be announced soon.</p>
@@ -182,7 +182,7 @@ export default function LiveDrawPage() {
       )}
 
       {status === 'countdown' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center mb-8 animate-pulse">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-xl p-6 text-center mb-8 animate-pulse">
           <h2 className="text-xl font-bold text-blue-800">Draw Starting Soon...</h2>
           <p className="text-blue-600 text-sm mt-1">The admin will begin the live draw shortly.</p>
         </div>
@@ -201,9 +201,9 @@ export default function LiveDrawPage() {
       )}
 
       {status === 'complete' && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-8 flex items-center justify-center gap-3">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-xl p-4 mb-8 flex items-center justify-center gap-3">
           <Trophy className="w-5 h-5 text-green-600" />
-          <span className="font-semibold text-green-800">Draw Complete — All fixtures revealed</span>
+          <span className="font-semibold text-green-800 dark:text-green-300">Draw Complete — All fixtures revealed</span>
         </div>
       )}
 
@@ -223,7 +223,7 @@ export default function LiveDrawPage() {
           {matches.map((m, idx) => (
             <div
               key={m.matchId}
-              className="bg-white border rounded-lg p-4 flex items-center justify-between animate-fade-in"
+              className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 flex items-center justify-between animate-fade-in"
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
               <div className="flex items-center gap-4">
@@ -334,27 +334,27 @@ function LeagueFixtureDisplay({ weekFixtures, totalWeeks, revealingWeek, status 
 
       {/* Summary */}
       {status === 'complete' && (
-        <div className="mt-8 bg-gray-50 border rounded-xl p-6">
+        <div className="mt-8 bg-gray-50 dark:bg-gray-900 border rounded-xl p-6">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" /> Draw Summary
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-gray-900">{totalWeeks}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalWeeks}</p>
               <p className="text-xs text-gray-500">Game Weeks</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {Object.values(weekFixtures).reduce((sum, w) => sum + (Array.isArray(w) ? w.length : 0), 0)}
               </p>
               <p className="text-xs text-gray-500">Total Matches</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">3</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
               <p className="text-xs text-gray-500">Home per Player</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">3</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
               <p className="text-xs text-gray-500">Away per Player</p>
             </div>
           </div>
@@ -382,7 +382,7 @@ function FixtureCard({ fixture, index, isAnimating }) {
 
   return (
     <div
-      className={`bg-white border rounded-xl p-4 transition-all ${
+      className={`bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-4 transition-all ${
         isAnimating ? 'animate-slide-in' : ''
       } hover:shadow-md`}
       style={isAnimating ? { animationDelay: `${index * 0.2}s`, animationFillMode: 'both' } : {}}
@@ -392,7 +392,7 @@ function FixtureCard({ fixture, index, isAnimating }) {
           {/* Home player */}
           <div className="flex items-center gap-3 mb-2">
             <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold">HOME</span>
-            <span className="font-semibold text-gray-900">{home.name}</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{home.name}</span>
             {home.handicap != null && (
               <span className="text-xs text-gray-500">({Number(home.handicap).toFixed(1)})</span>
             )}
@@ -408,7 +408,7 @@ function FixtureCard({ fixture, index, isAnimating }) {
           {/* Away player */}
           <div className="flex items-center gap-3 mt-2">
             <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-bold">AWAY</span>
-            <span className="font-semibold text-gray-900">{away.name}</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{away.name}</span>
             {away.handicap != null && (
               <span className="text-xs text-gray-500">({Number(away.handicap).toFixed(1)})</span>
             )}
@@ -427,7 +427,7 @@ function FixtureCard({ fixture, index, isAnimating }) {
             </span>
           )}
           {matchStatus === 'SCHEDULED' && !resultText && (
-            <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs">
+            <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 px-2 py-0.5 rounded text-xs">
               Scheduled
             </span>
           )}

@@ -40,7 +40,7 @@ function MatchWeatherTeeTime({ clubId, matchDate }) {
   return (
     <div className="flex flex-wrap items-center gap-3 mt-1.5">
       {weather && (
-        <span className="inline-flex items-center gap-1.5 text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-1.5 text-[11px] bg-blue-50 dark:bg-blue-900/20 text-blue-700 px-2 py-0.5 rounded-full">
           <CloudSun className="w-3 h-3" />
           {weather.desc} {weather.temp != null && `${weather.temp}\u00b0C`}
           {weather.rain != null && <span className="text-blue-500">💧 {weather.rain}mm</span>}
@@ -137,8 +137,8 @@ export default function PlayerDashboard() {
               return (
                 <div key={match.id} className="flex items-center justify-between bg-white rounded-lg p-4 border border-amber-100">
                   <div>
-                    <p className="font-medium text-gray-900">{match.tournament.name}</p>
-                    <p className="text-sm text-gray-600">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{match.tournament.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
                     <p className="text-sm text-amber-700 mt-1">Result: {match.result?.resultText}</p>
                   </div>
                   <div className="flex gap-2">
@@ -178,11 +178,11 @@ export default function PlayerDashboard() {
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3 mb-8">
         <a href="/api/calendar/my-matches" download
-          className="inline-flex items-center gap-1.5 bg-white border rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
           <CalendarPlus className="w-4 h-4" /> Export Calendar (.ics)
         </a>
         <Link to="/referral"
-          className="inline-flex items-center gap-1.5 bg-white border rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
           <Gift className="w-4 h-4" /> Refer a Friend — Get £5 Off
         </Link>
       </div>
@@ -199,8 +199,8 @@ export default function PlayerDashboard() {
               return (
                 <div key={match.id} className="flex items-center justify-between bg-white rounded-lg p-4 border border-red-100">
                   <div>
-                    <p className="font-medium text-gray-900">{match.tournament.name}</p>
-                    <p className="text-sm text-gray-600">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{match.tournament.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
                     {match.currentHole && <p className="text-sm text-red-600 mt-1">Currently on Hole {match.currentHole}</p>}
                   </div>
                   <div className="flex gap-2">
@@ -229,11 +229,11 @@ export default function PlayerDashboard() {
               {upcomingMatches.map(match => {
                 const opponent = match.playerAId === player.id ? match.playerB : match.playerA;
                 return (
-                  <div key={match.id} className="border rounded-lg p-4">
+                  <div key={match.id} className="border dark:border-gray-700 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium">{match.tournament.name}</p>
-                        <p className="text-sm text-gray-600">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
                         {match.gameWeek && <p className="text-xs text-blue-600 mt-0.5">Week {match.gameWeek}</p>}
                         {match.scheduledDate && (
                           <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
@@ -303,13 +303,13 @@ export default function PlayerDashboard() {
             <div className="space-y-3">
               {player.entries.map(entry => (
                 <Link key={entry.id} to={`/tournaments/${entry.tournament.id}`}
-                  className="block border rounded-lg p-4 hover:bg-gray-50 transition">
+                  className="block border rounded-lg p-4 hover:bg-gray-50 dark:bg-gray-900 transition">
                   <p className="font-medium">{entry.tournament.name}</p>
-                  <div className="flex gap-3 mt-1 text-sm text-gray-500">
+                  <div className="flex gap-3 mt-1 text-sm text-gray-500 dark:text-gray-400">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      entry.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                      entry.status === 'ELIMINATED' ? 'bg-red-100 text-red-700' :
-                      entry.status === 'PROMOTED' ? 'bg-blue-100 text-blue-700' :
+                      entry.status === 'ACTIVE' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                      entry.status === 'ELIMINATED' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                      entry.status === 'PROMOTED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
                       'bg-gray-100 text-gray-600'
                     }`}>{entry.status}</span>
                     <span>at {entry.club.name}</span>
@@ -330,9 +330,9 @@ export default function PlayerDashboard() {
         </h2>
         {completedMatches.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-gray-900 dark:text-gray-200">
               <thead>
-                <tr className="border-b text-left text-gray-500">
+                <tr className="border-b dark:border-gray-700 text-left text-gray-500">
                   <th className="pb-2">Tournament</th>
                   <th className="pb-2">Opponent</th>
                   <th className="pb-2">Result</th>
@@ -345,11 +345,11 @@ export default function PlayerDashboard() {
                   const won = match.winnerId === player.id;
                   const halved = !match.winnerId;
                   return (
-                    <tr key={match.id} className="border-b last:border-0">
+                    <tr key={match.id} className="border-b dark:border-gray-700 last:border-0">
                       <td className="py-2">{match.tournament.name}</td>
                       <td className="py-2">{opponent ? `${opponent.firstName} ${opponent.lastName}` : 'N/A'}</td>
                       <td className="py-2">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${won ? 'bg-green-100 text-green-700' : halved ? 'bg-gray-100 text-gray-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${won ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : halved ? 'bg-gray-100 text-gray-700' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
                           {won ? 'Won' : halved ? 'Halved' : 'Lost'}
                         </span>
                         {match.result?.resultText && <span className="text-gray-500 ml-2">{match.result.resultText}</span>}
@@ -451,7 +451,7 @@ function SubmitResultModal({ match, player, onClose, onSubmitted }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
         <h3 className="text-lg font-bold mb-4">Submit Match Result</h3>
         <p className="text-sm text-gray-600 mb-4">{match.tournament.name} — vs {opponent ? `${opponent.firstName} ${opponent.lastName}` : 'TBD'}</p>
 
@@ -460,7 +460,7 @@ function SubmitResultModal({ match, player, onClose, onSubmitted }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Winner *</label>
-            <select value={winnerId} onChange={(e) => setWinnerId(e.target.value)} className="w-full border rounded-lg px-3 py-2" required>
+            <select value={winnerId} onChange={(e) => setWinnerId(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" required>
               <option value="">Select winner...</option>
               <option value={player.id}>{player.firstName} {player.lastName} (Me)</option>
               {opponent && <option value={opponent.id}>{opponent.firstName} {opponent.lastName}</option>}
@@ -469,19 +469,19 @@ function SubmitResultModal({ match, player, onClose, onSubmitted }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Result Description *</label>
-            <input type="text" value={resultText} onChange={(e) => setResultText(e.target.value)} placeholder="e.g. 3&2, 1 up, 19th hole" className="w-full border rounded-lg px-3 py-2" required />
+            <input type="text" value={resultText} onChange={(e) => setResultText(e.target.value)} placeholder="e.g. 3&2, 1 up, 19th hole" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" required />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Gross Score (optional)</label>
-            <input type="number" value={grossScore} onChange={(e) => setGrossScore(e.target.value)} placeholder="e.g. 78" className="w-full border rounded-lg px-3 py-2" />
+            <input type="number" value={grossScore} onChange={(e) => setGrossScore(e.target.value)} placeholder="e.g. 78" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Upload Scorecard</label>
             <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-green-400 transition" onClick={() => fileRef.current?.click()}>
               <Upload className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-              <p className="text-sm text-gray-500">{scorecard ? scorecard.name : 'Click to upload scorecard image'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{scorecard ? scorecard.name : 'Click to upload scorecard image'}</p>
               <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setScorecard(e.target.files[0])} />
             </div>
           </div>
@@ -533,17 +533,17 @@ function ScheduleModal({ match, onClose, onScheduled }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
         <h3 className="text-lg font-bold mb-2">Schedule Match</h3>
         <p className="text-sm text-gray-600 mb-4">{match.tournament?.name} — vs {opponentName}</p>
         <form onSubmit={handleSchedule} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
-            <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border rounded-lg px-3 py-2" required />
+            <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Venue (optional)</label>
-            <select value={venueClubId} onChange={(e) => setVenueClubId(e.target.value)} className="w-full border rounded-lg px-3 py-2">
+            <select value={venueClubId} onChange={(e) => setVenueClubId(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2">
               <option value="">Select venue...</option>
               {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -580,12 +580,12 @@ function DisputeModal({ match, onClose, onDisputed }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
         <h3 className="text-lg font-bold mb-4">Dispute Match Result</h3>
         <form onSubmit={handleDispute} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Dispute *</label>
-            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} className="w-full border rounded-lg px-3 py-2" required placeholder="Explain why you disagree with the submitted result..." />
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" required placeholder="Explain why you disagree with the submitted result..." />
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={submitting} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-medium disabled:opacity-50">

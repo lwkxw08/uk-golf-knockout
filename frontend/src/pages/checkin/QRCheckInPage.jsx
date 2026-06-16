@@ -116,7 +116,7 @@ export default function QRCheckInPage() {
 
       {/* Match info card */}
       {match && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
           <div className="text-center mb-3">
             <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
               {match.tournament?.name}
@@ -151,7 +151,7 @@ export default function QRCheckInPage() {
       )}
 
       {/* Check-in status */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
         <h3 className="font-semibold text-gray-900 text-sm mb-3 flex items-center gap-2">
           <Users className="w-4 h-4" /> Check-In Status
         </h3>
@@ -159,8 +159,8 @@ export default function QRCheckInPage() {
           {[match?.playerA, match?.playerB].filter(Boolean).map(p => {
             const isCheckedIn = checkInStatus?.checkIns?.some(c => c.player?.id === p.id);
             return (
-              <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50">
-                <span className="text-sm text-gray-800">{p.firstName} {p.lastName}</span>
+              <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
+                <span className="text-sm text-gray-800 dark:text-white">{p.firstName} {p.lastName}</span>
                 {isCheckedIn ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-green-700">
                     <CheckCircle2 className="w-4 h-4" /> Checked in
@@ -174,11 +174,11 @@ export default function QRCheckInPage() {
         </div>
 
         {checkInStatus?.bothCheckedIn && (
-          <div className="mt-3 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-center">
+          <div className="mt-3 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg px-4 py-3 text-center">
             <CheckCircle2 className="w-6 h-6 text-green-600 mx-auto mb-1" />
-            <p className="text-sm font-semibold text-green-800">Both players checked in!</p>
+            <p className="text-sm font-semibold text-green-800 dark:text-green-300">Both players checked in!</p>
             <p className="text-xs text-green-600 mt-0.5">Match is ready to begin</p>
-            <Link to={`/match/${matchId}/live`} className="inline-block mt-2 text-xs font-medium text-green-700 hover:text-green-800">
+            <Link to={`/match/${matchId}/live`} className="inline-block mt-2 text-xs font-medium text-green-700 hover:text-green-800 dark:text-green-300">
               Go to Live Match →
             </Link>
           </div>
@@ -195,10 +195,10 @@ export default function QRCheckInPage() {
           </button>
 
           <div className="flex gap-3">
-            <button onClick={generateQR} className="flex-1 py-2.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
+            <button onClick={generateQR} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
               <QrCode className="w-4 h-4" /> Show My QR
             </button>
-            <button onClick={scanMode ? stopScanner : startScanner} className="flex-1 py-2.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
+            <button onClick={scanMode ? stopScanner : startScanner} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-2 text-sm transition-colors">
               <Camera className="w-4 h-4" /> {scanMode ? 'Stop Scan' : 'Scan QR'}
             </button>
           </div>
@@ -206,22 +206,22 @@ export default function QRCheckInPage() {
       )}
 
       {checkedIn && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-xl p-4 text-center">
           <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-2" />
-          <p className="font-semibold text-green-800">You're checked in!</p>
+          <p className="font-semibold text-green-800 dark:text-green-300">You're checked in!</p>
           <p className="text-xs text-green-600 mt-1">Waiting for your opponent to arrive</p>
         </div>
       )}
 
       {/* QR Code display */}
       {showQR && qrData && (
-        <div className="mt-4 bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
+        <div className="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 p-6 text-center">
           <h3 className="font-semibold text-gray-900 mb-3">Your Check-In QR Code</h3>
-          <div className="bg-gray-100 rounded-lg p-8 inline-block">
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-8 inline-block">
             <QrCode className="w-32 h-32 text-gray-800 mx-auto" />
             <p className="text-xs text-gray-500 mt-2">Show to opponent or club staff</p>
           </div>
-          <button onClick={() => setShowQR(false)} className="mt-3 text-sm text-gray-500 hover:text-gray-700">Close</button>
+          <button onClick={() => setShowQR(false)} className="mt-3 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300">Close</button>
         </div>
       )}
 

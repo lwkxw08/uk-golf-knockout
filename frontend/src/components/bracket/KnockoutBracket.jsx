@@ -15,7 +15,7 @@ function MatchCard({ match, myPlayerId }) {
   const isMyMatch = myPlayerId && (match.playerAId === myPlayerId || match.playerBId === myPlayerId);
 
   return (
-    <div className={`bg-white border rounded-lg shadow-sm overflow-hidden min-w-[220px] ${isMyMatch ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}>
+    <div className={`bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm overflow-hidden min-w-[220px] ${isMyMatch ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}>
       <div className={`px-3 py-1.5 border-b flex justify-between items-center ${
         isComplete ? 'bg-green-50' : match.status === 'DISPUTED' ? 'bg-red-50' : isMyMatch ? 'bg-green-50' : 'bg-gray-50'
       }`}>
@@ -24,10 +24,10 @@ function MatchCard({ match, myPlayerId }) {
         </span>
         <span className={`text-xs px-2 py-0.5 rounded-full ${
           match.status === 'PENDING' ? 'bg-gray-200 text-gray-600' :
-          match.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
+          match.status === 'SCHEDULED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
           match.status === 'RESULT_SUBMITTED' ? 'bg-yellow-100 text-yellow-700' :
-          isComplete ? 'bg-green-100 text-green-700' :
-          match.status === 'DISPUTED' ? 'bg-red-100 text-red-700' :
+          isComplete ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+          match.status === 'DISPUTED' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
           'bg-gray-200 text-gray-600'
         }`}>
           {match.status === 'RESULT_SUBMITTED' ? 'Awaiting Confirm' : match.status.replace(/_/g, ' ')}
@@ -52,12 +52,12 @@ function MatchCard({ match, myPlayerId }) {
       </div>
 
       {match.result?.resultText && (
-        <div className="px-3 py-1 bg-gray-50 border-t">
-          <span className="text-xs text-gray-600">{match.result.resultText}</span>
+        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-900 border-t">
+          <span className="text-xs text-gray-600 dark:text-gray-400">{match.result.resultText}</span>
         </div>
       )}
       {match.scheduledDate && (
-        <div className="px-3 py-1 bg-blue-50 border-t">
+        <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border-t">
           <span className="text-xs text-blue-600">{new Date(match.scheduledDate).toLocaleDateString('en-GB')}</span>
           {match.venueClub && <span className="text-xs text-blue-500 ml-1">@ {match.venueClub.name}</span>}
         </div>

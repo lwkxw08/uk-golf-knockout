@@ -51,14 +51,14 @@ export default function LeaderboardPage() {
 
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         {!isLeague && (
-          <div className="flex bg-gray-100 rounded-lg">
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg">
             <button onClick={() => setTab('leaderboard')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'leaderboard' ? 'bg-green-700 text-white' : 'text-gray-600'}`}>Adjusted Scores</button>
             <button onClick={() => setTab('rankings')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'rankings' ? 'bg-green-700 text-white' : 'text-gray-600'}`}>Rankings</button>
           </div>
         )}
 
         <select value={selectedTournament} onChange={(e) => setSelectedTournament(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-sm">
+          className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm">
           <option value="">All Tournaments</option>
           {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
@@ -94,26 +94,26 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">League Standings</span>
-          <span className="text-sm text-gray-500">{data.standings.length} players • {data.matchCount || 6} matches per player</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{data.standings.length} players • {data.matchCount || 6} matches per player</span>
         </div>
         <Link to={`/league/${tournamentId}`} className="text-emerald-600 hover:underline text-sm font-medium">
           View Full League Table →
         </Link>
       </div>
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead><tr className="bg-gray-50 border-b">
-            <th className="text-left px-4 py-3 font-semibold text-gray-600">#</th>
-            <th className="text-left px-4 py-3 font-semibold text-gray-600">Player</th>
-            <th className="text-left px-4 py-3 font-semibold text-gray-600">Club</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">P</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">W</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">D</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">L</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">Bonus</th>
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+        <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+          <thead><tr className="bg-gray-50 dark:bg-gray-900 border-b">
+            <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">#</th>
+            <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Player</th>
+            <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Club</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">P</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">W</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">D</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">L</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Bonus</th>
             <th className="text-center px-4 py-3 font-semibold text-emerald-700 bg-emerald-50">Pts</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">+/-</th>
-            <th className="text-center px-4 py-3 font-semibold text-gray-600">Away W</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">+/-</th>
+            <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Away W</th>
           </tr></thead>
           <tbody>
             {data.standings.map((s, i) => {
@@ -134,10 +134,10 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
                     <div className="text-xs text-gray-500">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-600 text-xs">{s.player?.homeClub?.name || '-'}</td>
-                  <td className="px-4 py-3 text-center text-gray-700">{s.played}</td>
-                  <td className="px-4 py-3 text-center font-medium text-gray-900">{s.wins}</td>
-                  <td className="px-4 py-3 text-center text-gray-600">{s.draws}</td>
-                  <td className="px-4 py-3 text-center text-gray-600">{s.losses}</td>
+                  <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{s.played}</td>
+                  <td className="px-4 py-3 text-center font-medium text-gray-900 dark:text-white">{s.wins}</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{s.draws}</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{s.losses}</td>
                   <td className="px-4 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
                   <td className="px-4 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
                   <td className="px-4 py-3 text-center">
@@ -145,7 +145,7 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
                       {s.holesDifferential > 0 ? '+' : ''}{s.holesDifferential}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center text-gray-600">{s.awayWins}</td>
+                  <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{s.awayWins}</td>
                 </tr>
               );
             })}
@@ -176,9 +176,9 @@ function AdjustedLeaderboard({ data, loading }) {
   }
 
   return (
-    <div className="bg-white border rounded-xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead><tr className="bg-gray-50 border-b">
+    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+      <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+        <thead><tr className="bg-gray-50 dark:bg-gray-900 border-b">
           <th className="text-left px-4 py-3">Pos</th>
           <th className="text-left px-4 py-3">Player</th>
           <th className="text-left px-4 py-3">Club</th>
@@ -197,8 +197,8 @@ function AdjustedLeaderboard({ data, loading }) {
                  i === 2 ? <Trophy className="w-5 h-5 text-amber-700 inline" /> :
                  <span className="font-bold text-gray-400">{i + 1}</span>}
               </td>
-              <td className="px-4 py-3 font-medium">{s.player.firstName} {s.player.lastName}</td>
-              <td className="px-4 py-3 text-gray-600">{s.player.homeClub?.name || s.club?.name}</td>
+              <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.player.firstName} {s.player.lastName}</td>
+              <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{s.player.homeClub?.name || s.club?.name}</td>
               <td className="px-4 py-3">{s.grossScore}</td>
               <td className="px-4 py-3">{Number(s.handicapAtPlay).toFixed(1)}</td>
               <td className="px-4 py-3">{Number(s.netScore).toFixed(1)}</td>
@@ -226,9 +226,9 @@ function RankingsTable() {
   }
 
   return (
-    <div className="bg-white border rounded-xl overflow-hidden">
-      <table className="w-full text-sm">
-        <thead><tr className="bg-gray-50 border-b">
+    <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+      <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+        <thead><tr className="bg-gray-50 dark:bg-gray-900 border-b">
           <th className="text-left px-4 py-3">#</th>
           <th className="text-left px-4 py-3">Player</th>
           <th className="text-left px-4 py-3">Club</th>
@@ -238,8 +238,8 @@ function RankingsTable() {
         <tbody>{rankings.players.map((p, i) => (
           <tr key={p.id} className={`border-b last:border-0 ${i < 3 ? 'bg-green-50' : ''}`}>
             <td className="px-4 py-3 font-bold text-gray-400">{i + 1}</td>
-            <td className="px-4 py-3 font-medium">{p.firstName} {p.lastName}</td>
-            <td className="px-4 py-3 text-gray-600">{p.homeClub?.name || '-'}</td>
+            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{p.firstName} {p.lastName}</td>
+            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.homeClub?.name || '-'}</td>
             <td className="px-4 py-3">{p.handicapIndex ? Number(p.handicapIndex).toFixed(1) : '-'}</td>
             <td className="px-4 py-3 font-bold text-green-700">{p.rankingPoints}</td>
           </tr>

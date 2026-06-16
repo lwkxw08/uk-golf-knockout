@@ -205,8 +205,8 @@ export default function LeagueTablePage() {
 
       {/* Admin Per-Week Draw Management */}
       {user?.role === 'ADMIN' && (
-        <div className="mt-8 bg-white border-2 border-blue-200 rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-2">League Draw Management (Admin)</h2>
+        <div className="mt-8 bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-6">
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">League Draw Management (Admin)</h2>
           <p className="text-sm text-gray-600 mb-4">Each game week has its own independent draw. Schedule a date/time or trigger immediately.</p>
           {drawMsg && (
             <div className={`mb-4 px-4 py-2 rounded text-sm ${drawMsg.includes('Failed') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
@@ -220,7 +220,7 @@ export default function LeagueTablePage() {
               const hasFixtures = drawStatus?.revealedWeeks?.includes(week);
 
               return (
-                <div key={week} className={`border rounded-lg p-4 ${hasFixtures ? 'bg-green-50 border-green-200' : weekDraw?.status === 'SCHEDULED' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+                <div key={week} className={`border rounded-lg p-4 ${hasFixtures ? 'bg-green-50 dark:bg-green-900/20 border-green-200' : weekDraw?.status === 'SCHEDULED' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : 'bg-gray-50 dark:bg-gray-900 border-gray-200'}`}>
                   <div className="flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
                       <span className="font-semibold text-sm">Week {week}</span>
@@ -244,7 +244,7 @@ export default function LeagueTablePage() {
                             type="datetime-local"
                             value={weekScheduleDates[week] || ''}
                             onChange={e => setWeekScheduleDates(prev => ({ ...prev, [week]: e.target.value }))}
-                            className="border rounded px-2 py-1 text-xs w-44"
+                            className="border dark:border-gray-600 rounded px-2 py-1 text-xs w-44"
                           />
                           <button
                             onClick={() => handleScheduleWeekDraw(week)}
@@ -292,20 +292,20 @@ function LeagueTable({ standings, matchCount }) {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+        <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+          <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
             <tr>
-              <th className="px-3 py-3 text-left font-semibold text-gray-600">#</th>
-              <th className="px-3 py-3 text-left font-semibold text-gray-600">Player</th>
-              <th className="px-3 py-3 text-left font-semibold text-gray-600">Club</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">P</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">W</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">D</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">L</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">Bonus</th>
+              <th className="px-3 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">#</th>
+              <th className="px-3 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">Player</th>
+              <th className="px-3 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">Club</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">P</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">W</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">D</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">L</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Bonus</th>
               <th className="px-3 py-3 text-center font-semibold text-emerald-700 bg-emerald-50">Pts</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">+/-</th>
-              <th className="px-3 py-3 text-center font-semibold text-gray-600">Away W</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">+/-</th>
+              <th className="px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Away W</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -313,7 +313,7 @@ function LeagueTable({ standings, matchCount }) {
               const isQualifying = s.position <= 4;
               const isRelegation = s.position > standings.length - 4;
               return (
-                <tr key={s.id} className={`${isQualifying ? 'bg-emerald-50/50' : ''} hover:bg-gray-50 transition-colors`}>
+                <tr key={s.id} className={`${isQualifying ? 'bg-emerald-50/50' : ''} hover:bg-gray-50 dark:bg-gray-900 transition-colors`}>
                   <td className="px-3 py-3">
                     <div className="flex items-center gap-1">
                       {isQualifying && <span className="w-1 h-6 bg-emerald-500 rounded-full" />}
@@ -323,7 +323,7 @@ function LeagueTable({ standings, matchCount }) {
                     </div>
                   </td>
                   <td className="px-3 py-3">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-gray-900 dark:text-white">
                       {s.player?.firstName} {s.player?.lastName}
                     </div>
                     <div className="text-xs text-gray-500">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
@@ -331,10 +331,10 @@ function LeagueTable({ standings, matchCount }) {
                   <td className="px-3 py-3 text-gray-600 text-xs">
                     {s.player?.homeClub?.name || '-'}
                   </td>
-                  <td className="px-3 py-3 text-center text-gray-700">{s.played}</td>
-                  <td className="px-3 py-3 text-center font-medium text-gray-900">{s.wins}</td>
-                  <td className="px-3 py-3 text-center text-gray-600">{s.draws}</td>
-                  <td className="px-3 py-3 text-center text-gray-600">{s.losses}</td>
+                  <td className="px-3 py-3 text-center text-gray-700 dark:text-gray-300">{s.played}</td>
+                  <td className="px-3 py-3 text-center font-medium text-gray-900 dark:text-white">{s.wins}</td>
+                  <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.draws}</td>
+                  <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.losses}</td>
                   <td className="px-3 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
                   <td className="px-3 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
                   <td className="px-3 py-3 text-center">
@@ -342,7 +342,7 @@ function LeagueTable({ standings, matchCount }) {
                       {s.holesDifferential > 0 ? '+' : ''}{s.holesDifferential}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-center text-gray-600">{s.awayWins}</td>
+                  <td className="px-3 py-3 text-center text-gray-600 dark:text-gray-400">{s.awayWins}</td>
                 </tr>
               );
             })}
@@ -351,7 +351,7 @@ function LeagueTable({ standings, matchCount }) {
       </div>
 
       {/* Legend */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center gap-6 text-xs text-gray-500">
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 flex items-center gap-6 text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 bg-emerald-500 rounded-full" />
           Qualifies for National Final
@@ -410,10 +410,10 @@ function FixturesList({ fixtures, weeks, selectedWeek, setSelectedWeek }) {
               <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Complete</span>
             )}
             {fixtures[week]?.[0]?.status === 'SCHEDULED' && (
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Upcoming</span>
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">Upcoming</span>
             )}
             {deadlineDate && (
-              <span className={`text-xs px-2 py-0.5 rounded flex items-center gap-1 ${isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+              <span className={`text-xs px-2 py-0.5 rounded flex items-center gap-1 ${isOverdue ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                 ⏰ Deadline: {deadlineDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                 {isOverdue && <span className="font-bold">(OVERDUE)</span>}
               </span>
@@ -444,7 +444,7 @@ function FixtureCard({ match }) {
         {/* Home player */}
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">HOME</span>
+            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-medium">HOME</span>
             <span className={`font-medium ${match.winnerId === playerA?.id ? 'text-emerald-700' : 'text-gray-900'}`}>
               {playerA?.firstName} {playerA?.lastName}
             </span>
@@ -462,7 +462,7 @@ function FixtureCard({ match }) {
         <div className="px-4 text-center">
           {isCompleted ? (
             <div>
-              <div className="text-lg font-bold text-gray-800">
+              <div className="text-lg font-bold text-gray-800 dark:text-white">
                 {match.result?.resultText || (match.winnerId ? `${match.holesUpMargin}&${match.holesRemainingMargin}` : 'Halved')}
               </div>
               {match.winnerId && (
@@ -543,7 +543,7 @@ function ScoringSystem({ config }) {
             <div className="text-3xl font-bold text-amber-700">{c.halved}</div>
             <div className="text-sm text-amber-600 font-medium mt-1">Halved Match</div>
           </div>
-          <div className="bg-gray-100 rounded-lg p-4 text-center">
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
             <div className="text-3xl font-bold text-gray-500">{c.loss}</div>
             <div className="text-sm text-gray-500 font-medium mt-1">Loss</div>
           </div>
@@ -562,7 +562,7 @@ function ScoringSystem({ config }) {
             { label: 'Match reaches 18th hole', points: `+${c.reached18thBonus} each`, color: 'purple' },
             { label: 'Away win', points: `+${c.awayWinBonus}`, color: 'orange' },
           ].map(b => (
-            <div key={b.label} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={b.label} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
               <div className="flex items-center gap-2">
                 <span className="text-gray-700 font-medium">{b.label}</span>
                 {b.note && <span className="text-xs text-gray-400">{b.note}</span>}
@@ -588,9 +588,9 @@ function ScoringSystem({ config }) {
             { result: '1 up win', diff: '+1' },
             { result: 'Halved', diff: '0' },
           ].map(d => (
-            <div key={d.result} className="flex justify-between p-2 bg-gray-50 rounded">
-              <span className="text-gray-700">{d.result}</span>
-              <span className="font-medium text-gray-900">{d.diff}</span>
+            <div key={d.result} className="flex justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded">
+              <span className="text-gray-700 dark:text-gray-300">{d.result}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{d.diff}</span>
             </div>
           ))}
         </div>
@@ -614,7 +614,7 @@ function ScoringSystem({ config }) {
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                 {i + 1}
               </span>
-              <span className="text-gray-700">{rule}</span>
+              <span className="text-gray-700 dark:text-gray-300">{rule}</span>
             </li>
           ))}
         </ol>
@@ -623,13 +623,13 @@ function ScoringSystem({ config }) {
       {/* Example Match Points */}
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Example: Away Win by 4&3</h3>
-        <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm space-y-1">
           <div className="flex justify-between"><span>Win</span><span className="font-medium">+10</span></div>
           <div className="flex justify-between"><span>Win by 3+ holes bonus</span><span className="font-medium">+2</span></div>
           <div className="flex justify-between"><span>Away win bonus</span><span className="font-medium">+1</span></div>
           <div className="flex justify-between border-t pt-1 mt-1"><span className="font-bold">Total</span><span className="font-bold text-emerald-700">13 pts</span></div>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1 mt-3">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm space-y-1 mt-3">
           <div className="text-gray-500 font-medium mb-1">Loser gets:</div>
           <div className="flex justify-between"><span>Loss</span><span>0</span></div>
           <div className="flex justify-between"><span>No close-loss bonus (4&3)</span><span>0</span></div>
@@ -658,36 +658,36 @@ function ClubChampionship({ season }) {
   return (
     <div>
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Club Points Championship {season}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Club Points Championship {season}</h3>
         <p className="text-sm text-gray-500 mt-1">Clubs earn points based on their players' league performance. More players = more points potential.</p>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+        <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+          <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600">#</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600">Club</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-600">Players</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-600">Matches</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-600">Wins</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">#</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-400">Club</th>
+              <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Players</th>
+              <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Matches</th>
+              <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Wins</th>
               <th className="px-4 py-3 text-center font-semibold text-emerald-700 bg-emerald-50">Total Pts</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-600">Qualifiers</th>
+              <th className="px-4 py-3 text-center font-semibold text-gray-600 dark:text-gray-400">Qualifiers</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {clubPoints.map(cp => (
-              <tr key={cp.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-bold text-gray-700">{cp.position}</td>
+              <tr key={cp.id} className="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
+                <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-300">{cp.position}</td>
                 <td className="px-4 py-3">
-                  <div className="font-medium text-gray-900">{cp.club?.name}</div>
+                  <div className="font-medium text-gray-900 dark:text-white">{cp.club?.name}</div>
                   <div className="text-xs text-gray-400">{cp.region?.name}</div>
                 </td>
-                <td className="px-4 py-3 text-center text-gray-600">{cp.playerCount}</td>
-                <td className="px-4 py-3 text-center text-gray-600">{cp.matchesPlayed}</td>
-                <td className="px-4 py-3 text-center text-gray-600">{cp.matchesWon}</td>
+                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{cp.playerCount}</td>
+                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{cp.matchesPlayed}</td>
+                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{cp.matchesWon}</td>
                 <td className="px-4 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{cp.totalPoints}</td>
-                <td className="px-4 py-3 text-center text-gray-600">{cp.leagueQualifiers}</td>
+                <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{cp.leagueQualifiers}</td>
               </tr>
             ))}
           </tbody>

@@ -149,7 +149,7 @@ export default function EditTournament() {
     }
   };
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
   const label = 'block text-sm font-medium text-gray-700 mb-1';
 
   if (loading) {
@@ -166,7 +166,7 @@ export default function EditTournament() {
       <div className="max-w-4xl mx-auto px-4 py-8">
 
       {tournament && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-6 text-sm text-green-800">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg px-4 py-3 mb-6 text-sm text-green-800 dark:text-green-300">
           Editing: <strong>{tournament.name}</strong> — {tournament._count?.entries || 0} entrants
         </div>
       )}
@@ -176,7 +176,7 @@ export default function EditTournament() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Status */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Tournament Status</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -189,7 +189,7 @@ export default function EditTournament() {
         </div>
 
         {/* Basic Info */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -244,7 +244,7 @@ export default function EditTournament() {
         </div>
 
         {/* Format */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Playing Format</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
@@ -274,18 +274,18 @@ export default function EditTournament() {
             <div className="flex items-center gap-4 pt-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.isKnockout} onChange={update('isKnockout')} className="w-4 h-4 text-green-600 rounded" />
-                <span className="text-sm font-medium text-gray-700">Knockout Format</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Knockout Format</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={form.enableLeaderboard} onChange={update('enableLeaderboard')} className="w-4 h-4 text-green-600 rounded" />
-                <span className="text-sm font-medium text-gray-700">Overall Leaderboard</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Leaderboard</span>
               </label>
             </div>
           </div>
         </div>
 
         {/* Dates */}
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Key Dates</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>

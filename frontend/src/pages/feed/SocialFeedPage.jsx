@@ -105,7 +105,7 @@ export default function SocialFeedPage() {
       ) : (
         <div className="space-y-4">
           {posts.map(post => (
-            <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Post header */}
               <div className="px-4 pt-4 pb-2 flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -168,7 +168,7 @@ export default function SocialFeedPage() {
                   ))}
                 </div>
                 <button onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))}
-                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300">
                   <MessageSquare className="w-4 h-4" />
                   <span>{post.commentCount}</span>
                 </button>
@@ -182,10 +182,10 @@ export default function SocialFeedPage() {
                       {post.comments.map(c => (
                         <div key={c.id} className="flex gap-2">
                           <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-medium text-gray-600">{c.player.firstName[0]}{c.player.lastName[0]}</span>
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{c.player.firstName[0]}{c.player.lastName[0]}</span>
                           </div>
-                          <div className="bg-gray-50 rounded-lg px-3 py-1.5 flex-1">
-                            <span className="text-xs font-semibold text-gray-800">{c.player.firstName} {c.player.lastName}</span>
+                          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg px-3 py-1.5 flex-1">
+                            <span className="text-xs font-semibold text-gray-800 dark:text-white">{c.player.firstName} {c.player.lastName}</span>
                             <p className="text-xs text-gray-700 mt-0.5">{c.content}</p>
                           </div>
                         </div>
@@ -196,7 +196,7 @@ export default function SocialFeedPage() {
                     <input type="text" value={commentText[post.id] || ''} onChange={e => setCommentText(prev => ({ ...prev, [post.id]: e.target.value }))}
                       onKeyDown={e => e.key === 'Enter' && handleComment(post.id)}
                       placeholder="Write a comment..." className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-green-400" />
-                    <button onClick={() => handleComment(post.id)} className="text-green-700 hover:text-green-800">
+                    <button onClick={() => handleComment(post.id)} className="text-green-700 hover:text-green-800 dark:text-green-300">
                       <Send className="w-4 h-4" />
                     </button>
                   </div>

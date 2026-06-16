@@ -137,12 +137,12 @@ export default function CourseGalleryPage() {
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-6">
               <button disabled={page <= 1} onClick={() => setPage(page - 1)}
-                className="px-3 py-1.5 bg-gray-100 rounded text-sm disabled:opacity-50">
+                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded text-sm disabled:opacity-50">
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="px-3 py-1.5 text-sm text-gray-600">Page {page} of {totalPages}</span>
+              <span className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400">Page {page} of {totalPages}</span>
               <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-                className="px-3 py-1.5 bg-gray-100 rounded text-sm disabled:opacity-50">
+                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded text-sm disabled:opacity-50">
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -156,7 +156,7 @@ export default function CourseGalleryPage() {
           {holeNumbers.map((holeNum) => (
             <div key={holeNum}>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
+                <span className="w-8 h-8 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full flex items-center justify-center text-sm font-bold">
                   {holeNum}
                 </span>
                 Hole {holeNum}
@@ -196,13 +196,13 @@ export default function CourseGalleryPage() {
       {/* Photo lightbox */}
       {selectedPhoto && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setSelectedPhoto(null)}>
-          <div className="max-w-3xl w-full bg-white rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-3xl w-full bg-white dark:bg-gray-800 rounded-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <img src={selectedPhoto.imageUrl} alt={selectedPhoto.caption} className="w-full max-h-[60vh] object-contain bg-black" />
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  {selectedPhoto.holeNumber && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded mr-2">Hole {selectedPhoto.holeNumber}</span>}
-                  {selectedPhoto.isFeatured && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Featured</span>}
+                  {selectedPhoto.holeNumber && <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded mr-2">Hole {selectedPhoto.holeNumber}</span>}
+                  {selectedPhoto.isFeatured && <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">Featured</span>}
                 </div>
                 <div className="flex items-center gap-3">
                   <button onClick={() => likePhoto(selectedPhoto.id)}
@@ -224,7 +224,7 @@ export default function CourseGalleryPage() {
                 </p>
               )}
               <button onClick={() => setSelectedPhoto(null)}
-                className="mt-3 text-sm text-gray-500 hover:text-gray-700">Close</button>
+                className="mt-3 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-300">Close</button>
             </div>
           </div>
         </div>
@@ -233,9 +233,9 @@ export default function CourseGalleryPage() {
       {/* Upload modal */}
       {showUpload && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowUpload(false)}>
-          <div className="bg-white rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Upload Photo</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Upload Photo</h3>
               <button onClick={() => setShowUpload(false)}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <form onSubmit={submitPhoto} className="space-y-4">
@@ -243,13 +243,13 @@ export default function CourseGalleryPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
                 <input type="url" required value={uploadForm.imageUrl}
                   onChange={(e) => setUploadForm({ ...uploadForm, imageUrl: e.target.value })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
+                  className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hole Number (optional)</label>
                 <select value={uploadForm.holeNumber}
                   onChange={(e) => setUploadForm({ ...uploadForm, holeNumber: e.target.value })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm">
+                  className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm">
                   <option value="">General / Clubhouse</option>
                   {Array.from({ length: 18 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>Hole {i + 1}</option>
@@ -260,7 +260,7 @@ export default function CourseGalleryPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Caption (optional)</label>
                 <input type="text" value={uploadForm.caption}
                   onChange={(e) => setUploadForm({ ...uploadForm, caption: e.target.value })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Beautiful view from the tee..." />
+                  className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" placeholder="Beautiful view from the tee..." />
               </div>
               <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm font-medium">
                 Upload Photo

@@ -74,8 +74,8 @@ export default function ResetPasswordPage() {
             <Lock className="w-6 h-6 text-green-700" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Reset Password</h1>
-            <p className="text-sm text-gray-500">Choose a new password</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Reset Password</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Choose a new password</p>
           </div>
         </div>
 
@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
           <div>
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
             />
           </div>
           <button

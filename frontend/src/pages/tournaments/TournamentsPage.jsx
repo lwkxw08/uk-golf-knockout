@@ -19,10 +19,10 @@ const FORMAT_LABELS = {
 
 const STATUS_COLORS = {
   DRAFT: 'bg-gray-100 text-gray-700',
-  REGISTRATION_OPEN: 'bg-green-100 text-green-700',
+  REGISTRATION_OPEN: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
   REGISTRATION_CLOSED: 'bg-yellow-100 text-yellow-700',
-  DRAW_PENDING: 'bg-blue-100 text-blue-700',
-  IN_PROGRESS: 'bg-purple-100 text-purple-700',
+  DRAW_PENDING: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  IN_PROGRESS: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
   COMPLETED: 'bg-gray-100 text-gray-700',
 };
 
@@ -138,7 +138,7 @@ export default function TournamentsPage() {
                 className="border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm w-44 focus:ring-2 focus:ring-green-500 outline-none"
               />
             </div>
-            <select value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="border rounded-lg px-2 py-2 text-sm">
+            <select value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="border dark:border-gray-700 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-2 text-sm">
               {RADIUS_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
             <button type="submit" className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
@@ -160,7 +160,7 @@ export default function TournamentsPage() {
 
       {loading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => <div key={i} className="h-44 bg-gray-100 rounded-xl animate-pulse" />)}
+          {[...Array(6)].map((_, i) => <div key={i} className="h-44 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />)}
         </div>
       ) : data.tournaments.length === 0 ? (
         <div className="text-center py-12">

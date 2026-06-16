@@ -113,7 +113,7 @@ export default function LiveMatchPage() {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">
               {playerA?.firstName?.[0]}{playerA?.lastName?.[0]}
             </div>
-            <p className="font-bold text-lg">{playerA?.firstName} {playerA?.lastName}</p>
+            <p className="font-bold text-lg text-gray-900 dark:text-white">{playerA?.firstName} {playerA?.lastName}</p>
             <p className="text-sm opacity-70">{playerA?.homeClub?.name}</p>
             {playerA?.handicapIndex && <p className="text-xs opacity-60">HI: {Number(playerA.handicapIndex).toFixed(1)}</p>}
           </div>
@@ -131,7 +131,7 @@ export default function LiveMatchPage() {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">
               {playerB?.firstName?.[0]}{playerB?.lastName?.[0]}
             </div>
-            <p className="font-bold text-lg">{playerB?.firstName} {playerB?.lastName}</p>
+            <p className="font-bold text-lg text-gray-900 dark:text-white">{playerB?.firstName} {playerB?.lastName}</p>
             <p className="text-sm opacity-70">{playerB?.homeClub?.name}</p>
             {playerB?.handicapIndex && <p className="text-xs opacity-60">HI: {Number(playerB.handicapIndex).toFixed(1)}</p>}
           </div>
@@ -152,20 +152,20 @@ export default function LiveMatchPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hole-by-Hole Scorecard */}
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b bg-gray-50 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">Hole-by-Hole Scores</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900 dark:text-white">Hole-by-Hole Scores</h2>
           {isLive && match.currentHole && (
             <span className="text-sm text-red-600 font-medium">Playing Hole {match.currentHole}</span>
           )}
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm text-gray-900 dark:text-gray-200">
             <thead>
-              <tr className="bg-gray-50 text-gray-500">
+              <tr className="bg-gray-50 dark:bg-gray-900 text-gray-500">
                 <th className="px-3 py-2 text-left font-medium">Hole</th>
                 {Array.from({ length: 18 }, (_, i) => (
-                  <th key={i + 1} className={`px-2 py-2 text-center font-medium min-w-[36px] ${match.currentHole === i + 1 ? 'bg-red-100 text-red-700' : ''}`}>
+                  <th key={i + 1} className={`px-2 py-2 text-center font-medium min-w-[36px] ${match.currentHole === i + 1 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : ''}`}>
                     {i + 1}
                   </th>
                 ))}
@@ -194,7 +194,7 @@ export default function LiveMatchPage() {
                 </tr>
               ))}
               {/* Hole result row */}
-              <tr className="border-t bg-gray-50">
+              <tr className="border-t bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
                 <td className="px-3 py-2 font-medium text-gray-500 text-xs">Result</td>
                 {Array.from({ length: 18 }, (_, i) => {
                   const hole = scoresByHole?.[i + 1];
@@ -217,7 +217,7 @@ export default function LiveMatchPage() {
 
       {/* Live Activity Feed */}
       {liveUpdates.length > 0 && (
-        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6 mb-6">
           <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Radio className="w-4 h-4 text-red-500" /> Live Updates
           </h2>
@@ -231,7 +231,7 @@ export default function LiveMatchPage() {
                   {u.type === 'started' && <p className="text-green-700 font-medium">Match started!</p>}
                   {u.type === 'ended' && <p className="text-red-700 font-medium">Match ended</p>}
                   {u.type === 'hole' && (
-                    <p className="text-gray-700">
+                    <p className="text-gray-700 dark:text-gray-300">
                       Hole {u.holeNumber} completed
                       {u.holeResult && <span className="font-medium"> — {u.holeResult}</span>}
                     </p>
@@ -244,7 +244,7 @@ export default function LiveMatchPage() {
       )}
 
       {/* Match Info */}
-      <div className="bg-white rounded-xl border shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-6">
         <h2 className="font-semibold text-gray-900 mb-3">Match Information</h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -275,7 +275,7 @@ export default function LiveMatchPage() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-gray-500">
+        <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             <span>Share this page so friends and family can follow along live</span>

@@ -38,7 +38,7 @@ export default function TournamentProgrammePage() {
       </div>
 
       {/* Programme Content */}
-      <div className="bg-white rounded-xl shadow-sm border print:shadow-none print:border-0">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border print:shadow-none print:border-0">
         {/* Cover / Header */}
         <div className="bg-gradient-to-r from-green-700 to-green-800 text-white p-8 rounded-t-xl print:rounded-none text-center">
           <Trophy className="w-12 h-12 mx-auto mb-3 opacity-90" />
@@ -68,19 +68,19 @@ export default function TournamentProgrammePage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {programme.dates.registration && (
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Registration Deadline</p>
                 <p className="font-medium text-sm">{new Date(programme.dates.registration).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</p>
               </div>
             )}
             {programme.dates.start && (
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Tournament Start</p>
                 <p className="font-medium text-sm">{new Date(programme.dates.start).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</p>
               </div>
             )}
             {programme.dates.end && (
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                 <p className="text-xs text-gray-500">Final</p>
                 <p className="font-medium text-sm">{new Date(programme.dates.end).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</p>
               </div>
@@ -95,10 +95,10 @@ export default function TournamentProgrammePage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
             {programme.entrants.map((e, i) => (
-              <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 text-sm">
+              <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-50 dark:bg-gray-900 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-400 text-xs w-4">{i + 1}</span>
-                  <span className="font-medium text-gray-800">{e.name}</span>
+                  <span className="font-medium text-gray-800 dark:text-white">{e.name}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span>{e.club}</span>
@@ -116,7 +116,7 @@ export default function TournamentProgrammePage() {
           </h3>
           {Object.entries(programme.fixtures).map(([round, matches]) => (
             <div key={round} className="mb-4">
-              <h4 className="font-medium text-gray-700 text-sm mb-2 bg-gray-50 px-3 py-1.5 rounded">{round}</h4>
+              <h4 className="font-medium text-gray-700 dark:text-gray-300 text-sm mb-2 bg-gray-50 dark:bg-gray-900 px-3 py-1.5 rounded">{round}</h4>
               <div className="space-y-1 ml-2">
                 {matches.map((m, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm py-1">
@@ -142,7 +142,7 @@ export default function TournamentProgrammePage() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {programme.clubs.map((c, i) => (
-                <div key={i} className="bg-gray-50 rounded-lg p-3">
+                <div key={i} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                   <p className="font-medium text-gray-800 text-sm">{c.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{c.address}</p>
                   <div className="flex gap-3 mt-1 text-xs text-gray-500">
@@ -165,7 +165,7 @@ export default function TournamentProgrammePage() {
             <div className="space-y-2">
               {programme.prizes.map((p, i) => (
                 <div key={i} className="flex items-center justify-between py-1.5">
-                  <span className="text-sm text-gray-700">{p.description}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{p.description}</span>
                   {p.valuePence && <span className="text-sm font-medium text-green-700">\u00a3{(p.valuePence / 100).toFixed(0)}</span>}
                 </div>
               ))}
@@ -179,7 +179,7 @@ export default function TournamentProgrammePage() {
             <h3 className="font-semibold text-gray-900 mb-3">Sponsors</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {programme.sponsors.map((s, i) => (
-                <div key={i} className="text-center p-3 bg-gray-50 rounded-lg">
+                <div key={i} className="text-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                   {s.logoUrl ? (
                     <img src={s.logoUrl} alt={s.name} className="h-10 mx-auto mb-2 object-contain" />
                   ) : (
@@ -187,7 +187,7 @@ export default function TournamentProgrammePage() {
                       {s.name.substring(0, 2).toUpperCase()}
                     </div>
                   )}
-                  <p className="text-xs font-medium text-gray-700">{s.name}</p>
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{s.name}</p>
                   <p className="text-[10px] text-gray-400 uppercase">{s.tier}</p>
                 </div>
               ))}
@@ -196,7 +196,7 @@ export default function TournamentProgrammePage() {
         )}
 
         {/* Footer */}
-        <div className="bg-gray-50 p-4 rounded-b-xl text-center text-xs text-gray-400 border-t">
+        <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-b-xl text-center text-xs text-gray-400 border-t">
           Generated by UK Golf Knockout \u2022 {new Date(programme.generatedAt).toLocaleDateString('en-GB')}
         </div>
       </div>

@@ -107,17 +107,17 @@ export default function SettingsPage() {
         {Object.entries(groupedSettings).map(([category, items]) => {
           const Icon = categoryIcons[category] || Globe;
           return (
-            <div key={category} className="bg-white border rounded-xl p-6">
+            <div key={category} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Icon className="w-5 h-5 text-green-700" />
-                <h2 className="font-semibold text-gray-900">{categoryLabels[category] || category}</h2>
+                <h2 className="font-semibold text-gray-900 dark:text-white">{categoryLabels[category] || category}</h2>
               </div>
 
               <div className="space-y-4">
                 {items.map(setting => (
                   <div key={setting.key} className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <div className="sm:w-48 flex-shrink-0">
-                      <label className="text-sm font-medium text-gray-700">{setting.label || setting.key}</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{setting.label || setting.key}</label>
                     </div>
                     <div className="flex-1 flex gap-2">
                       <div className="relative flex-1">
@@ -126,7 +126,7 @@ export default function SettingsPage() {
                           value={editValues[setting.key] || ''}
                           onChange={(e) => setEditValues({ ...editValues, [setting.key]: e.target.value })}
                           placeholder={setting.isSecret ? 'Enter API key...' : 'Enter value...'}
-                          className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm"
+                          className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm"
                         />
                         {setting.isSecret && (
                           <button
@@ -155,7 +155,7 @@ export default function SettingsPage() {
               </div>
 
               {category === 'email' && (
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg px-4 py-3">
                   <p className="text-sm text-blue-800 font-medium">Setup Instructions</p>
                   <ol className="text-xs text-blue-700 list-decimal list-inside mt-1 space-y-1">
                     <li>Sign up at <a href="https://sendgrid.com" target="_blank" rel="noopener" className="underline">sendgrid.com</a></li>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
               )}
 
               {category === 'payments' && (
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg px-4 py-3">
                   <p className="text-sm text-blue-800 font-medium">Setup Instructions</p>
                   <ol className="text-xs text-blue-700 list-decimal list-inside mt-1 space-y-1">
                     <li>Go to <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener" className="underline">Stripe Dashboard → API Keys</a></li>

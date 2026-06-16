@@ -80,7 +80,7 @@ export default function PricingManagement() {
     fetchData();
   };
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
@@ -95,9 +95,9 @@ export default function PricingManagement() {
           <h2 className="text-lg font-semibold">Platform Pricing</h2>
           <button onClick={openCreatePricing} className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1"><Plus className="w-4 h-4" /> Add</button>
         </div>
-        <div className="bg-white border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead><tr className="bg-gray-50 border-b">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+          <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+            <thead><tr className="bg-gray-50 dark:bg-gray-900 border-b">
               <th className="text-left px-4 py-3">Key</th>
               <th className="text-left px-4 py-3">Amount</th>
               <th className="text-left px-4 py-3">Description</th>
@@ -106,10 +106,10 @@ export default function PricingManagement() {
             </tr></thead>
             <tbody>
               {pricing.map(p => (
-                <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50">
+                <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-3 font-medium font-mono text-sm">{p.pricingKey}</td>
                   <td className="px-4 py-3 font-semibold">&pound;{(p.amountPence / 100).toFixed(2)}</td>
-                  <td className="px-4 py-3 text-gray-600">{p.description}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.description}</td>
                   <td className="px-4 py-3 text-gray-500">{p.effectiveFrom ? new Date(p.effectiveFrom).toLocaleDateString('en-GB') : '-'}</td>
                   <td className="px-4 py-3 text-center">
                     <button onClick={() => openEditPricing(p)} className="text-blue-600 hover:text-blue-800 mr-2"><Edit2 className="w-4 h-4" /></button>
@@ -131,9 +131,9 @@ export default function PricingManagement() {
         </div>
         <div className="grid md:grid-cols-3 gap-4">
           {tiers.map(t => (
-            <div key={t.id} className="bg-white border rounded-xl p-6">
+            <div key={t.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <div className="flex justify-between items-start mb-3">
-                <h3 className="font-bold text-lg">{t.name}</h3>
+                <h3 className="font-bold text-lg text-gray-900 dark:text-white">{t.name}</h3>
                 <div className="flex gap-1">
                   <button onClick={() => openEditTier(t)} className="text-blue-600 hover:text-blue-800"><Edit2 className="w-4 h-4" /></button>
                   <button onClick={() => deleteTier(t.id)} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button>
@@ -153,7 +153,7 @@ export default function PricingManagement() {
       {/* Pricing Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold mb-4">{showForm === 'create' ? 'New Pricing' : 'Edit Pricing'}</h3>
             <form onSubmit={savePricing} className="space-y-3">
               <input type="text" required value={form.pricingKey} onChange={(e) => setForm({ ...form, pricingKey: e.target.value })} placeholder="Pricing key (e.g. player_membership_annual)" className={input} disabled={showForm !== 'create'} />
@@ -173,7 +173,7 @@ export default function PricingManagement() {
       {/* Tier Form Modal */}
       {showTierForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold mb-4">{showTierForm === 'create' ? 'New Tier' : 'Edit Tier'}</h3>
             <form onSubmit={saveTier} className="space-y-3">
               <input type="text" required value={tierForm.name} onChange={(e) => setTierForm({ ...tierForm, name: e.target.value })} placeholder="Tier name (e.g. Standard)" className={input} />

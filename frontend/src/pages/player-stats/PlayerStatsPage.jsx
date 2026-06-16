@@ -71,24 +71,24 @@ export default function PlayerStatsPage() {
       {tab === 'overview' && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Win/Loss/Draw */}
-          <div className="bg-white rounded-xl border p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Match Record</h3>
             <div className="flex items-center gap-4 mb-4">
               <div className="flex-1 text-center">
                 <p className="text-3xl font-bold text-green-600">{summary.wins}</p>
-                <p className="text-sm text-gray-500">Wins</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Wins</p>
               </div>
               <div className="flex-1 text-center">
                 <p className="text-3xl font-bold text-gray-400">{summary.draws}</p>
-                <p className="text-sm text-gray-500">Draws</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Draws</p>
               </div>
               <div className="flex-1 text-center">
                 <p className="text-3xl font-bold text-red-500">{summary.losses}</p>
-                <p className="text-sm text-gray-500">Losses</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Losses</p>
               </div>
             </div>
             {summary.totalMatches > 0 && (
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+              <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
                 <div className="bg-green-500 transition-all" style={{ width: `${(summary.wins / summary.totalMatches) * 100}%` }} />
                 <div className="bg-gray-300 transition-all" style={{ width: `${(summary.draws / summary.totalMatches) * 100}%` }} />
                 <div className="bg-red-400 transition-all" style={{ width: `${(summary.losses / summary.totalMatches) * 100}%` }} />
@@ -97,14 +97,14 @@ export default function PlayerStatsPage() {
           </div>
 
           {/* Best/Worst Holes */}
-          <div className="bg-white rounded-xl border p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Best & Worst Holes</h3>
             {bestHoles?.length > 0 ? (
               <div className="space-y-3">
                 <p className="text-xs text-gray-500 font-medium uppercase">Best (lowest avg)</p>
                 {bestHoles.map(h => (
-                  <div key={`best-${h.hole}`} className="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
-                    <span className="font-medium text-green-800">Hole {h.hole}</span>
+                  <div key={`best-${h.hole}`} className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">
+                    <span className="font-medium text-green-800 dark:text-green-300">Hole {h.hole}</span>
                     <span className="text-sm text-green-700">Avg {h.avgScore.toFixed(1)}</span>
                   </div>
                 ))}
@@ -123,7 +123,7 @@ export default function PlayerStatsPage() {
 
           {/* Avg Stableford */}
           {summary.avgStableford && (
-            <div className="bg-white rounded-xl border p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border p-6">
               <h3 className="font-semibold text-gray-900 mb-2">Stableford Average</h3>
               <p className="text-4xl font-bold text-green-700">{summary.avgStableford}</p>
               <p className="text-sm text-gray-500 mt-1">points per round</p>
@@ -133,16 +133,16 @@ export default function PlayerStatsPage() {
       )}
 
       {tab === 'matches' && (
-        <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border overflow-hidden">
           <div className="divide-y">
             {matchHistory?.length > 0 ? matchHistory.map((m, i) => (
               <div key={i} className="px-6 py-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${m.result === 'WIN' ? 'bg-green-100 text-green-700' : m.result === 'LOSS' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${m.result === 'WIN' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : m.result === 'LOSS' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-gray-100 text-gray-600'}`}>
                       {m.result}
                     </span>
-                    <span className="font-medium text-gray-900">vs {m.opponent?.firstName} {m.opponent?.lastName}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">vs {m.opponent?.firstName} {m.opponent?.lastName}</span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
                     {m.tournament} {m.venue ? `• ${m.venue}` : ''}
@@ -150,7 +150,7 @@ export default function PlayerStatsPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  {m.resultText && <p className="text-sm font-medium text-gray-700">{m.resultText}</p>}
+                  {m.resultText && <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{m.resultText}</p>}
                   {m.leaguePointsEarned != null && <p className="text-xs text-gray-500">{m.leaguePointsEarned} league pts</p>}
                 </div>
               </div>
@@ -162,11 +162,11 @@ export default function PlayerStatsPage() {
       )}
 
       {tab === 'holes' && (
-        <div className="bg-white rounded-xl border overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-gray-900 dark:text-gray-200">
               <thead>
-                <tr className="bg-gray-50 text-gray-500">
+                <tr className="bg-gray-50 dark:bg-gray-900 text-gray-500">
                   <th className="px-4 py-3 text-left font-medium">Hole</th>
                   <th className="px-4 py-3 text-center font-medium">Avg Score</th>
                   <th className="px-4 py-3 text-center font-medium">Avg Putts</th>
@@ -177,7 +177,7 @@ export default function PlayerStatsPage() {
               <tbody className="divide-y">
                 {holeAverages?.length > 0 ? holeAverages.sort((a, b) => a.hole - b.hole).map(h => (
                   <tr key={h.hole}>
-                    <td className="px-4 py-3 font-medium">Hole {h.hole}</td>
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">Hole {h.hole}</td>
                     <td className="px-4 py-3 text-center font-semibold">{h.avgScore.toFixed(1)}</td>
                     <td className="px-4 py-3 text-center">{h.avgPutts != null ? h.avgPutts.toFixed(1) : '-'}</td>
                     <td className="px-4 py-3 text-center">{h.fairwayPct != null ? `${h.fairwayPct.toFixed(0)}%` : '-'}</td>
@@ -193,7 +193,7 @@ export default function PlayerStatsPage() {
       )}
 
       {tab === 'trends' && (
-        <div className="bg-white rounded-xl border p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Handicap Trend</h3>
           {handicapTrend?.length > 0 ? (
             <div className="space-y-2">
@@ -201,13 +201,13 @@ export default function PlayerStatsPage() {
                 const prev = i > 0 ? handicapTrend[i - 1].handicap : t.handicap;
                 const diff = t.handicap - prev;
                 return (
-                  <div key={i} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+                  <div key={i} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded-lg px-4 py-3">
                     <div>
-                      <p className="text-sm text-gray-500">{new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="font-bold text-gray-900">{t.handicap.toFixed(1)}</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{t.handicap.toFixed(1)}</p>
                         {diff !== 0 && (
                           <p className={`text-xs flex items-center gap-0.5 ${diff < 0 ? 'text-green-600' : 'text-red-500'}`}>
                             {diff < 0 ? <ArrowDown className="w-3 h-3" /> : <ArrowUp className="w-3 h-3" />}
@@ -215,7 +215,7 @@ export default function PlayerStatsPage() {
                           </p>
                         )}
                       </div>
-                      <div className="text-right text-sm text-gray-500">
+                      <div className="text-right text-sm text-gray-500 dark:text-gray-400">
                         <p>Gross: {t.grossScore}</p>
                         {t.stablefordPoints && <p>Stableford: {t.stablefordPoints}</p>}
                       </div>
@@ -237,17 +237,17 @@ export default function PlayerStatsPage() {
 function StatCard({ label, value, sub, icon, color }) {
   const colors = {
     green: 'bg-green-50 text-green-700',
-    blue: 'bg-blue-50 text-blue-700',
+    blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700',
     purple: 'bg-purple-50 text-purple-700',
     amber: 'bg-amber-50 text-amber-700',
   };
   return (
-    <div className="bg-white rounded-xl border p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border p-4">
       <div className={`w-10 h-10 rounded-lg ${colors[color]} flex items-center justify-center mb-2`}>
         {icon}
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   );

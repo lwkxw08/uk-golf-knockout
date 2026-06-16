@@ -35,8 +35,8 @@ export default function SponsorBanner({ placement, tournamentId, clubId, matchId
   };
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm ${className}`}>
-      <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition" onClick={handleClick}>
+    <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm ${className}`}>
+      <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:bg-gray-900 transition" onClick={handleClick}>
         {ad.adImageUrl ? (
           <img src={ad.adImageUrl} alt={ad.name} className="h-12 w-auto max-w-[120px] object-contain" />
         ) : ad.logoUrl ? (

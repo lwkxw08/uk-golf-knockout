@@ -5,9 +5,9 @@ import PageHeader from '../../components/layout/PageHeader';
 
 const ROLES = ['PLAYER', 'CLUB_MANAGER', 'ADMIN'];
 const ROLE_COLORS = {
-  ADMIN: 'bg-red-100 text-red-700',
-  CLUB_MANAGER: 'bg-blue-100 text-blue-700',
-  PLAYER: 'bg-green-100 text-green-700',
+  ADMIN: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  CLUB_MANAGER: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  PLAYER: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
 };
 
 export default function UserManagement() {
@@ -96,11 +96,11 @@ export default function UserManagement() {
             className="w-full border rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
           />
         </div>
-        <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm">
+        <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }} className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm">
           <option value="">All Roles</option>
           {ROLES.map(r => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
         </select>
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm">
+        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
@@ -112,7 +112,7 @@ export default function UserManagement() {
         <div className="flex-1">
           {loading ? (
             <div className="space-y-3">
-              {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />)}
+              {[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />)}
             </div>
           ) : (
             <div className="space-y-2">
@@ -120,7 +120,7 @@ export default function UserManagement() {
                 <div
                   key={u.id}
                   onClick={() => setSelectedUser(u)}
-                  className={`bg-white border rounded-lg p-4 cursor-pointer hover:border-green-300 transition ${
+                  className={`bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 cursor-pointer hover:border-green-300 transition ${
                     selectedUser?.id === u.id ? 'border-green-500 ring-1 ring-green-200' : ''
                   } ${!u.isActive ? 'opacity-60' : ''}`}
                 >
@@ -130,7 +130,7 @@ export default function UserManagement() {
                         {getName(u).split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{getName(u)}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{getName(u)}</p>
                         <p className="text-xs text-gray-500">{u.email}</p>
                       </div>
                     </div>
@@ -139,7 +139,7 @@ export default function UserManagement() {
                         {u.role.replace('_', ' ')}
                       </span>
                       {!u.isActive && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Suspended</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">Suspended</span>
                       )}
                       {u.emailVerified && (
                         <span className="text-green-600 text-xs" title="Email verified">Verified</span>
@@ -161,15 +161,15 @@ export default function UserManagement() {
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(p => p - 1)}
-                className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-30"
+                className="p-2 rounded-lg border hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-30"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Page {page} of {totalPages}</span>
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-30"
+                className="p-2 rounded-lg border hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-30"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -179,18 +179,18 @@ export default function UserManagement() {
 
         {/* User detail panel */}
         {selectedUser && (
-          <div className="w-80 bg-white border rounded-xl p-6 h-fit sticky top-4">
+          <div className="w-80 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 h-fit sticky top-4">
             <div className="text-center mb-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-700 text-xl font-bold mx-auto mb-2">
                 {getName(selectedUser).split(' ').map(n => n[0]).join('').slice(0, 2)}
               </div>
-              <h3 className="font-semibold text-gray-900">{getName(selectedUser)}</h3>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">{getName(selectedUser)}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
               <div className="flex justify-center gap-2 mt-2">
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[selectedUser.role]}`}>
                   {selectedUser.role.replace('_', ' ')}
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedUser.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedUser.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}`}>
                   {selectedUser.isActive ? 'Active' : 'Suspended'}
                 </span>
               </div>
@@ -254,7 +254,7 @@ export default function UserManagement() {
                 <button
                   onClick={() => handleAction(selectedUser.id, 'suspend')}
                   disabled={actionLoading === `${selectedUser.id}-suspend`}
-                  className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
                 >
                   <ShieldOff className="w-4 h-4" />
                   {actionLoading === `${selectedUser.id}-suspend` ? 'Suspending...' : 'Suspend User'}
@@ -263,7 +263,7 @@ export default function UserManagement() {
                 <button
                   onClick={() => handleAction(selectedUser.id, 'reactivate')}
                   disabled={actionLoading === `${selectedUser.id}-reactivate`}
-                  className="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50"
                 >
                   <UserCheck className="w-4 h-4" />
                   {actionLoading === `${selectedUser.id}-reactivate` ? 'Reactivating...' : 'Reactivate User'}

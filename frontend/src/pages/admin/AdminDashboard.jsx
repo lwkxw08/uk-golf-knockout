@@ -23,9 +23,9 @@ export default function AdminDashboard() {
   if (loading) return <div className="text-center py-12 text-gray-500">Loading...</div>;
 
   const statCards = [
-    { icon: MapPin, label: 'Clubs', value: stats?.clubs || 0, color: 'bg-blue-100 text-blue-700', link: '/admin/clubs' },
-    { icon: Users, label: 'Players', value: stats?.players || 0, color: 'bg-green-100 text-green-700' },
-    { icon: Trophy, label: 'Tournaments', value: stats?.tournaments || 0, color: 'bg-purple-100 text-purple-700' },
+    { icon: MapPin, label: 'Clubs', value: stats?.clubs || 0, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300', link: '/admin/clubs' },
+    { icon: Users, label: 'Players', value: stats?.players || 0, color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+    { icon: Trophy, label: 'Tournaments', value: stats?.tournaments || 0, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' },
     { icon: Activity, label: 'Active Matches', value: stats?.activeMatches || 0, color: 'bg-orange-100 text-orange-700' },
     { icon: BarChart3, label: 'Completed Matches', value: stats?.completedMatches || 0, color: 'bg-teal-100 text-teal-700' },
     { icon: Banknote, label: 'Platform Revenue', value: `£${((stats?.revenue?.platform || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}`, color: 'bg-emerald-100 text-emerald-700' },
@@ -82,15 +82,15 @@ export default function AdminDashboard() {
 
       {/* Revenue breakdown */}
       <div className="grid md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-1">Total Revenue</h3>
-          <p className="text-2xl font-bold text-gray-900">£{((stats?.revenue?.total || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">£{((stats?.revenue?.total || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-1">Platform Share</h3>
           <p className="text-2xl font-bold text-emerald-700">£{((stats?.revenue?.platform || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white border rounded-xl p-6">
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
           <h3 className="text-sm font-medium text-gray-500 mb-1">Club Share</h3>
           <p className="text-2xl font-bold text-blue-700">£{((stats?.revenue?.clubs || 0) / 100).toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
         </div>
@@ -99,14 +99,14 @@ export default function AdminDashboard() {
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         {/* Region breakdown */}
         {stats?.regionBreakdown?.length > 0 && (
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Clubs by Region</h2>
             <div className="space-y-3">
               {stats.regionBreakdown.map((r, i) => (
                 <div key={r.county || `unknown-${i}`} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{r.county || 'Not specified'}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{r.county || 'Not specified'}</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-32 bg-gray-100 rounded-full h-2">
+                    <div className="w-32 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                       <div className="bg-green-600 rounded-full h-2" style={{ width: `${Math.min(100, (r._count / (stats.clubs || 1)) * 100)}%` }} />
                     </div>
                     <span className="text-sm font-medium text-gray-600 w-8 text-right">{r._count}</span>
@@ -119,22 +119,22 @@ export default function AdminDashboard() {
 
         {/* Tournament status breakdown */}
         {stats?.tournamentsByStatus && Object.keys(stats.tournamentsByStatus).length > 0 && (
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Tournament Status</h2>
             <div className="space-y-3">
               {Object.entries(stats.tournamentsByStatus).map(([status, count]) => {
                 const colors = {
                   DRAFT: 'bg-gray-200 text-gray-700',
-                  REGISTRATION_OPEN: 'bg-blue-100 text-blue-700',
-                  IN_PROGRESS: 'bg-green-100 text-green-700',
-                  COMPLETED: 'bg-purple-100 text-purple-700',
+                  REGISTRATION_OPEN: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                  IN_PROGRESS: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+                  COMPLETED: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
                 };
                 return (
                   <div key={status} className="flex items-center justify-between">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${colors[status] || 'bg-gray-100 text-gray-600'}`}>
                       {status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-lg font-bold text-gray-900">{count}</span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">{count}</span>
                   </div>
                 );
               })}
@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         {/* Recent players */}
         {stats?.recentPlayers?.length > 0 && (
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-green-600" /> Recent Registrations
             </h2>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
 
         {/* Recent match results */}
         {stats?.recentMatches?.length > 0 && (
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-orange-600" /> Recent Results
             </h2>
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
                     <p className="font-medium text-gray-900 text-sm">
                       {m.playerA?.firstName} {m.playerA?.lastName} vs {m.playerB?.firstName} {m.playerB?.lastName}
                     </p>
-                    {m.gameWeek && <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">Week {m.gameWeek}</span>}
+                    {m.gameWeek && <span className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 px-1.5 py-0.5 rounded">Week {m.gameWeek}</span>}
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
                     <p className="text-xs text-gray-500">{m.tournament?.name} {m.result?.resultText ? `— ${m.result.resultText}` : ''}</p>
@@ -191,15 +191,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tournaments table */}
-      <div className="bg-white border rounded-xl p-6">
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Tournaments</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Tournaments</h2>
           <Link to="/admin/tournaments/new" className="text-green-700 hover:underline text-sm">Create New</Link>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm text-gray-900 dark:text-gray-200">
             <thead>
-              <tr className="border-b text-left text-gray-500">
+              <tr className="border-b dark:border-gray-700 text-left text-gray-500">
                 <th className="pb-2">Name</th>
                 <th className="pb-2">Format</th>
                 <th className="pb-2">Category</th>
@@ -210,15 +210,15 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {tournaments.map((t) => (
-                <tr key={t.id} className="border-b last:border-0">
-                  <td className="py-3 font-medium">
+                <tr key={t.id} className="border-b dark:border-gray-700 last:border-0">
+                  <td className="py-3 font-medium text-gray-900 dark:text-white">
                     <Link to={`/tournaments/${t.id}`} className="text-green-700 hover:underline">{t.name}</Link>
                   </td>
-                  <td className="py-3 text-gray-600">{t.formatType.replace(/_/g, ' ')}</td>
+                  <td className="py-3 text-gray-600 dark:text-gray-400">{t.formatType.replace(/_/g, ' ')}</td>
                   <td className="py-3">{t.ageCategory}</td>
                   <td className="py-3">{t._count?.entries || 0}</td>
                   <td className="py-3">
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100">{t.status.replace(/_/g, ' ')}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700">{t.status.replace(/_/g, ' ')}</span>
                   </td>
                   <td className="py-3">
                     <Link to={`/admin/tournaments/${t.id}`} className="text-green-700 hover:underline text-sm">Manage</Link>
@@ -234,24 +234,24 @@ export default function AdminDashboard() {
       </div>
 
       {/* Match stats summary */}
-      <div className="mt-6 bg-white border rounded-xl p-6">
+      <div className="mt-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Match Summary</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-3xl font-bold text-gray-900">{stats?.totalMatches || 0}</p>
-            <p className="text-sm text-gray-500">Total Matches</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats?.totalMatches || 0}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Total Matches</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-green-700">{stats?.completedMatches || 0}</p>
-            <p className="text-sm text-gray-500">Completed</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-orange-600">{stats?.activeMatches || 0}</p>
-            <p className="text-sm text-gray-500">Active / Pending</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Active / Pending</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-red-600">{stats?.disputes || 0}</p>
-            <p className="text-sm text-gray-500">Disputed</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Disputed</p>
           </div>
         </div>
       </div>

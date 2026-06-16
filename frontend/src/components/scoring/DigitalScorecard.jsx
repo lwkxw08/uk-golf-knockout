@@ -102,10 +102,10 @@ function ScorePopup({ holePar, onSelect, onPickUp, showPickUp, onClose, playerNa
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-xs shadow-xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-xs shadow-xl" onClick={e => e.stopPropagation()}>
         <div className={`${playerColor.bg} ${playerColor.text} rounded-t-2xl px-4 py-3 text-center`}>
           <p className="text-sm opacity-80">Enter score for</p>
-          <p className="font-bold text-lg">{playerName}</p>
+          <p className="font-bold text-lg text-gray-900 dark:text-white">{playerName}</p>
           <p className="text-xs opacity-70 mt-0.5">Par {holePar}</p>
         </div>
         <div className="p-4">
@@ -162,7 +162,7 @@ function PlayerBubble({ initials, color, score, holePar, extraStrokes, onClick, 
       </button>
       {hasScore ? (
         isPickUp ? (
-          <span className="inline-flex items-center justify-center w-9 h-6 bg-amber-100 text-amber-700 rounded text-xs font-bold">PU</span>
+          <span className="inline-flex items-center justify-center w-9 h-6 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded text-xs font-bold">PU</span>
         ) : (
           <ScoreMarking score={score} par={holePar} extraStrokes={extraStrokes}>
             {score}
@@ -434,7 +434,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
   if (loading) return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-8 text-center">Loading scorecard...</div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-8 text-center">Loading scorecard...</div>
     </div>
   );
 
@@ -459,11 +459,11 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2">
-      <div className="bg-white rounded-xl max-w-lg w-full max-h-[95vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-3 flex items-center justify-between z-10">
           <div className="min-w-0">
-            <h3 className="font-bold text-lg">Scorecard</h3>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white">Scorecard</h3>
             <p className="text-xs text-gray-500 truncate">
               {match.tournament?.name}
               {tee && <span className="ml-1 text-green-700">({tee.teeName}, SR {tee.slopeRating})</span>}
@@ -476,12 +476,12 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
             >
               {mode === 'entry' ? 'Summary' : 'Card'}
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-400"><X className="w-5 h-5" /></button>
           </div>
         </div>
 
         {/* Player Legend */}
-        <div className="px-4 py-2 border-b bg-gray-50 flex items-center gap-3 overflow-x-auto">
+        <div className="px-4 py-2 border-b bg-gray-50 dark:bg-gray-900 flex items-center gap-3 overflow-x-auto">
           {players.map((p, i) => (
             <div key={p.id} className="flex items-center gap-1.5 shrink-0">
               <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${p.color.bg} ${p.color.text}`}>
@@ -504,7 +504,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
         {mode === 'entry' && (
           <div className="p-4">
             {/* Info: mark all players */}
-            <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3 text-xs text-blue-700">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 rounded-lg px-3 py-2 mb-3 text-xs text-blue-700">
               Enter scores for <strong>all players</strong> — your own and your opponent's. Both players' submissions will be cross-checked for confirmation.
             </div>
 
@@ -520,10 +520,10 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
               <div className="text-center">
                 <p className="text-xs text-gray-400 uppercase tracking-wide">Hole</p>
-                <p className="text-4xl font-black text-gray-900">{currentHole}</p>
+                <p className="text-4xl font-black text-gray-900 dark:text-white">{currentHole}</p>
                 <div className="flex items-center justify-center gap-3 mt-1">
-                  <span className="text-sm text-gray-500">Par <strong className="text-gray-800">{holePar}</strong></span>
-                  <span className="text-sm text-gray-500">SI <strong className="text-gray-800">{holeSI}</strong></span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Par <strong className="text-gray-800 dark:text-white">{holePar}</strong></span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">SI <strong className="text-gray-800 dark:text-white">{holeSI}</strong></span>
                 </div>
               </div>
 
@@ -587,7 +587,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                       isCurrent
                         ? 'bg-green-700 text-white scale-110 shadow'
                         : allDone
-                          ? 'bg-green-100 text-green-700'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                           : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                     }`}
                   >
@@ -612,7 +612,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
             {/* Progress & Submit */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-500">{holesCompleted}/18 holes completed</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{holesCompleted}/18 holes completed</span>
                 <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div className="h-full bg-green-600 rounded-full transition-all" style={{ width: `${(holesCompleted / 18) * 100}%` }} />
                 </div>
@@ -628,7 +628,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${p.color.bg} ${p.color.text}`}>
                           {p.initials}
                         </span>
-                        <span className="text-xs font-medium text-gray-700">{p.firstName}</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{p.firstName}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-center">
@@ -667,13 +667,13 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
               </div>
 
               {showUploadFallback && (
-                <div className="mt-3 bg-gray-50 border rounded-lg p-3 text-sm text-gray-500">
+                <div className="mt-3 bg-gray-50 dark:bg-gray-900 border rounded-lg p-3 text-sm text-gray-500 dark:text-gray-400">
                   Can't use digital scoring? Close this and use "Submit Result" on your dashboard to upload a scorecard photo.
                 </div>
               )}
 
               {!scoreData?.bothSubmitted && (scoreData?.playerA?.submitted || scoreData?.playerB?.submitted) && (
-                <div className="mt-3 bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm">
+                <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 px-3 py-2 rounded text-sm">
                   Waiting for {opponentName} to submit their scores...
                 </div>
               )}
@@ -684,7 +684,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
         {/* ── SUMMARY MODE — Full scorecard table view ── */}
         {mode === 'summary' && (
           <div className="p-4">
-            <h4 className="font-bold text-sm mb-3 text-gray-700">Full Scorecard</h4>
+            <h4 className="font-bold text-sm mb-3 text-gray-700 dark:text-gray-300">Full Scorecard</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse min-w-[600px]">
                 <thead>
@@ -704,7 +704,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                 <tbody>
                   {/* Par row */}
                   <tr className="border-t">
-                    <td className="px-2 py-1 font-medium text-gray-600">Par</td>
+                    <td className="px-2 py-1 font-medium text-gray-600 dark:text-gray-400">Par</td>
                     {[...Array(9)].map((_, i) => {
                       const h = holes.find(x => x.holeNumber === i + 1);
                       return <td key={i + 1} className="px-1 py-1 text-center">{h?.par || ''}</td>;
@@ -827,7 +827,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
             {/* Scoring legend */}
             <div className="mt-4 border-t pt-3">
               <p className="text-xs text-gray-400 mb-2 font-medium">Score markings</p>
-              <div className="flex items-center gap-4 flex-wrap text-xs text-gray-600">
+              <div className="flex items-center gap-4 flex-wrap text-xs text-gray-600 dark:text-gray-400">
                 <span className="flex items-center gap-1">
                   <ScoreMarking score={2} par={4} extraStrokes={0}><span className="text-[10px]">2</span></ScoreMarking>
                   Eagle
@@ -869,11 +869,11 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                   <tr className="bg-green-50">
                     <th className="px-2 py-1.5 text-left font-bold text-green-800 w-16">Hole</th>
                     {[...Array(9)].map((_, i) => (
-                      <th key={i + 1} className="px-1 py-1.5 text-center font-bold text-green-800">{i + 1}</th>
+                      <th key={i + 1} className="px-1 py-1.5 text-center font-bold text-green-800 dark:text-green-300">{i + 1}</th>
                     ))}
                     <th className="px-1 py-1.5 text-center font-bold bg-green-100">Out</th>
                     {[...Array(9)].map((_, i) => (
-                      <th key={i + 10} className="px-1 py-1.5 text-center font-bold text-green-800">{i + 10}</th>
+                      <th key={i + 10} className="px-1 py-1.5 text-center font-bold text-green-800 dark:text-green-300">{i + 10}</th>
                     ))}
                     <th className="px-1 py-1.5 text-center font-bold bg-green-100">In</th>
                     <th className="px-1 py-1.5 text-center font-bold bg-green-200">Tot</th>
@@ -882,7 +882,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                 <tbody>
                   {/* Par */}
                   <tr className="border-t">
-                    <td className="px-2 py-1 font-medium text-gray-600">Par</td>
+                    <td className="px-2 py-1 font-medium text-gray-600 dark:text-gray-400">Par</td>
                     {holes.filter(h => h.holeNumber <= 9).map(h => (
                       <td key={h.holeNumber} className="px-1 py-1 text-center">{h.par}</td>
                     ))}
@@ -951,10 +951,10 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
             {/* Cross-Check Status */}
             {scoreData.crossCheck && (
-              <div className={`mt-4 rounded-lg p-4 ${scoreData.crossCheck.allMatch ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
+              <div className={`mt-4 rounded-lg p-4 ${scoreData.crossCheck.allMatch ? 'bg-green-50 dark:bg-green-900/20 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
                 {scoreData.crossCheck.allMatch ? (
                   <div className="text-center">
-                    <p className="font-bold text-green-800">All scores match</p>
+                    <p className="font-bold text-green-800 dark:text-green-300">All scores match</p>
                     <p className="text-sm text-green-600 mt-1">Both players recorded the same scores — ready to confirm.</p>
                   </div>
                 ) : (
@@ -1022,7 +1022,7 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
                 </button>
                 <button
                   onClick={() => setMode('comparison')}
-                  className="px-6 py-2.5 border rounded-lg text-gray-600 hover:bg-gray-50 transition"
+                  className="px-6 py-2.5 border rounded-lg text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition"
                 >
                   Back
                 </button>

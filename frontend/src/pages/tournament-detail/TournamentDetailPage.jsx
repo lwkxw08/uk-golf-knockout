@@ -189,16 +189,16 @@ export default function TournamentDetailPage() {
         {/* Info */}
         <div className="md:col-span-2 space-y-6">
           {tournament.description && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-2">About</h2>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">About</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{tournament.description}</p>
             </div>
           )}
 
           {/* Stages */}
           {tournament.stages?.length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4">Stages & Progression</h2>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Stages & Progression</h2>
               <div className="flex flex-wrap gap-2 mb-4">
                 {tournament.stages.map(s => (
                   <button key={s.stage} onClick={() => setActiveStage(s.stage)}
@@ -210,17 +210,17 @@ export default function TournamentDetailPage() {
                 ))}
               </div>
               {tournament.stages.map(s => activeStage === s.stage && (
-                <div key={s.id} className="border rounded-lg p-4">
+                <div key={s.id} className="border dark:border-gray-700 rounded-lg p-4">
                   <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div><p className="text-gray-500">Rounds</p><p className="font-bold text-lg">{s.totalRounds}</p></div>
-                    <div><p className="text-gray-500">Places Qualify</p><p className="font-bold text-lg">{s.qualifyCount}</p></div>
-                    <div><p className="text-gray-500">Deadline</p><p className="font-bold text-lg">{s.matchDeadlineDays ? `${s.matchDeadlineDays} days` : 'TBD'}</p></div>
+                    <div><p className="text-gray-500">Rounds</p><p className="font-bold text-lg text-gray-900 dark:text-white">{s.totalRounds}</p></div>
+                    <div><p className="text-gray-500">Places Qualify</p><p className="font-bold text-lg text-gray-900 dark:text-white">{s.qualifyCount}</p></div>
+                    <div><p className="text-gray-500">Deadline</p><p className="font-bold text-lg text-gray-900 dark:text-white">{s.matchDeadlineDays ? `${s.matchDeadlineDays} days` : 'TBD'}</p></div>
                   </div>
                   {s.stageRegions?.length > 0 && (
                     <div className="mt-3">
                       <p className="text-sm text-gray-500 mb-1">Regions:</p>
                       <div className="flex flex-wrap gap-1">{s.stageRegions.map(r => (
-                        <span key={r.id} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">{r.region.name}</span>
+                        <span key={r.id} className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 px-2 py-0.5 rounded text-xs">{r.region.name}</span>
                       ))}</div>
                     </div>
                   )}
@@ -242,15 +242,15 @@ export default function TournamentDetailPage() {
 
           {/* Bracket (knockout only) */}
           {!isLeague && bracket && bracket.totalRounds > 0 && (
-            <div className="bg-white border rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4">Bracket — {stageLabels[activeStage] || activeStage}</h2>
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Bracket — {stageLabels[activeStage] || activeStage}</h2>
               <KnockoutBracket rounds={bracket.rounds} totalRounds={bracket.totalRounds} roundLabels={bracket.roundLabels} />
             </div>
           )}
 
           {/* League Fixtures (league only) */}
           {isLeague && Object.keys(leagueFixtures).length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-lg">League Fixtures</h2>
                 <Link to={`/league/${id}`} className="text-green-700 hover:underline text-sm font-medium">View Full League Table →</Link>
@@ -289,11 +289,11 @@ export default function TournamentDetailPage() {
               })()}
               <div className="space-y-3">
                 {(leagueFixtures[leagueFixtureWeek] || []).map(match => (
-                  <div key={match.id} className="border rounded-lg p-4">
+                  <div key={match.id} className="border dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA !== false ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{match.isHomeForPlayerA !== false ? 'HOME' : 'AWAY'}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA !== false ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>{match.isHomeForPlayerA !== false ? 'HOME' : 'AWAY'}</span>
                           <span className="font-medium">{match.playerA ? `${match.playerA.firstName} ${match.playerA.lastName}` : 'TBD'}</span>
                           {match.playerA?.handicapIndex != null && <span className="text-xs text-gray-400">({match.playerA.handicapIndex})</span>}
                         </div>
@@ -325,7 +325,7 @@ export default function TournamentDetailPage() {
                         <div className="flex items-center justify-end gap-2">
                           {match.playerB?.handicapIndex != null && <span className="text-xs text-gray-400">({match.playerB.handicapIndex})</span>}
                           <span className="font-medium">{match.playerB ? `${match.playerB.firstName} ${match.playerB.lastName}` : 'TBD'}</span>
-                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA === false ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{match.isHomeForPlayerA === false ? 'HOME' : 'AWAY'}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${match.isHomeForPlayerA === false ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>{match.isHomeForPlayerA === false ? 'HOME' : 'AWAY'}</span>
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">{match.playerB?.homeClub?.name || ''}</div>
                       </div>
@@ -380,8 +380,8 @@ export default function TournamentDetailPage() {
 
           {/* Admin: Per-Week Draw Management */}
           {user?.role === 'ADMIN' && isLeague && (
-            <div className="bg-white border-2 border-blue-200 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Shuffle className="w-5 h-5 text-blue-600" /> League Draw Management
               </h2>
               <p className="text-sm text-gray-600 mb-4">Each game week has its own independent draw. Schedule a date/time or trigger immediately.</p>
@@ -397,7 +397,7 @@ export default function TournamentDetailPage() {
                   const hasFixtures = drawStatus?.revealedWeeks?.includes(week);
 
                   return (
-                    <div key={week} className={`border rounded-lg p-4 ${hasFixtures ? 'bg-green-50 border-green-200' : weekDraw?.status === 'SCHEDULED' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+                    <div key={week} className={`border rounded-lg p-4 ${hasFixtures ? 'bg-green-50 dark:bg-green-900/20 border-green-200' : weekDraw?.status === 'SCHEDULED' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : 'bg-gray-50 dark:bg-gray-900 border-gray-200'}`}>
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-sm">Week {week}</span>
@@ -422,7 +422,7 @@ export default function TournamentDetailPage() {
                                 type="datetime-local"
                                 value={weekScheduleDates[week] || ''}
                                 onChange={e => setWeekScheduleDates(prev => ({ ...prev, [week]: e.target.value }))}
-                                className="border rounded px-2 py-1 text-xs w-44"
+                                className="border dark:border-gray-600 rounded px-2 py-1 text-xs w-44"
                               />
                               <button
                                 onClick={() => handleScheduleWeekDraw(week)}
@@ -461,8 +461,8 @@ export default function TournamentDetailPage() {
 
           {/* Round Deadlines (Admin) */}
           {user?.role === 'ADMIN' && isLeague && (
-            <div className="bg-white border-2 border-amber-200 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-600" /> Round Deadlines
               </h2>
               <p className="text-sm text-gray-600 mb-4">Set a deadline for each game week. Players must arrange and play their match before this date.</p>
@@ -473,7 +473,7 @@ export default function TournamentDetailPage() {
                   const currentDeadline = weekFixtures[0]?.roundDeadline;
 
                   return (
-                    <div key={week} className="border rounded-lg p-3 bg-gray-50 flex items-center justify-between flex-wrap gap-2">
+                    <div key={week} className="border dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900 flex items-center justify-between flex-wrap gap-2">
                       <div>
                         <span className="font-medium text-sm">Week {week}</span>
                         {currentDeadline && (
@@ -487,7 +487,7 @@ export default function TournamentDetailPage() {
                           type="datetime-local"
                           value={weekDeadlines[week] || ''}
                           onChange={e => setWeekDeadlines(prev => ({ ...prev, [week]: e.target.value }))}
-                          className="border rounded px-2 py-1 text-xs w-44"
+                          className="border dark:border-gray-600 rounded px-2 py-1 text-xs w-44"
                         />
                         <button
                           onClick={async () => {
@@ -525,7 +525,7 @@ export default function TournamentDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <div className="bg-white border rounded-xl p-6">
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
             <h3 className="font-semibold mb-3">Details</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-gray-500">Status</dt><dd className="font-medium capitalize">{tournament.status.replace(/_/g, ' ').toLowerCase()}</dd></div>
@@ -537,7 +537,7 @@ export default function TournamentDetailPage() {
           </div>
 
           {tournament.pricing?.length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h3 className="font-semibold mb-3">Entry Fee</h3>
               {tournament.pricing.filter(p => p.feeType === 'ENTRY_FEE').map(p => (
                 <div key={p.id} className="text-center">
@@ -549,7 +549,7 @@ export default function TournamentDetailPage() {
           )}
 
           {tournament.sponsors?.length > 0 && (
-            <div className="bg-white border rounded-xl p-6">
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
               <h3 className="font-semibold mb-3">Sponsors</h3>
               <div className="space-y-2">{tournament.sponsors.map(s => (
                 <div key={s.id} className="flex items-center gap-2">
@@ -565,19 +565,19 @@ export default function TournamentDetailPage() {
       {/* Entry Form Modal */}
       {showEntryForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold mb-4">Enter {tournament.name}</h3>
             {entryError && <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">{entryError}</div>}
             <form onSubmit={handleEnter} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Select Your Club *</label>
-                <select value={selectedClub} onChange={(e) => setSelectedClub(e.target.value)} className="w-full border rounded-lg px-3 py-2" required>
+                <select value={selectedClub} onChange={(e) => setSelectedClub(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2" required>
                   <option value="">Choose club...</option>
                   {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               {tournament.pricing?.length > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400">
                   Entry fee: <strong>&pound;{(tournament.pricing[0].amountPence / 100).toFixed(2)}</strong>
                 </div>
               )}

@@ -95,7 +95,7 @@ export default function MatchChatPage() {
   if (loading) return <div className="flex items-center justify-center h-screen text-gray-500">Loading chat...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
       {/* Header */}
       <div className="bg-gradient-to-r from-green-800 to-emerald-900 border-b border-green-700 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
@@ -123,7 +123,7 @@ export default function MatchChatPage() {
 
       {/* Weather & Booking bar */}
       {(weather || bookingLinks.length > 0) && (
-        <div className="bg-blue-50 border-b border-blue-100 px-4 py-2">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 px-4 py-2">
           <div className="max-w-2xl mx-auto flex items-center gap-4 text-xs">
             {weather?.forecast?.[0] && (
               <div className="flex items-center gap-2 text-blue-700">
@@ -176,7 +176,7 @@ export default function MatchChatPage() {
       </div>
 
       {/* Quick replies */}
-      <div className="bg-white border-t border-gray-100 px-4 py-2 overflow-x-auto">
+      <div className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 border-gray-100 px-4 py-2 overflow-x-auto">
         <div className="max-w-2xl mx-auto flex gap-2">
           {quickMessages.map((qm, i) => (
             <button key={i} onClick={() => setNewMessage(qm)}
@@ -188,7 +188,7 @@ export default function MatchChatPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-200 px-4 py-3">
+      <div className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 border-gray-200 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center gap-2">
           <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && sendMessage()}

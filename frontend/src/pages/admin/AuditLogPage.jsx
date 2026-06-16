@@ -85,7 +85,7 @@ export default function AuditLogPage() {
             <select
               value={actionFilter}
               onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-              className="border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="border dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="">All Actions</option>
               {actions.map(a => <option key={a} value={a}>{a}</option>)}
@@ -96,7 +96,7 @@ export default function AuditLogPage() {
             <select
               value={entityFilter}
               onChange={(e) => { setEntityFilter(e.target.value); setPage(1); }}
-              className="border rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="border dark:border-gray-700 rounded-lg px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="">All Entities</option>
               {entities.map(e => <option key={e} value={e}>{e}</option>)}
@@ -116,8 +116,8 @@ export default function AuditLogPage() {
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">No audit log entries found</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Timestamp</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">User</th>
@@ -129,7 +129,7 @@ export default function AuditLogPage() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {logs.map(log => (
-                  <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                  <tr key={log.id} className="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-750">
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDate(log.createdAt)}</td>
                     <td className="px-4 py-3 text-gray-800 dark:text-gray-200">{log.userEmail || '—'}</td>
                     <td className="px-4 py-3">

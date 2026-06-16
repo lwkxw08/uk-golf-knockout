@@ -41,23 +41,23 @@ export default function ClubSubscriptionPage() {
       <div className="max-w-5xl mx-auto px-4 py-12">
 
       {currentSub && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-8 text-center">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-xl p-6 mb-8 text-center">
           <Crown className="w-8 h-8 text-green-700 mx-auto mb-2" />
-          <p className="font-bold text-green-800">Active: {currentSub.tier?.name}</p>
+          <p className="font-bold text-green-800 dark:text-green-300">Active: {currentSub.tier?.name}</p>
           <p className="text-sm text-green-700 mt-1">Expires: {new Date(currentSub.currentPeriodEnd).toLocaleDateString('en-GB')}</p>
         </div>
       )}
 
       <div className="grid md:grid-cols-3 gap-6">
         {tiers.map((tier, i) => (
-          <div key={tier.id} className={`bg-white rounded-2xl overflow-hidden border-2 transition ${i === 1 ? 'border-green-500 shadow-lg scale-105' : 'border-gray-200'}`}>
+          <div key={tier.id} className={`bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border-2 transition ${i === 1 ? 'border-green-500 shadow-lg scale-105' : 'border-gray-200'}`}>
             {i === 1 && <div className="bg-green-700 text-white text-center py-1.5 text-xs font-bold">MOST POPULAR</div>}
             <div className="p-8">
               <h3 className="text-xl font-bold">{tier.name}</h3>
               <p className="text-4xl font-bold text-green-700 mt-4">&pound;{(tier.amountPence / 100).toFixed(0)}<span className="text-sm font-normal text-gray-500">/year</span></p>
               <ul className="mt-6 space-y-3">
                 {(tier.features || []).map((f, fi) => (
-                  <li key={fi} className="flex items-center gap-2 text-sm text-gray-700">
+                  <li key={fi} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                     <Check className="w-4 h-4 text-green-600 flex-shrink-0" />{f}
                   </li>
                 ))}

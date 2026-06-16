@@ -166,12 +166,12 @@ export default function ClubPortal() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {clubs.map(club => (
             <Link key={club.id} to={`/clubs/${club.slug}`} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition">
-              <h3 className="font-bold text-lg">{club.name}</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">{club.name}</h3>
               <p className="text-sm text-gray-500 mt-1">{club.region?.name || 'No region'}</p>
               <div className="flex gap-4 mt-3 text-sm text-gray-600 dark:text-gray-400">
                 <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {club._count?.players || 0} members</span>
               </div>
-              <span className={`mt-3 inline-block px-2 py-0.5 rounded text-xs font-medium ${club.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`mt-3 inline-block px-2 py-0.5 rounded text-xs font-medium ${club.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-gray-100 text-gray-500'}`}>
                 {club.isActive ? 'Active' : 'Inactive'}
               </span>
             </Link>
@@ -254,8 +254,8 @@ export default function ClubPortal() {
         <div className="grid md:grid-cols-2 gap-6">
           {/* Club Info */}
           <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-            <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Information</h2>
-            {dashboard.club.description && <p className="text-gray-700 text-sm mb-4">{dashboard.club.description}</p>}
+            <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white">Club Information</h2>
+            {dashboard.club.description && <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">{dashboard.club.description}</p>}
             <div className="space-y-2 text-sm">
               {dashboard.club.address && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 text-gray-400" /> {dashboard.club.address}{dashboard.club.postcode ? `, ${dashboard.club.postcode}` : ''}</p>}
               {dashboard.club.phone && <p className="flex items-center gap-2 text-gray-600 dark:text-gray-400"><Phone className="w-4 h-4 text-gray-400" /> {dashboard.club.phone}</p>}
@@ -264,17 +264,17 @@ export default function ClubPortal() {
             </div>
             {dashboard.club.slopeRating && (
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                   <p className="text-xs text-gray-500">Slope</p>
-                  <p className="font-bold text-lg">{dashboard.club.slopeRating}</p>
+                  <p className="font-bold text-lg text-gray-900 dark:text-white">{dashboard.club.slopeRating}</p>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                   <p className="text-xs text-gray-500">Course Rating</p>
-                  <p className="font-bold text-lg">{dashboard.club.courseRating ? Number(dashboard.club.courseRating).toFixed(1) : '-'}</p>
+                  <p className="font-bold text-lg text-gray-900 dark:text-white">{dashboard.club.courseRating ? Number(dashboard.club.courseRating).toFixed(1) : '-'}</p>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
                   <p className="text-xs text-gray-500">Par</p>
-                  <p className="font-bold text-lg">{dashboard.club.par || '-'}</p>
+                  <p className="font-bold text-lg text-gray-900 dark:text-white">{dashboard.club.par || '-'}</p>
                 </div>
               </div>
             )}
@@ -283,7 +283,7 @@ export default function ClubPortal() {
           {/* Recent Activity */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Calendar className="w-5 h-5 text-green-700" /> Upcoming Fixtures</h2>
               {(dashboard.fixtures || []).length > 0 ? (
                 <div className="space-y-2">
                   {dashboard.fixtures.slice(0, 5).map(f => (
@@ -300,7 +300,7 @@ export default function ClubPortal() {
             </div>
 
             <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-green-700" /> Recent Results</h2>
               {(dashboard.results || []).length > 0 ? (
                 <div className="space-y-2">
                   {dashboard.results.slice(0, 5).map(r => (
@@ -324,14 +324,14 @@ export default function ClubPortal() {
           {/* Club Championship Position */}
           {(dashboard.regionChampionship || []).length > 0 && (
             <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-600" /> Club Championship Standings
               </h2>
               <p className="text-sm text-gray-500 mb-4">
                 How your club ranks against others in the region. Clubs earn points from their players' league performances.
               </p>
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+              <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+                <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">#</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Club</th>
@@ -367,14 +367,14 @@ export default function ClubPortal() {
           {/* Individual Player League Standings */}
           {(dashboard.leagueStandings || []).length > 0 ? (
             <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-green-700" /> Your Players' League Standings
               </h2>
               <p className="text-sm text-gray-500 mb-4">
                 Individual performance of your club's players across all active leagues.
               </p>
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+              <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+                <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
                   <tr>
                     <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Pos</th>
                     <th className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-400">Player</th>
@@ -392,7 +392,7 @@ export default function ClubPortal() {
                   {dashboard.leagueStandings
                     .sort((a, b) => b.totalPoints - a.totalPoints)
                     .map((s, i) => (
-                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <tr key={s.id} className="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
                       <td className="px-3 py-3">
                         <span className={`font-bold ${s.position <= 4 ? 'text-emerald-700' : 'text-gray-700'}`}>
                           {s.position || '-'}
@@ -461,7 +461,7 @@ export default function ClubPortal() {
                 className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full text-sm text-gray-900 dark:text-gray-200">
             <thead>
               <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                 <th className="pb-3 font-medium">Name</th>
@@ -473,11 +473,11 @@ export default function ClubPortal() {
             </thead>
             <tbody>
               {filteredMembers.map(m => (
-                <tr key={m.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="py-3 font-medium">{m.firstName} {m.lastName}</td>
+                <tr key={m.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
+                  <td className="py-3 font-medium text-gray-900 dark:text-white">{m.firstName} {m.lastName}</td>
                   <td className="py-3 text-gray-600 dark:text-gray-400">{m.user?.email || '-'}</td>
                   <td className="py-3">{m.handicapIndex ? Number(m.handicapIndex).toFixed(1) : '-'}</td>
-                  <td className="py-3"><span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">{m.rankingPoints}</span></td>
+                  <td className="py-3"><span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded text-xs font-medium">{m.rankingPoints}</span></td>
                   <td className="py-3 text-gray-400">{new Date(m.createdAt).toLocaleDateString('en-GB')}</td>
                 </tr>
               ))}
@@ -491,9 +491,9 @@ export default function ClubPortal() {
 
       {activeTab === 'fixtures' && (
         <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Upcoming Fixtures</h2>
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white">Upcoming Fixtures</h2>
           {(dashboard.fixtures || []).length > 0 ? (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-gray-900 dark:text-gray-200">
               <thead>
                 <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                   <th className="pb-3 font-medium">Tournament</th>
@@ -505,7 +505,7 @@ export default function ClubPortal() {
               </thead>
               <tbody>
                 {dashboard.fixtures.map(f => (
-                  <tr key={f.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={f.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
                     <td className="py-3 font-medium text-gray-900 dark:text-white">{f.tournament?.name}</td>
                     <td className="py-3 text-gray-700 dark:text-gray-300">{f.playerA?.firstName} {f.playerA?.lastName} {f.playerA?.handicapIndex ? `(${Number(f.playerA.handicapIndex).toFixed(1)})` : ''}</td>
                     <td className="py-3 text-gray-700 dark:text-gray-300">{f.playerB ? `${f.playerB.firstName} ${f.playerB.lastName} ${f.playerB.handicapIndex ? `(${Number(f.playerB.handicapIndex).toFixed(1)})` : ''}` : 'TBD'}</td>
@@ -525,9 +525,9 @@ export default function ClubPortal() {
 
       {activeTab === 'results' && (
         <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Match Results</h2>
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white">Match Results</h2>
           {(dashboard.results || []).length > 0 ? (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm text-gray-900 dark:text-gray-200">
               <thead>
                 <tr className="border-b dark:border-gray-600 text-left text-gray-500 dark:text-gray-400">
                   <th className="pb-3 font-medium">Tournament</th>
@@ -539,12 +539,12 @@ export default function ClubPortal() {
               </thead>
               <tbody>
                 {dashboard.results.map(r => (
-                  <tr key={r.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="py-3 font-medium">{r.tournament?.name}</td>
+                  <tr key={r.id} className="border-b dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
+                    <td className="py-3 font-medium text-gray-900 dark:text-white">{r.tournament?.name}</td>
                     <td className="py-3">{r.playerA?.firstName} {r.playerA?.lastName}</td>
                     <td className="py-3">{r.playerB?.firstName} {r.playerB?.lastName}</td>
                     <td className="py-3 text-green-700 font-medium">{r.winner?.firstName} {r.winner?.lastName}</td>
-                    <td className="py-3"><span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">{r.result?.resultText}</span></td>
+                    <td className="py-3"><span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded text-xs font-medium">{r.result?.resultText}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -570,7 +570,7 @@ export default function ClubPortal() {
           )}
 
           {offerForm && (
-            <div className="mb-6 border rounded-xl p-5 bg-gray-50">
+            <div className="mb-6 border rounded-xl p-5 bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium">{offerForm.id ? 'Edit Offer' : 'New Offer'}</h3>
                 <button onClick={() => setOfferForm(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-400"><X className="w-5 h-5" /></button>
@@ -579,44 +579,44 @@ export default function ClubPortal() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Offer Type</label>
                   <select value={offerForm.offeringType} onChange={e => setOfferForm({ ...offerForm, offeringType: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     {OFFER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                   <input type="text" value={offerForm.title} onChange={e => setOfferForm({ ...offerForm, title: e.target.value })}
-                    placeholder="e.g. Summer Visitor Green Fee" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    placeholder="e.g. Summer Visitor Green Fee" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                   <textarea rows="3" value={offerForm.description} onChange={e => setOfferForm({ ...offerForm, description: e.target.value })}
-                    placeholder="Describe what's included in this offer..." className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    placeholder="Describe what's included in this offer..." className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price (&pound;)</label>
                   <input type="number" step="0.01" min="0" value={offerForm.pricePence} onChange={e => setOfferForm({ ...offerForm, pricePence: e.target.value })}
-                    placeholder="25.00" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    placeholder="25.00" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Original Price (&pound;) <span className="text-gray-400">(for discount display)</span></label>
                   <input type="number" step="0.01" min="0" value={offerForm.originalPricePence} onChange={e => setOfferForm({ ...offerForm, originalPricePence: e.target.value })}
-                    placeholder="40.00" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    placeholder="40.00" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Valid From</label>
                   <input type="date" value={offerForm.validFrom} onChange={e => setOfferForm({ ...offerForm, validFrom: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Valid Until</label>
                   <input type="date" value={offerForm.validTo} onChange={e => setOfferForm({ ...offerForm, validTo: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Max Redemptions <span className="text-gray-400">(leave blank for unlimited)</span></label>
                   <input type="number" min="1" value={offerForm.maxRedemptions} onChange={e => setOfferForm({ ...offerForm, maxRedemptions: e.target.value })}
-                    placeholder="100" className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                    placeholder="100" className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
                 </div>
               </div>
               <div className="mt-4 flex gap-3">
@@ -625,7 +625,7 @@ export default function ClubPortal() {
                   {offerSaving ? 'Saving...' : offerForm.id ? 'Update Offer' : 'Create Offer'}
                 </button>
                 <button onClick={() => setOfferForm(null)}
-                  className="px-6 py-2 rounded-lg font-medium border text-gray-600 hover:bg-gray-50 transition">Cancel</button>
+                  className="px-6 py-2 rounded-lg font-medium border text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition">Cancel</button>
               </div>
             </div>
           )}
@@ -633,23 +633,23 @@ export default function ClubPortal() {
           {(dashboard.offerings || []).length > 0 ? (
             <div className="space-y-3">
               {dashboard.offerings.map(o => (
-                <div key={o.id} className={`border rounded-xl p-5 ${o.isActive ? 'bg-white' : 'bg-gray-50 opacity-70'}`}>
+                <div key={o.id} className={`border rounded-xl p-5 ${o.isActive ? 'bg-white' : 'bg-gray-50 dark:bg-gray-900 opacity-70'}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded capitalize">
+                        <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded capitalize">
                           {o.offeringType.replace(/_/g, ' ')}
                         </span>
                         {!o.isActive && <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Inactive</span>}
                         {o.originalPricePence > o.pricePence && o.pricePence && (
-                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded flex items-center gap-1">
                             <Tag className="w-3 h-3" /> {Math.round((1 - o.pricePence / o.originalPricePence) * 100)}% off
                           </span>
                         )}
                       </div>
-                      <h3 className="font-bold text-lg">{o.title}</h3>
+                      <h3 className="font-bold text-lg text-gray-900 dark:text-white">{o.title}</h3>
                       {o.description && <p className="text-sm text-gray-600 mt-1">{o.description}</p>}
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
                         {o.pricePence != null && (
                           <span className="font-semibold text-green-700 text-lg">&pound;{(o.pricePence / 100).toFixed(2)}
                             {o.originalPricePence > o.pricePence && (
@@ -663,7 +663,7 @@ export default function ClubPortal() {
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <button onClick={() => handleToggleOffer(o)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${o.isActive ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${o.isActive ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200'}`}>
                         {o.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                       <button onClick={() => setOfferForm({
@@ -701,13 +701,13 @@ export default function ClubPortal() {
 
       {activeTab === 'sponsors' && (
         <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Sponsors</h2>
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white">Club Sponsors</h2>
           {(dashboard.sponsors || []).length > 0 ? (
             <div className="grid md:grid-cols-2 gap-4">
               {dashboard.sponsors.map(s => (
-                <div key={s.id} className="border rounded-xl p-5 flex items-start gap-4">
+                <div key={s.id} className="border dark:border-gray-700 rounded-xl p-5 flex items-start gap-4">
                   {s.logoUrl ? (
-                    <img src={s.logoUrl} alt={s.name} className="w-16 h-16 rounded-lg object-contain bg-gray-50 p-2" />
+                    <img src={s.logoUrl} alt={s.name} className="w-16 h-16 rounded-lg object-contain bg-gray-50 dark:bg-gray-900 p-2" />
                   ) : (
                     <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
                       <Megaphone className="w-6 h-6 text-gray-400" />
@@ -715,7 +715,7 @@ export default function ClubPortal() {
                   )}
                   <div className="flex-1">
                     <h3 className="font-semibold">{s.name}</h3>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded capitalize">{s.tier?.toLowerCase()} sponsor</span>
+                    <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded capitalize">{s.tier?.toLowerCase()} sponsor</span>
                     {s.description && <p className="text-sm text-gray-600 mt-2">{s.description}</p>}
                     {s.websiteUrl && <a href={s.websiteUrl} target="_blank" rel="noreferrer" className="text-green-600 text-sm hover:underline mt-1 block">Visit website →</a>}
                   </div>
@@ -734,7 +734,7 @@ export default function ClubPortal() {
 
       {activeTab === 'settings' && settingsForm && (
         <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
-          <h2 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">Club Settings</h2>
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4 text-gray-900 dark:text-white">Club Settings</h2>
           {saveMsg && (
             <div className={`mb-4 px-4 py-2 rounded text-sm ${saveMsg.includes('success') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
               {saveMsg}
@@ -744,48 +744,48 @@ export default function ClubPortal() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Club Name</label>
               <input type="text" value={settingsForm.name} onChange={e => setSettingsForm({ ...settingsForm, name: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input type="email" value={settingsForm.email} onChange={e => setSettingsForm({ ...settingsForm, email: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
               <input type="tel" value={settingsForm.phone} onChange={e => setSettingsForm({ ...settingsForm, phone: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
               <input type="url" value={settingsForm.website} onChange={e => setSettingsForm({ ...settingsForm, website: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input type="text" value={settingsForm.address} onChange={e => setSettingsForm({ ...settingsForm, address: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
               <input type="text" value={settingsForm.city} onChange={e => setSettingsForm({ ...settingsForm, city: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">County</label>
               <input type="text" value={settingsForm.county} onChange={e => setSettingsForm({ ...settingsForm, county: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Postcode</label>
               <input type="text" value={settingsForm.postcode} onChange={e => setSettingsForm({ ...settingsForm, postcode: e.target.value })}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+                className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
           </div>
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea rows="4" value={settingsForm.description} onChange={e => setSettingsForm({ ...settingsForm, description: e.target.value })}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+              className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
           </div>
           <div className="mt-6 flex gap-3">
             <button onClick={handleSaveSettings} disabled={saving}

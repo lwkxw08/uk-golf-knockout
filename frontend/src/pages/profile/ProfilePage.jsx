@@ -52,7 +52,7 @@ export default function ProfilePage() {
     }).finally(() => setLoading(false));
   }, []);
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none';
   const update = (field) => (e) => {
     setForm({ ...form, [field]: e.target.value });
     setSuccess('');
@@ -187,7 +187,7 @@ export default function ProfilePage() {
       {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1">
+      <div className="flex gap-1 mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
         {tabs.map(t => (
           <button
             key={t.id}
@@ -220,14 +220,14 @@ export default function ProfilePage() {
               </label>
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900">{form.firstName} {form.lastName}</h2>
-              <p className="text-sm text-gray-500">{user?.email}</p>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{form.firstName} {form.lastName}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
             </div>
           </div>
 
           {/* Personal info */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Personal Information</h3>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 space-y-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Personal Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -249,8 +249,8 @@ export default function ProfilePage() {
           </div>
 
           {/* Golf info */}
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Golf Details</h3>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 space-y-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Golf Details</h3>
 
             {/* WHS Handicap ID + auto-pull */}
             <div>
@@ -336,8 +336,8 @@ export default function ProfilePage() {
       {/* Security tab */}
       {tab === 'security' && (
         <form onSubmit={handleChangePassword} className="space-y-6">
-          <div className="bg-white border rounded-xl p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900">Change Password</h3>
+          <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6 space-y-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Change Password</h3>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
               <input

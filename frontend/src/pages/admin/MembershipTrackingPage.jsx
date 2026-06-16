@@ -218,8 +218,8 @@ export default function MembershipTrackingPage() {
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+          <table className="w-full text-sm text-gray-900 dark:text-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700">
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Player</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-300">Email</th>
@@ -234,7 +234,7 @@ export default function MembershipTrackingPage() {
               {memberships.map((m) => {
                 const days = daysUntil(m.currentPeriodEnd);
                 return (
-                  <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+                  <tr key={m.id} className="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-750">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
                       {m.player.firstName} {m.player.lastName}
                       {m.player.handicapIndex && <span className="ml-2 text-xs text-gray-500">({m.player.handicapIndex})</span>}

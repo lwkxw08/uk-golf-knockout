@@ -38,7 +38,7 @@ export default function HeadToHeadPage() {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">
               {player?.firstName?.[0]}{player?.lastName?.[0]}
             </div>
-            <p className="font-bold text-lg">{player?.firstName} {player?.lastName}</p>
+            <p className="font-bold text-lg text-gray-900 dark:text-white">{player?.firstName} {player?.lastName}</p>
             <p className="text-blue-200 text-sm">{player?.homeClub?.name}</p>
           </div>
 
@@ -64,7 +64,7 @@ export default function HeadToHeadPage() {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">
               {opponent?.firstName?.[0]}{opponent?.lastName?.[0]}
             </div>
-            <p className="font-bold text-lg">{opponent?.firstName} {opponent?.lastName}</p>
+            <p className="font-bold text-lg text-gray-900 dark:text-white">{opponent?.firstName} {opponent?.lastName}</p>
             <p className="text-blue-200 text-sm">{opponent?.homeClub?.name}</p>
           </div>
         </div>
@@ -73,9 +73,9 @@ export default function HeadToHeadPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Match History */}
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <h2 className="font-semibold text-gray-900">Match History</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
+          <h2 className="font-semibold text-gray-900 dark:text-white">Match History</h2>
         </div>
         <div className="divide-y">
           {matchDetails?.length > 0 ? matchDetails.map((m, i) => (
@@ -86,7 +86,7 @@ export default function HeadToHeadPage() {
                   {m.winner === 'opponent' && <Trophy className="w-5 h-5 text-red-400" />}
                   {m.winner === 'halved' && <span className="w-5 h-5 flex items-center justify-center text-gray-400 font-bold text-sm">=</span>}
                   <div>
-                    <p className="font-medium text-gray-900">{m.resultText || 'Result pending'}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{m.resultText || 'Result pending'}</p>
                     <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
                       {m.tournament && <span>{m.tournament}</span>}
                       {m.venue && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{m.venue}</span>}
@@ -94,7 +94,7 @@ export default function HeadToHeadPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${m.winner === 'player' ? 'bg-green-100 text-green-700' : m.winner === 'opponent' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${m.winner === 'player' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : m.winner === 'opponent' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-gray-100 text-gray-600'}`}>
                     {m.winner === 'player' ? 'WON' : m.winner === 'opponent' ? 'LOST' : 'HALVED'}
                   </span>
                   {m.date && (
@@ -114,10 +114,10 @@ export default function HeadToHeadPage() {
 
       {/* Hole-by-Hole Analysis */}
       {holeAnalysis?.length > 0 && (
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b bg-gray-50">
-            <h2 className="font-semibold text-gray-900">Hole-by-Hole Analysis</h2>
-            <p className="text-sm text-gray-500">Which holes does each player tend to win?</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50 dark:bg-gray-900 dark:bg-gray-700/50">
+            <h2 className="font-semibold text-gray-900 dark:text-white">Hole-by-Hole Analysis</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Which holes does each player tend to win?</p>
           </div>
           <div className="p-6">
             <div className="space-y-2">
@@ -128,7 +128,7 @@ export default function HeadToHeadPage() {
                 return (
                   <div key={h.hole} className="flex items-center gap-3">
                     <span className="text-sm font-medium text-gray-500 w-12">Hole {h.hole}</span>
-                    <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden flex">
+                    <div className="flex-1 h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex">
                       <div className="bg-green-500 transition-all flex items-center justify-center" style={{ width: `${pPct}%` }}>
                         {pPct > 15 && <span className="text-white text-xs font-bold">{h.player}</span>}
                       </div>

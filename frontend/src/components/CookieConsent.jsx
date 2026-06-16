@@ -40,7 +40,7 @@ export default function CookieConsent() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl border p-6">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border p-6">
         <div className="flex items-start gap-4">
           <Cookie className="w-8 h-8 text-green-700 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -53,11 +53,11 @@ export default function CookieConsent() {
             </p>
 
             {showPreferences && (
-              <div className="mb-4 space-y-3 bg-gray-50 rounded-lg p-4">
+              <div className="mb-4 space-y-3 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
                 <label className="flex items-center gap-3">
                   <input type="checkbox" checked disabled className="accent-green-700 w-4 h-4" />
                   <div>
-                    <span className="text-sm font-medium text-gray-900">Essential Cookies</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Essential Cookies</span>
                     <span className="text-xs text-gray-500 ml-2">(always active)</span>
                     <p className="text-xs text-gray-500">Required for login, navigation, and core functionality.</p>
                   </div>
@@ -70,7 +70,7 @@ export default function CookieConsent() {
                     className="accent-green-700 w-4 h-4"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-900">Analytics Cookies</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Analytics Cookies</span>
                     <p className="text-xs text-gray-500">Help us understand how the platform is used.</p>
                   </div>
                 </label>
@@ -82,7 +82,7 @@ export default function CookieConsent() {
                     className="accent-green-700 w-4 h-4"
                   />
                   <div>
-                    <span className="text-sm font-medium text-gray-900">Marketing Cookies</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Marketing Cookies</span>
                     <p className="text-xs text-gray-500">Used for relevant sponsor offers and promotions.</p>
                   </div>
                 </label>
@@ -119,7 +119,7 @@ export default function CookieConsent() {
               </button>
             </div>
           </div>
-          <button onClick={rejectAll} className="text-gray-400 hover:text-gray-600">
+          <button onClick={rejectAll} className="text-gray-400 hover:text-gray-600 dark:text-gray-400">
             <X className="w-5 h-5" />
           </button>
         </div>

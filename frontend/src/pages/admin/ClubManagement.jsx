@@ -70,10 +70,10 @@ export default function ClubManagement() {
       />
       <div className="max-w-6xl mx-auto px-4 py-8">
 
-      <div className="bg-white border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl overflow-hidden">
+        <table className="w-full text-sm text-gray-900 dark:text-gray-200">
           <thead>
-            <tr className="bg-gray-50 text-left text-gray-500 border-b">
+            <tr className="bg-gray-50 dark:bg-gray-900 text-left text-gray-500 border-b">
               <th className="px-4 py-3">Club</th>
               <th className="px-4 py-3">Region</th>
               <th className="px-4 py-3">Location</th>
@@ -84,18 +84,18 @@ export default function ClubManagement() {
           </thead>
           <tbody>
             {clubs.map(club => (
-              <tr key={club.id} className="border-b last:border-0 hover:bg-gray-50">
+              <tr key={club.id} className="border-b last:border-0 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700/50">
                 <td className="px-4 py-3">
-                  <p className="font-medium text-gray-900">{club.name}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{club.name}</p>
                   <p className="text-xs text-gray-400">/{club.slug}</p>
                 </td>
-                <td className="px-4 py-3 text-gray-600">{club.region?.name || '—'}</td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{club.region?.name || '—'}</td>
                 <td className="px-4 py-3 text-gray-600 text-xs">
                   {[club.city, club.county].filter(Boolean).join(', ') || '—'}
                 </td>
                 <td className="px-4 py-3">
                   {club.slopeRating ? (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                    <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
                       SR {club.slopeRating} / CR {club.courseRating} / Par {club.par}
                     </span>
                   ) : (
@@ -103,7 +103,7 @@ export default function ClubManagement() {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-0.5 rounded ${club.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded ${club.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-gray-100 text-gray-500'}`}>
                     {club.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
@@ -253,21 +253,21 @@ function ClubModal({ club, regions, onClose, onSaved }) {
     }
   };
 
-  const input = 'w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm';
+  const input = 'w-full border dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none text-sm';
   const label = 'block text-sm font-medium text-gray-700 mb-1';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold">{isEdit ? 'Edit Club' : 'Add New Club'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-400"><X className="w-5 h-5" /></button>
         </div>
 
         {error && <div className="bg-red-50 text-red-700 px-3 py-2 rounded mb-4 text-sm">{error}</div>}
 
         {/* Course Search — auto-fills fields */}
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg p-4">
           <p className="text-xs text-blue-700 mb-2 font-medium">Auto-fill from course database (optional)</p>
           <CourseSearch onSelect={handleCourseSelect} />
         </div>
@@ -335,7 +335,7 @@ function ClubModal({ club, regions, onClose, onSaved }) {
 
           {/* Tee Data Section */}
           {tees.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg p-4">
               <button
                 type="button"
                 onClick={() => setShowTees(!showTees)}
@@ -419,7 +419,7 @@ function ClubModal({ club, regions, onClose, onSaved }) {
           )}
 
           {/* Course rating data (manual override) */}
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
             <p className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <MapPin className="w-4 h-4" /> Course Data
               <span className="text-xs font-normal text-gray-400">(auto-filled from search or enter manually)</span>
@@ -452,14 +452,14 @@ function ClubModal({ club, regions, onClose, onSaved }) {
 
           <div className="flex items-center gap-3">
             <input type="checkbox" id="isActive" checked={form.isActive} onChange={update('isActive')} className="rounded" />
-            <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
+            <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">Active</label>
           </div>
 
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={saving} className="flex-1 bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-lg font-medium disabled:opacity-50 transition text-sm">
               {saving ? 'Saving...' : (isEdit ? 'Update Club' : 'Create Club')}
             </button>
-            <button type="button" onClick={onClose} className="px-6 py-2.5 border rounded-lg text-gray-600 hover:bg-gray-50 transition text-sm">Cancel</button>
+            <button type="button" onClick={onClose} className="px-6 py-2.5 border rounded-lg text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition text-sm">Cancel</button>
           </div>
         </form>
       </div>
@@ -487,7 +487,7 @@ function ScorecardTable({ holes, editable = false, onHoleChange }) {
             max="18"
             value={h.strokeIndex || ''}
             onChange={(e) => onHoleChange?.(h.holeNumber, 'strokeIndex', e.target.value ? Number(e.target.value) : null)}
-            className="w-8 text-center text-xs border rounded px-0.5 py-0.5 focus:ring-1 focus:ring-green-400 outline-none"
+            className="w-8 text-center text-xs border dark:border-gray-600 rounded px-0.5 py-0.5 focus:ring-1 focus:ring-green-400 outline-none"
             placeholder="—"
           />
         </td>
