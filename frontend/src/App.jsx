@@ -62,6 +62,7 @@ function ProtectedRoute({ children, roles }) {
 function DashboardRouter() {
   const { user } = useAuth();
   if (user?.role === 'ADMIN') return <Navigate to="/admin" replace />;
+  if (user?.role === 'CLUB_MANAGER') return <Navigate to="/club-portal" replace />;
   return <PlayerDashboard />;
 }
 
