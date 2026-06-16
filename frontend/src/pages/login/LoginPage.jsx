@@ -34,7 +34,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
           <div className="mx-auto mb-4">
-            <img src="/logo.svg" alt="UK Golf Knockout" className="h-16 w-auto mx-auto" />
+            <img src="/logo.svg" alt="Luna Golf" className="h-20 w-auto mx-auto dark:hidden" />
+            <img src="/logo-white.svg" alt="Luna Golf" className="h-20 w-auto mx-auto hidden dark:block" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Sign In</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome back to UK Golf Knockout</p>
