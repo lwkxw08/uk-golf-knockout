@@ -44,7 +44,7 @@ export default function Navbar() {
   const navBg = scrolled || menuOpen
     ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg shadow-lg border-b border-gray-200/50 dark:border-gray-700/50'
     : isHome
-      ? 'bg-transparent'
+      ? 'bg-transparent dark:bg-gray-900'
       : 'bg-green-900 dark:bg-gray-900';
 
   const textColor = scrolled || menuOpen
@@ -77,7 +77,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className={`flex items-center gap-2 font-bold text-lg ${textColor} transition`}>
-            <img src={(isHome && !scrolled) || (!scrolled && !dark) ? '/logo-white.svg' : '/logo.svg'} alt="Luna Golf" className="h-12 w-auto" />
+            <img src={!scrolled && !dark ? '/logo-white.svg' : '/logo.svg'} alt="Luna Golf" className="h-12 w-auto" />
           </Link>
 
           {/* Desktop nav */}
