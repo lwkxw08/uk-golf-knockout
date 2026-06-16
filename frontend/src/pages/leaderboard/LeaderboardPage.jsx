@@ -52,13 +52,13 @@ export default function LeaderboardPage() {
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         {!isLeague && (
           <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <button onClick={() => setTab('leaderboard')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'leaderboard' ? 'bg-green-700 text-white' : 'text-gray-600'}`}>Adjusted Scores</button>
-            <button onClick={() => setTab('rankings')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'rankings' ? 'bg-green-700 text-white' : 'text-gray-600'}`}>Rankings</button>
+            <button onClick={() => setTab('leaderboard')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'leaderboard' ? 'bg-green-700 text-white' : 'text-gray-600 dark:text-gray-300'}`}>Adjusted Scores</button>
+            <button onClick={() => setTab('rankings')} className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'rankings' ? 'bg-green-700 text-white' : 'text-gray-600 dark:text-gray-300'}`}>Rankings</button>
           </div>
         )}
 
         <select value={selectedTournament} onChange={(e) => setSelectedTournament(e.target.value)}
-          className="border dark:border-gray-700 rounded-lg px-3 py-2 text-sm">
+          className="border dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm">
           <option value="">All Tournaments</option>
           {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
@@ -93,7 +93,7 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">League Standings</span>
+          <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 px-3 py-1 rounded-full text-sm font-medium">League Standings</span>
           <span className="text-sm text-gray-500 dark:text-gray-400">{data.standings.length} players • {data.matchCount || 6} matches per player</span>
         </div>
         <Link to={`/league/${tournamentId}`} className="text-emerald-600 hover:underline text-sm font-medium">
@@ -111,7 +111,7 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
             <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">D</th>
             <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">L</th>
             <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Bonus</th>
-            <th className="text-center px-4 py-3 font-semibold text-emerald-700 bg-emerald-50">Pts</th>
+            <th className="text-center px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20">Pts</th>
             <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">+/-</th>
             <th className="text-center px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Away W</th>
           </tr></thead>
@@ -119,27 +119,27 @@ function LeagueLeaderboard({ data, loading, tournamentId }) {
             {data.standings.map((s, i) => {
               const isQualifying = s.position <= 4;
               return (
-                <tr key={s.id} className={`border-b last:border-0 ${isQualifying ? 'bg-emerald-50/50' : ''} hover:bg-gray-50`}>
+                <tr key={s.id} className={`border-b dark:border-gray-700 last:border-0 ${isQualifying ? 'bg-emerald-50/50 dark:bg-emerald-900/10' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       {isQualifying && <span className="w-1 h-5 bg-emerald-500 rounded-full" />}
                       {i === 0 ? <Trophy className="w-5 h-5 text-amber-500" /> :
                        i === 1 ? <Trophy className="w-5 h-5 text-gray-400" /> :
                        i === 2 ? <Trophy className="w-5 h-5 text-amber-700" /> :
-                       <span className={`font-bold ${isQualifying ? 'text-emerald-700' : 'text-gray-400'}`}>{s.position}</span>}
+                       <span className={`font-bold ${isQualifying ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-400'}`}>{s.position}</span>}
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-medium">{s.player?.firstName} {s.player?.lastName}</div>
-                    <div className="text-xs text-gray-500">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
+                    <div className="font-medium text-gray-900 dark:text-white">{s.player?.firstName} {s.player?.lastName}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">HI: {Number(s.player?.handicapIndex || 0).toFixed(1)}</div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{s.player?.homeClub?.name || '-'}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-xs">{s.player?.homeClub?.name || '-'}</td>
                   <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300">{s.played}</td>
                   <td className="px-4 py-3 text-center font-medium text-gray-900 dark:text-white">{s.wins}</td>
                   <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{s.draws}</td>
                   <td className="px-4 py-3 text-center text-gray-600 dark:text-gray-400">{s.losses}</td>
                   <td className="px-4 py-3 text-center text-amber-600 font-medium">{s.bonusPoints || 0}</td>
-                  <td className="px-4 py-3 text-center font-bold text-emerald-700 bg-emerald-50">{s.totalPoints}</td>
+                  <td className="px-4 py-3 text-center font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20">{s.totalPoints}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`font-medium ${s.holesDifferential > 0 ? 'text-emerald-600' : s.holesDifferential < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                       {s.holesDifferential > 0 ? '+' : ''}{s.holesDifferential}
@@ -190,7 +190,7 @@ function AdjustedLeaderboard({ data, loading }) {
         </tr></thead>
         <tbody>
           {data.leaderboard.map((s, i) => (
-            <tr key={s.id} className={`border-b last:border-0 ${i < 3 ? 'bg-green-50' : ''}`}>
+            <tr key={s.id} className={`border-b dark:border-gray-700 last:border-0 ${i < 3 ? 'bg-green-50 dark:bg-green-900/10' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
               <td className="px-4 py-3">
                 {i === 0 ? <Trophy className="w-5 h-5 text-amber-500 inline" /> :
                  i === 1 ? <Trophy className="w-5 h-5 text-gray-400 inline" /> :
@@ -199,11 +199,11 @@ function AdjustedLeaderboard({ data, loading }) {
               </td>
               <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{s.player.firstName} {s.player.lastName}</td>
               <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{s.player.homeClub?.name || s.club?.name}</td>
-              <td className="px-4 py-3">{s.grossScore}</td>
-              <td className="px-4 py-3">{Number(s.handicapAtPlay).toFixed(1)}</td>
-              <td className="px-4 py-3">{Number(s.netScore).toFixed(1)}</td>
-              <td className="px-4 py-3 font-bold text-green-700">{Number(s.adjustedScore).toFixed(1)}</td>
-              <td className="px-4 py-3"><span className="text-xs bg-gray-100 px-2 py-0.5 rounded capitalize">{(s.stage || '').replace(/_/g, ' ').toLowerCase()}</span></td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-200">{s.grossScore}</td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-200">{Number(s.handicapAtPlay).toFixed(1)}</td>
+              <td className="px-4 py-3 text-gray-900 dark:text-gray-200">{Number(s.netScore).toFixed(1)}</td>
+              <td className="px-4 py-3 font-bold text-green-700 dark:text-green-400">{Number(s.adjustedScore).toFixed(1)}</td>
+              <td className="px-4 py-3"><span className="text-xs bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded capitalize">{(s.stage || '').replace(/_/g, ' ').toLowerCase()}</span></td>
             </tr>
           ))}
         </tbody>
@@ -236,12 +236,12 @@ function RankingsTable() {
           <th className="text-left px-4 py-3">Points</th>
         </tr></thead>
         <tbody>{rankings.players.map((p, i) => (
-          <tr key={p.id} className={`border-b last:border-0 ${i < 3 ? 'bg-green-50' : ''}`}>
+          <tr key={p.id} className={`border-b dark:border-gray-700 last:border-0 ${i < 3 ? 'bg-green-50 dark:bg-green-900/10' : ''} hover:bg-gray-50 dark:hover:bg-gray-700/50`}>
             <td className="px-4 py-3 font-bold text-gray-400">{i + 1}</td>
             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{p.firstName} {p.lastName}</td>
             <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{p.homeClub?.name || '-'}</td>
-            <td className="px-4 py-3">{p.handicapIndex ? Number(p.handicapIndex).toFixed(1) : '-'}</td>
-            <td className="px-4 py-3 font-bold text-green-700">{p.rankingPoints}</td>
+            <td className="px-4 py-3 text-gray-900 dark:text-gray-200">{p.handicapIndex ? Number(p.handicapIndex).toFixed(1) : '-'}</td>
+            <td className="px-4 py-3 font-bold text-green-700 dark:text-green-400">{p.rankingPoints}</td>
           </tr>
         ))}</tbody>
       </table>
