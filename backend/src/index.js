@@ -64,6 +64,9 @@ if (config.redis.url) {
 app.set('io', io);
 app.set('logger', logger);
 
+// Behind Railway / Cloudflare / dev tunnels the client IP arrives in X-Forwarded-For
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -145,6 +148,7 @@ app.use('/api/search', require('./routes/search'));
 app.use('/api/audit-log', require('./routes/auditLog'));
 app.use('/api/social', require('./routes/social'));
 app.use('/api/news', require('./routes/news'));
+app.use('/api/stats', require('./routes/stats'));
 
 // Enhanced health check
 app.get('/api/health', async (req, res) => {

@@ -1,7 +1,7 @@
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const config = require('../config');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
 let s3Client = null;
 
@@ -28,7 +28,7 @@ async function uploadFile(file, folder = 'uploads') {
   if (!client) return null; // fallback to base64
 
   const ext = file.originalname?.split('.').pop() || 'jpg';
-  const key = `${folder}/${uuidv4()}.${ext}`;
+  const key = `${folder}/${randomUUID()}.${ext}`;
 
   await client.send(new PutObjectCommand({
     Bucket: config.r2.bucketName,
@@ -53,7 +53,7 @@ async function uploadAvatar(file, playerId) {
   }
 
   const ext = file.originalname?.split('.').pop() || 'jpg';
-  const key = `avatars/${playerId}/${uuidv4()}.${ext}`;
+  const key = `avatars/${playerId}/${randomUUID()}.${ext}`;
 
   await client.send(new PutObjectCommand({
     Bucket: config.r2.bucketName,
@@ -77,7 +77,7 @@ async function uploadGalleryPhoto(file, clubId) {
   }
 
   const ext = file.originalname?.split('.').pop() || 'jpg';
-  const key = `gallery/${clubId}/${uuidv4()}.${ext}`;
+  const key = `gallery/${clubId}/${randomUUID()}.${ext}`;
 
   await client.send(new PutObjectCommand({
     Bucket: config.r2.bucketName,
@@ -98,7 +98,7 @@ async function uploadScorecard(file, matchId) {
   if (!client) throw new Error('Storage not configured');
 
   const ext = file.originalname.split('.').pop();
-  const key = `scorecards/${matchId}/${uuidv4()}.${ext}`;
+  const key = `scorecards/${matchId}/${randomUUID()}.${ext}`;
 
   await client.send(new PutObjectCommand({
     Bucket: config.r2.bucketName,

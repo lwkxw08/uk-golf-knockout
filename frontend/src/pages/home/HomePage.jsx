@@ -10,12 +10,13 @@ import {
 function AnimatedCounter({ end, suffix = '', duration = 2000 }) {
   const [count, setCount] = useState(0);
   const ref = useRef(null);
-  const started = useRef(false);
+  const animatedFor = useRef(null);
 
   useEffect(() => {
+    if (!end) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true;
+      if (entry.isIntersecting && animatedFor.current !== end) {
+        animatedFor.current = end;
         let start = 0;
         const step = Math.ceil(end / (duration / 16));
         const timer = setInterval(() => {
@@ -51,16 +52,8 @@ export default function HomePage() {
       setTeeTimes(tt.teeTimes?.slice(0, 3) || []);
       setPosts(feed.posts?.slice(0, 4) || []);
 
-      const [playersResp, clubsResp] = await Promise.all([
-        api.get('/players?limit=1').catch(() => ({ total: 24 })),
-        api.get('/clubs').catch(() => []),
-      ]);
-      setStats({
-        players: playersResp?.total || 24,
-        clubs: Array.isArray(clubsResp) ? clubsResp.length : (clubsResp?.clubs?.length || 8),
-        matches: 156,
-        tournaments: Array.isArray(tourns) ? tourns.length : (tourns?.tournaments?.length || 4),
-      });
+      const platformStats = await api.get('/stats').catch(() => null);
+      if (platformStats) setStats(platformStats);
     } catch {}
   };
 
