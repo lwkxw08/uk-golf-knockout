@@ -1,0 +1,1341 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  CLUB_MANAGER
+  PLAYER
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  DRAW_PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum FormatType {
+  SINGLES_MATCHPLAY
+  SINGLES_STROKEPLAY
+  SINGLES_STABLEFORD
+  PAIRS_MATCHPLAY
+  PAIRS_BESTBALL
+  PAIRS_FOURSOMES
+  PAIRS_GREENSOMES
+  TEAM_MATCHPLAY
+  TEAM_STROKEPLAY
+  TEAM_STABLEFORD
+}
+
+enum ScoringSystem {
+  MATCHPLAY
+  STROKEPLAY
+  STABLEFORD
+  BEST_BALL
+}
+
+enum TournamentStage {
+  CLUB_QUALIFIER
+  REGIONAL
+  REGIONAL_LEAGUE
+  NATIONAL_FINAL
+}
+
+enum AgeCategory {
+  OPEN
+  JUNIOR
+  SENIOR
+}
+
+enum GenderCategory {
+  MEN
+  WOMEN
+  MIXED
+}
+
+enum MatchStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  RESULT_SUBMITTED
+  RESULT_CONFIRMED
+  COMPLETED
+  WALKOVER
+  DISPUTED
+}
+
+enum EntryStatus {
+  REGISTERED
+  PAYMENT_PENDING
+  ACTIVE
+  ELIMINATED
+  WITHDRAWN
+  DISQUALIFIED
+  PROMOTED
+  LEAGUE_ACTIVE
+  LEAGUE_COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+enum SponsorTier {
+  NATIONAL
+  REGIONAL
+  LOCAL
+  CLUB
+}
+
+enum FeeType {
+  ENTRY_FEE
+  LATE_ENTRY
+  PLAYER_MEMBERSHIP
+  CLUB_SUBSCRIPTION
+  SPECTATOR
+  OTHER
+}
+
+enum RevenueType {
+  ENTRY_FEE
+  SPONSORSHIP
+  ADVERTISING
+  MEMBERSHIP
+  CLUB_SUBSCRIPTION
+  OTHER
+}
+
+enum DrawStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+// ─── MODELS ─────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  role          UserRole @default(PLAYER)
+  isActive      Boolean  @default(true) @map("is_active")
+  emailVerified Boolean  @default(false) @map("email_verified")
+  emailVerifyToken  String?  @map("email_verify_token")
+  emailVerifyExpiry DateTime? @map("email_verify_expiry")
+  resetToken        String?  @map("reset_token")
+  resetTokenExpiry  DateTime? @map("reset_token_expiry")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  player       Player?
+  clubManager  ClubManager?
+  newsArticles NewsArticle[] @relation("NewsAuthor")
+
+  @@map("users")
+}
+
+model Player {
+  id              String  @id @default(uuid())
+  userId          String  @unique @map("user_id")
+  firstName       String  @map("first_name")
+  lastName        String  @map("last_name")
+  phone           String?
+  dateOfBirth     DateTime? @map("date_of_birth")
+  avatarUrl       String?   @map("avatar_url")
+  homeClubId      String?   @map("home_club_id")
+  whsHandicapId   String?   @map("whs_handicap_id")
+  handicapIndex   Decimal?  @map("handicap_index") @db.Decimal(4, 1)
+  rankingPoints   Int       @default(0) @map("ranking_points")
+  membershipType  String    @default("free") @map("membership_type")
+  membershipExpiry DateTime? @map("membership_expiry")
+  stripeCustomerId String?  @map("stripe_customer_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeClub Club?  @relation(fields: [homeClubId], references: [id])
+
+  entries            TournamentEntry[]
+  matchesAsA         Match[]           @relation("PlayerA")
+  matchesAsB         Match[]           @relation("PlayerB")
+  matchesWon         Match[]           @relation("MatchWinner")
+  resultsSubmitted   MatchResult[]     @relation("ResultSubmitter")
+  resultsConfirmed   MatchResult[]     @relation("ResultConfirmer")
+  scoreRecords       ScoreRecord[]
+  playerMemberships  PlayerMembership[]
+  holeScores         MatchHoleScore[]
+  leagueStandings    LeagueStanding[]
+  feedPosts          FeedPost[]       @relation("FeedPostAuthor")
+  feedComments       FeedComment[]
+  feedReactions      FeedReaction[]
+  matchMessages      MatchMessage[]
+  matchCheckIns      MatchCheckIn[]
+  referralsMade      Referral[]       @relation("ReferralsMade")
+  referralsReceived  Referral[]       @relation("ReferralsReceived")
+  photosUploaded     CoursePhoto[]    @relation("PhotosUploaded")
+  videosUploaded     VideoHighlight[] @relation("VideosUploaded")
+  posts              PlayerPost[]     @relation("PlayerPosts")
+  postLikes          PostLike[]       @relation("PostLikes")
+  postComments       PostComment[]    @relation("PostComments")
+  following          PlayerFollow[]   @relation("Following")
+  followers          PlayerFollow[]   @relation("Followers")
+  postedTeeTimes     OpenTeeTime[]    @relation("PostedTeeTimes")
+  teeTimeInterests   TeeTimeInterest[] @relation("TeeTimeInterests")
+  notifications      Notification[]   @relation("PlayerNotifications")
+  pushSubscriptions  PushSubscription[] @relation("PlayerPushSubscriptions")
+  notificationPreference NotificationPreference? @relation("PlayerNotificationPreference")
+  availability       PlayerAvailability[] @relation("PlayerAvailability")
+  scheduleProposals  MatchScheduleProposal[] @relation("ScheduleProposalsMade")
+  achievements       PlayerAchievement[] @relation("PlayerAchievements")
+
+  @@map("players")
+}
+
+model Club {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  courseApiId  String? @map("course_api_id")
+  courseProvider String? @map("course_provider")
+  address     String?
+  city        String?
+  county      String?
+  postcode    String?
+  regionId    String? @map("region_id")
+  phone       String?
+  email       String?
+  website     String?
+  logoUrl     String? @map("logo_url")
+  description String?
+  latitude    Decimal? @db.Decimal(10, 7)
+  longitude   Decimal? @db.Decimal(10, 7)
+  slopeRating Int?     @map("slope_rating")
+  courseRating Decimal? @map("course_rating") @db.Decimal(4, 1)
+  par         Int?
+  isActive    Boolean  @default(true) @map("is_active")
+  stripeCustomerId String? @map("stripe_customer_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  region   Region? @relation(fields: [regionId], references: [id])
+  players  Player[]
+  managers ClubManager[]
+  entries  TournamentEntry[]
+  matches  Match[]
+  sponsors Sponsor[]
+  tees     ClubTee[]
+  tournamentClubStages TournamentClubStage[]
+  courseOfferings      CourseOffering[]
+  clubSubscriptions    ClubSubscription[]
+  scoreRecords         ScoreRecord[]
+  clubSeasonPoints     ClubSeasonPoints[]
+  feedPosts            FeedPost[]         @relation("FeedPostClub")
+  matchCheckIns        MatchCheckIn[]     @relation("CheckInClub")
+  coursePhotos         CoursePhoto[]      @relation("CoursePhotos")
+  videoHighlights     VideoHighlight[]   @relation("ClubVideoHighlights")
+  openTeeTimes        OpenTeeTime[]      @relation("ClubTeeTimes")
+
+  @@map("clubs")
+}
+
+model ClubTee {
+  id            String  @id @default(uuid())
+  clubId        String  @map("club_id")
+  teeApiId      String? @map("tee_api_id")
+  teeName       String  @map("tee_name")
+  gender        String  @default("Male")
+  slopeRating   Int?    @map("slope_rating")
+  courseRating   Decimal? @map("course_rating") @db.Decimal(4, 1)
+  bogeyRating   Decimal? @map("bogey_rating") @db.Decimal(4, 1)
+  par           Int?
+  totalYards    Int?    @map("total_yards")
+  totalMeters   Int?    @map("total_meters")
+  numberOfHoles Int     @default(18) @map("number_of_holes")
+
+  club  Club          @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  holes ClubTeeHole[]
+  tournamentTees TournamentTee[]
+
+  @@unique([clubId, teeName])
+  @@map("club_tees")
+}
+
+model ClubTeeHole {
+  id          String @id @default(uuid())
+  clubTeeId   String @map("club_tee_id")
+  holeNumber  Int    @map("hole_number")
+  par         Int
+  yards       Int?
+  meters      Int?
+  strokeIndex Int?   @map("stroke_index")
+
+  clubTee ClubTee @relation(fields: [clubTeeId], references: [id], onDelete: Cascade)
+
+  @@unique([clubTeeId, holeNumber])
+  @@map("club_tee_holes")
+}
+
+model TournamentTee {
+  id           String @id @default(uuid())
+  tournamentId String @map("tournament_id")
+  clubTeeId    String @map("club_tee_id")
+  gender       String @default("Male")
+  isDefault    Boolean @default(false) @map("is_default")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  clubTee    ClubTee    @relation(fields: [clubTeeId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, clubTeeId])
+  @@map("tournament_tees")
+}
+
+model ClubManager {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  clubId    String   @map("club_id")
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@map("club_managers")
+}
+
+model Region {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  clubs      Club[]
+  sponsors   Sponsor[]
+  stageRegions TournamentStageRegion[]
+  clubSeasonPoints ClubSeasonPoints[]
+
+  @@map("regions")
+}
+
+// ─── TOURNAMENTS ────────────────────────────────────────────────────────────
+
+model Tournament {
+  id                   String           @id @default(uuid())
+  name                 String
+  slug                 String           @unique
+  season               String
+  description          String?
+  rulesText            String?          @map("rules_text")
+  status               TournamentStatus @default(DRAFT)
+  formatType           FormatType       @map("format_type")
+  scoringSystem        ScoringSystem    @map("scoring_system")
+  teamSize             Int              @default(1) @map("team_size")
+  isKnockout           Boolean          @default(true) @map("is_knockout")
+  handicapAllowancePct Int              @default(100) @map("handicap_allowance_pct")
+  maxHandicap          Decimal?         @map("max_handicap") @db.Decimal(4, 1)
+  ageCategory          AgeCategory      @default(OPEN) @map("age_category")
+  genderCategory       GenderCategory   @default(MIXED) @map("gender_category")
+  minAge               Int?             @map("min_age")
+  maxAge               Int?             @map("max_age")
+  enableLeaderboard    Boolean          @default(false) @map("enable_leaderboard")
+  stablefordConfig     Json?            @map("stableford_config")
+  registrationOpens    DateTime?        @map("registration_opens")
+  registrationDeadline DateTime?        @map("registration_deadline")
+  startDate            DateTime?        @map("start_date")
+  endDate              DateTime?        @map("end_date")
+  bannerUrl            String?          @map("banner_url")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  // League configuration (stored as JSON)
+  leagueScoringConfig Json?   @map("league_scoring_config")
+  leagueMatchCount    Int?    @map("league_match_count")
+  leagueDrawStageId   String? @map("league_draw_stage_id")
+
+  pricing    TournamentPricing[]
+  entries    TournamentEntry[]
+  stages     TournamentStage_[]
+  matches    Match[]
+  draws      Draw[]
+  sponsors   Sponsor[]
+  clubStages TournamentClubStage[]
+  prizes     Prize[]
+  scoreRecords ScoreRecord[]
+  tournamentTees TournamentTee[]
+  leagueStandings LeagueStanding[]
+  feedPosts       FeedPost[]
+  adImpressions   SponsorAdImpression[]
+
+  @@map("tournaments")
+}
+
+model TournamentStage_ {
+  id                String          @id @default(uuid())
+  tournamentId      String          @map("tournament_id")
+  stage             TournamentStage
+  stageOrder        Int             @map("stage_order")
+  name              String
+  maxParticipants   Int?            @map("max_participants")
+  totalRounds       Int             @default(1) @map("total_rounds")
+  qualifyCount      Int             @default(1) @map("qualify_count")
+  matchDeadlineDays Int?            @map("match_deadline_days")
+  feedsIntoStageId  String?         @map("feeds_into_stage_id")
+
+  // League-specific stage config
+  isLeague         Boolean @default(false) @map("is_league")
+  leagueMatchCount Int?    @map("league_match_count")
+  homeMatchCount   Int?    @map("home_match_count")
+  awayMatchCount   Int?    @map("away_match_count")
+  matchDeadlineDaysPerWeek Int? @map("match_deadline_days_per_week")
+
+  tournament   Tournament        @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  feedsInto    TournamentStage_? @relation("StageProgression", fields: [feedsIntoStageId], references: [id])
+  fedBy        TournamentStage_[] @relation("StageProgression")
+  stageRegions TournamentStageRegion[]
+  prizes       Prize[]
+  leagueStandings LeagueStanding[]
+
+  @@map("tournament_stages")
+}
+
+model TournamentStageRegion {
+  id       String @id @default(uuid())
+  stageId  String @map("stage_id")
+  regionId String @map("region_id")
+
+  stage  TournamentStage_ @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  region Region           @relation(fields: [regionId], references: [id])
+
+  @@unique([stageId, regionId])
+  @@map("tournament_stage_regions")
+}
+
+model TournamentClubStage {
+  id           String @id @default(uuid())
+  tournamentId String @map("tournament_id")
+  clubId       String @map("club_id")
+  maxEntries   Int?   @map("max_entries")
+  qualifyCount Int    @default(1) @map("qualify_count")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  club       Club       @relation(fields: [clubId], references: [id])
+
+  @@unique([tournamentId, clubId])
+  @@map("tournament_club_stages")
+}
+
+// ─── PRIZES ─────────────────────────────────────────────────────────────────
+
+model Prize {
+  id            String          @id @default(uuid())
+  tournamentId  String          @map("tournament_id")
+  stageId       String?         @map("stage_id")
+  position      Int
+  description   String
+  valuePence    Int?            @map("value_pence")
+  prizeType     String          @default("trophy") @map("prize_type")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  tournament Tournament       @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stage      TournamentStage_? @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@map("prizes")
+}
+
+// ─── PRICING (Admin-Configurable) ───────────────────────────────────────────
+
+model TournamentPricing {
+  id                String   @id @default(uuid())
+  tournamentId      String   @map("tournament_id")
+  feeType           FeeType  @map("fee_type")
+  amountPence       Int      @map("amount_pence")
+  currency          String   @default("GBP")
+  clubSharePct      Int      @map("club_share_pct")
+  platformSharePct  Int      @map("platform_share_pct")
+  description       String?
+  isActive          Boolean  @default(true) @map("is_active")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@map("tournament_pricing")
+}
+
+model PlatformPricing {
+  id            String   @id @default(uuid())
+  pricingKey    String   @unique @map("pricing_key")
+  amountPence   Int      @map("amount_pence")
+  currency      String   @default("GBP")
+  description   String?
+  effectiveFrom DateTime @map("effective_from")
+  effectiveTo   DateTime? @map("effective_to")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_pricing")
+}
+
+// ─── ENTRIES ────────────────────────────────────────────────────────────────
+
+model TournamentEntry {
+  id               String      @id @default(uuid())
+  tournamentId     String      @map("tournament_id")
+  playerId         String      @map("player_id")
+  clubId           String      @map("club_id")
+  stage            TournamentStage @default(CLUB_QUALIFIER)
+  entryFeePaidPence Int?       @map("entry_fee_paid_pence")
+  paymentStatus    PaymentStatus @default(PENDING) @map("payment_status")
+  stripePaymentId  String?     @map("stripe_payment_id")
+  handicapAtEntry  Decimal?    @map("handicap_at_entry") @db.Decimal(4, 1)
+  seed             Int?
+  status           EntryStatus @default(REGISTERED)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id])
+  club       Club       @relation(fields: [clubId], references: [id])
+
+  @@unique([tournamentId, playerId])
+  @@map("tournament_entries")
+}
+
+// ─── DRAWS (Live Scheduled) ─────────────────────────────────────────────────
+
+model Draw {
+  id            String      @id @default(uuid())
+  tournamentId  String      @map("tournament_id")
+  stage         TournamentStage
+  roundNumber   Int         @map("round_number")
+  scheduledAt   DateTime    @map("scheduled_at")
+  status        DrawStatus  @default(SCHEDULED)
+  startedAt     DateTime?   @map("started_at")
+  completedAt   DateTime?   @map("completed_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@map("draws")
+}
+
+// ─── MATCHES ────────────────────────────────────────────────────────────────
+
+model Match {
+  id            String          @id @default(uuid())
+  tournamentId  String          @map("tournament_id")
+  stage         TournamentStage
+  roundNumber   Int             @map("round_number")
+  matchNumber   Int             @map("match_number")
+  playerAId     String?         @map("player_a_id")
+  playerBId     String?         @map("player_b_id")
+  venueClubId   String?         @map("venue_club_id")
+  scheduledDate DateTime?       @map("scheduled_date")
+  status        MatchStatus     @default(PENDING)
+  winnerId      String?         @map("winner_id")
+  scorecard     Json?
+  playedAt      DateTime?       @map("played_at")
+  nextMatchId   String?         @map("next_match_id")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  // League-specific fields
+  gameWeek           Int?      @map("game_week")
+  isHomeForPlayerA   Boolean?  @map("is_home_for_player_a")
+  holesUpMargin      Int?      @map("holes_up_margin")
+  holesRemainingMargin Int?    @map("holes_remaining_margin")
+  leaguePointsA      Int?      @map("league_points_a")
+  leaguePointsB      Int?      @map("league_points_b")
+  leagueBonusDetailA Json?     @map("league_bonus_detail_a")
+  leagueBonusDetailB Json?     @map("league_bonus_detail_b")
+
+  // Stores each player's full submission: own scores + their version of opponent scores
+  // { "playerAId": { ownScores: {1:4,...}, opponentScores: {1:5,...} }, "playerBId": {...} }
+  scoreSubmissions   Json?     @map("score_submissions")
+
+  // Round deadline & match scheduling
+  roundDeadline      DateTime? @map("round_deadline")
+  matchStartedAt     DateTime? @map("match_started_at")
+  matchEndedAt       DateTime? @map("match_ended_at")
+  currentHole        Int?      @map("current_hole")
+  scheduledSlot      AvailabilitySlot? @map("scheduled_slot")
+
+  // Deadline enforcement
+  walkoverReason     String?   @map("walkover_reason")
+  walkoverAppliedAt  DateTime? @map("walkover_applied_at")
+  deadlineRemindersSent Int    @default(0) @map("deadline_reminders_sent")
+
+  // Public spectator link
+  shareToken         String?   @unique @map("share_token")
+  spectatorViews     Int       @default(0) @map("spectator_views")
+
+  tournament Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  playerA    Player?     @relation("PlayerA", fields: [playerAId], references: [id])
+  playerB    Player?     @relation("PlayerB", fields: [playerBId], references: [id])
+  venueClub  Club?       @relation(fields: [venueClubId], references: [id])
+  winner     Player?     @relation("MatchWinner", fields: [winnerId], references: [id])
+  nextMatch  Match?      @relation("MatchProgression", fields: [nextMatchId], references: [id])
+  prevMatches Match[]    @relation("MatchProgression")
+  result     MatchResult?
+  holeScores MatchHoleScore[]
+  feedPosts  FeedPost[]
+  messages   MatchMessage[]
+  checkIns   MatchCheckIn[]
+  adImpressions SponsorAdImpression[]
+  videoHighlights VideoHighlight[]
+  scheduleProposals MatchScheduleProposal[] @relation("MatchScheduleProposals")
+
+  @@map("matches")
+}
+
+model MatchResult {
+  id               String   @id @default(uuid())
+  matchId          String   @unique @map("match_id")
+  resultText       String   @map("result_text")
+  grossScore       Int?     @map("gross_score")
+  netScore         Decimal? @map("net_score") @db.Decimal(5, 1)
+  stablefordPoints Int?     @map("stableford_points")
+  scorecardUrl     String?  @map("scorecard_url")
+  submittedById    String   @map("submitted_by_id")
+  submittedAt      DateTime @default(now()) @map("submitted_at")
+  confirmedById    String?  @map("confirmed_by_id")
+  confirmedAt      DateTime? @map("confirmed_at")
+  isConfirmed      Boolean  @default(false) @map("is_confirmed")
+  disputeReason    String?  @map("dispute_reason")
+
+  match       Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  submittedBy Player @relation("ResultSubmitter", fields: [submittedById], references: [id])
+  confirmedBy Player? @relation("ResultConfirmer", fields: [confirmedById], references: [id])
+
+  @@map("match_results")
+}
+
+// ─── HOLE-BY-HOLE SCORING ───────────────────────────────────────────────────
+
+model MatchHoleScore {
+  id         String @id @default(uuid())
+  matchId    String @map("match_id")
+  playerId   String @map("player_id")
+  holeNumber Int    @map("hole_number")
+  score      Int
+  putts      Int?
+  fairwayHit Boolean? @map("fairway_hit")
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, playerId, holeNumber])
+  @@map("match_hole_scores")
+}
+
+// ─── OVERALL LEADERBOARD (Score vs Handicap) ────────────────────────────────
+
+model ScoreRecord {
+  id              String   @id @default(uuid())
+  tournamentId    String   @map("tournament_id")
+  playerId        String   @map("player_id")
+  clubId          String   @map("club_id")
+  stage           TournamentStage
+  grossScore      Int      @map("gross_score")
+  handicapAtPlay  Decimal  @map("handicap_at_play") @db.Decimal(4, 1)
+  slopeRating     Int      @map("slope_rating")
+  courseRating     Decimal  @map("course_rating") @db.Decimal(4, 1)
+  par             Int
+  netScore        Decimal  @map("net_score") @db.Decimal(5, 1)
+  adjustedScore   Decimal  @map("adjusted_score") @db.Decimal(5, 1)
+  stablefordPoints Int?    @map("stableford_points")
+  playedAt        DateTime @map("played_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id])
+  club       Club       @relation(fields: [clubId], references: [id])
+
+  @@map("score_records")
+}
+
+// ─── SPONSORS & ADVERTISING ─────────────────────────────────────────────────
+
+model Sponsor {
+  id            String      @id @default(uuid())
+  name          String
+  logoUrl       String?     @map("logo_url")
+  website       String?
+  tier          SponsorTier
+  regionId      String?     @map("region_id")
+  clubId        String?     @map("club_id")
+  tournamentId  String?     @map("tournament_id")
+  contactName   String?     @map("contact_name")
+  contactEmail  String?     @map("contact_email")
+  adImageUrl    String?     @map("ad_image_url")
+  adText        String?     @map("ad_text")
+  contractStart DateTime?   @map("contract_start")
+  contractEnd   DateTime?   @map("contract_end")
+  annualFeePence Int?       @map("annual_fee_pence")
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  region     Region?     @relation(fields: [regionId], references: [id])
+  club       Club?       @relation(fields: [clubId], references: [id])
+  tournament Tournament? @relation(fields: [tournamentId], references: [id])
+  impressions SponsorAdImpression[]
+
+  @@map("sponsors")
+}
+
+// ─── REVENUE TRACKING ───────────────────────────────────────────────────────
+
+model RevenueTransaction {
+  id                  String      @id @default(uuid())
+  type                RevenueType
+  totalAmountPence    Int         @map("total_amount_pence")
+  clubAmountPence     Int         @default(0) @map("club_amount_pence")
+  platformAmountPence Int         @default(0) @map("platform_amount_pence")
+  clubId              String?     @map("club_id")
+  tournamentId        String?     @map("tournament_id")
+  playerId            String?     @map("player_id")
+  stripePaymentId     String?     @map("stripe_payment_id")
+  status              PaymentStatus @default(PENDING)
+  description         String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+
+  @@map("revenue_transactions")
+}
+
+// ─── PLAYER MEMBERSHIP (£39/year) ───────────────────────────────────────────
+
+model PlayerMembership {
+  id                 String             @id @default(uuid())
+  playerId           String             @map("player_id")
+  tier               String             @default("standard")
+  amountPence        Int                @map("amount_pence")
+  status             SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  reminder30Sent     Boolean            @default(false) @map("reminder_30_sent")
+  reminder7Sent      Boolean            @default(false) @map("reminder_7_sent")
+  expiryNotifSent    Boolean            @default(false) @map("expiry_notif_sent")
+  renewedFromId      String?            @map("renewed_from_id")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@index([status, currentPeriodEnd])
+  @@map("player_memberships")
+}
+
+// ─── CLUB SUBSCRIPTIONS (£299-£999/year, admin-managed tiers) ───────────────
+
+model SubscriptionTier {
+  id            String  @id @default(uuid())
+  name          String  @unique
+  slug          String  @unique
+  amountPence   Int     @map("amount_pence")
+  features      Json    @default("[]")
+  isActive      Boolean @default(true) @map("is_active")
+  sortOrder     Int     @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  clubSubscriptions ClubSubscription[]
+
+  @@map("subscription_tiers")
+}
+
+model ClubSubscription {
+  id                 String             @id @default(uuid())
+  clubId             String             @map("club_id")
+  tierId             String             @map("tier_id")
+  amountPence        Int                @map("amount_pence")
+  status             SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  stripeCustomerId   String?            @map("stripe_customer_id")
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  cancelledAt        DateTime?          @map("cancelled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  club Club             @relation(fields: [clubId], references: [id])
+  tier SubscriptionTier @relation(fields: [tierId], references: [id])
+
+  @@map("club_subscriptions")
+}
+
+// ─── LEAGUE STANDINGS ────────────────────────────────────────────────────────
+
+model LeagueStanding {
+  id              String @id @default(uuid())
+  tournamentId    String @map("tournament_id")
+  stageId         String @map("stage_id")
+  playerId        String @map("player_id")
+  clubId          String @map("club_id")
+  played          Int    @default(0)
+  wins            Int    @default(0)
+  draws           Int    @default(0)
+  losses          Int    @default(0)
+  leaguePoints    Int    @default(0) @map("league_points")
+  bonusPoints     Int    @default(0) @map("bonus_points")
+  totalPoints     Int    @default(0) @map("total_points")
+  holesWon        Int    @default(0) @map("holes_won")
+  holesLost       Int    @default(0) @map("holes_lost")
+  holesDifferential Int  @default(0) @map("holes_differential")
+  awayWins        Int    @default(0) @map("away_wins")
+  homeWins        Int    @default(0) @map("home_wins")
+  matchesReached18 Int   @default(0) @map("matches_reached_18")
+  position        Int?
+  qualified       Boolean @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tournament Tournament       @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stage      TournamentStage_ @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  player     Player           @relation(fields: [playerId], references: [id])
+
+  @@unique([tournamentId, stageId, playerId])
+  @@map("league_standings")
+}
+
+// ─── CLUB POINTS CHAMPIONSHIP ───────────────────────────────────────────────
+
+model ClubSeasonPoints {
+  id              String @id @default(uuid())
+  season          String
+  clubId          String @map("club_id")
+  regionId        String? @map("region_id")
+  totalPoints     Int    @default(0) @map("total_points")
+  playerCount     Int    @default(0) @map("player_count")
+  matchesPlayed   Int    @default(0) @map("matches_played")
+  matchesWon      Int    @default(0) @map("matches_won")
+  leagueQualifiers Int   @default(0) @map("league_qualifiers")
+  nationalQualifiers Int @default(0) @map("national_qualifiers")
+  position        Int?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  club   Club    @relation(fields: [clubId], references: [id])
+  region Region? @relation(fields: [regionId], references: [id])
+
+  @@unique([season, clubId])
+  @@map("club_season_points")
+}
+
+// ─── COURSE MARKETPLACE ─────────────────────────────────────────────────────
+
+model CourseOffering {
+  id            String   @id @default(uuid())
+  clubId        String   @map("club_id")
+  offeringType  String   @map("offering_type")
+  title         String
+  description   String?
+  pricePence    Int?     @map("price_pence")
+  originalPricePence Int? @map("original_price_pence")
+  validFrom     DateTime? @map("valid_from")
+  validTo       DateTime? @map("valid_to")
+  maxRedemptions Int?    @map("max_redemptions")
+  redemptionCount Int    @default(0) @map("redemption_count")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  club Club @relation(fields: [clubId], references: [id])
+
+  @@map("course_offerings")
+}
+
+// ── Social Feed ──────────────────────────────────
+
+model FeedPost {
+  id          String   @id @default(uuid())
+  type        String   // MATCH_RESULT, PROMOTION, ANNOUNCEMENT, PLAYER_ACHIEVEMENT
+  content     String
+  authorId    String?  @map("author_id")
+  matchId     String?  @map("match_id")
+  tournamentId String? @map("tournament_id")
+  clubId      String?  @map("club_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  author      Player?  @relation("FeedPostAuthor", fields: [authorId], references: [id])
+  match       Match?   @relation(fields: [matchId], references: [id])
+  tournament  Tournament? @relation(fields: [tournamentId], references: [id])
+  club        Club?    @relation("FeedPostClub", fields: [clubId], references: [id])
+  comments    FeedComment[]
+  reactions   FeedReaction[]
+
+  @@map("feed_posts")
+}
+
+model FeedComment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post    FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player  Player   @relation(fields: [playerId], references: [id])
+
+  @@map("feed_comments")
+}
+
+model FeedReaction {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  type      String   @default("like") // like, clap, fire
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post    FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player  Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([postId, playerId, type])
+  @@map("feed_reactions")
+}
+
+// ── Match Chat ───────────────────────────────────
+
+model MatchMessage {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  senderId  String   @map("sender_id")
+  content   String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  sender  Player @relation(fields: [senderId], references: [id])
+
+  @@map("match_messages")
+}
+
+// ── QR Code Check-In ─────────────────────────────
+
+model MatchCheckIn {
+  id        String   @id @default(uuid())
+  matchId   String   @map("match_id")
+  playerId  String   @map("player_id")
+  clubId    String?  @map("club_id")
+  checkedInAt DateTime @default(now()) @map("checked_in_at")
+  latitude  Float?
+  longitude Float?
+
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player  Player @relation(fields: [playerId], references: [id])
+  club    Club?  @relation("CheckInClub", fields: [clubId], references: [id])
+
+  @@unique([matchId, playerId])
+  @@map("match_check_ins")
+}
+
+// ── Sponsor Ad Impressions ────────────────────────
+
+model SponsorAdImpression {
+  id          String   @id @default(uuid())
+  sponsorId   String   @map("sponsor_id")
+  placement   String   // match_page, scorecard, bracket, leaderboard, feed
+  matchId     String?  @map("match_id")
+  tournamentId String? @map("tournament_id")
+  viewerId    String?  @map("viewer_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  sponsor    Sponsor     @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  match      Match?      @relation(fields: [matchId], references: [id])
+  tournament Tournament? @relation(fields: [tournamentId], references: [id])
+
+  @@map("sponsor_ad_impressions")
+}
+
+// ── Referral Programme ────────────────────────────
+
+model Referral {
+  id             String    @id @default(uuid())
+  referrerPlayerId String  @map("referrer_player_id")
+  referralCode   String    @unique @map("referral_code")
+  referredEmail  String?   @map("referred_email")
+  referredPlayerId String? @map("referred_player_id")
+  status         String    @default("pending") // pending, registered, redeemed
+  discountPence  Int       @default(500) @map("discount_pence")
+  referrerCredited Boolean @default(false) @map("referrer_credited")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  redeemedAt     DateTime? @map("redeemed_at")
+
+  referrer       Player    @relation("ReferralsMade", fields: [referrerPlayerId], references: [id])
+  referredPlayer Player?   @relation("ReferralsReceived", fields: [referredPlayerId], references: [id])
+
+  @@map("referrals")
+}
+
+// ── Course Photo Gallery ──────────────────────────
+
+model CoursePhoto {
+  id          String   @id @default(uuid())
+  clubId      String   @map("club_id")
+  holeNumber  Int?     @map("hole_number")
+  caption     String?
+  imageUrl    String   @map("image_url")
+  uploadedById String? @map("uploaded_by_id")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  likes       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  club       Club    @relation("CoursePhotos", fields: [clubId], references: [id], onDelete: Cascade)
+  uploadedBy Player? @relation("PhotosUploaded", fields: [uploadedById], references: [id])
+
+  @@map("course_photos")
+}
+
+// ── Club Premium Features ─────────────────────────
+
+model VideoHighlight {
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  clubId      String?  @map("club_id")
+  title       String
+  videoUrl    String   @map("video_url")
+  thumbnailUrl String? @map("thumbnail_url")
+  durationSec Int?     @map("duration_sec")
+  uploadedById String? @map("uploaded_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  match      Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  club       Club?   @relation("ClubVideoHighlights", fields: [clubId], references: [id])
+  uploadedBy Player? @relation("VideosUploaded", fields: [uploadedById], references: [id])
+
+  @@map("video_highlights")
+}
+
+// ── System Settings (admin-configurable) ─────────────────────
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  label     String?
+  category  String   @default("general")
+  isSecret  Boolean  @default(false) @map("is_secret")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+// ── Audit Log ────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  userEmail   String?  @map("user_email")
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── NEWS ARTICLES (Blog/CMS) ────────────────────────────────────────────────
+
+model NewsArticle {
+  id          String    @id @default(uuid())
+  title       String
+  summary     String?
+  content     String    @db.Text
+  category    String    @default("Announcement")
+  published   Boolean   @default(true)
+  publishedAt DateTime? @map("published_at")
+  authorId    String?   @map("author_id")
+  author      User?     @relation("NewsAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([published])
+  @@index([createdAt])
+  @@map("news_articles")
+}
+
+// ─── PLAYER POSTS (Social Timeline) ────────────────────────────────────────
+
+model PlayerPost {
+  id          String   @id @default(uuid())
+  playerId    String   @map("player_id")
+  content     String
+  images      Json?    // Array of image URLs
+  taggedClubId    String?  @map("tagged_club_id")
+  taggedTournamentId String? @map("tagged_tournament_id")
+  likesCount  Int      @default(0) @map("likes_count")
+  commentsCount Int    @default(0) @map("comments_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  player   Player  @relation("PlayerPosts", fields: [playerId], references: [id])
+  likes    PostLike[]
+  comments PostComment[]
+
+  @@index([playerId, createdAt])
+  @@map("player_posts")
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post   PlayerPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player Player     @relation("PostLikes", fields: [playerId], references: [id])
+
+  @@unique([postId, playerId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  playerId  String   @map("player_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post   PlayerPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  player Player     @relation("PostComments", fields: [playerId], references: [id])
+
+  @@index([postId, createdAt])
+  @@map("post_comments")
+}
+
+// ─── FOLLOW SYSTEM ──────────────────────────────────────────────────────────
+
+model PlayerFollow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower  Player @relation("Following", fields: [followerId], references: [id])
+  following Player @relation("Followers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("player_follows")
+}
+
+// ─── SHARE A ROUND / OPEN TEE TIMES ────────────────────────────────────────
+
+model OpenTeeTime {
+  id            String   @id @default(uuid())
+  posterId      String   @map("poster_id")
+  clubId        String?  @map("club_id")
+  courseName    String?  @map("course_name")
+  teeTime       DateTime @map("tee_time")
+  spotsAvailable Int     @default(1) @map("spots_available")
+  greenFeePence  Int?    @map("green_fee_pence")
+  notes         String?
+  status        TeeTimeStatus @default(OPEN)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  poster    Player  @relation("PostedTeeTimes", fields: [posterId], references: [id])
+  club      Club?   @relation("ClubTeeTimes", fields: [clubId], references: [id])
+  interests TeeTimeInterest[]
+
+  @@index([status, teeTime])
+  @@index([posterId])
+  @@map("open_tee_times")
+}
+
+model TeeTimeInterest {
+  id          String   @id @default(uuid())
+  teeTimeId   String   @map("tee_time_id")
+  playerId    String   @map("player_id")
+  message     String?
+  status      InterestStatus @default(PENDING)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  teeTime OpenTeeTime @relation(fields: [teeTimeId], references: [id], onDelete: Cascade)
+  player  Player      @relation("TeeTimeInterests", fields: [playerId], references: [id])
+
+  @@unique([teeTimeId, playerId])
+  @@map("tee_time_interests")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  playerId  String           @map("player_id")
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  player Player @relation("PlayerNotifications", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player @relation("PlayerPushSubscriptions", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("push_subscriptions")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  playerId  String   @unique @map("player_id")
+  email     Boolean  @default(true)
+  push      Boolean  @default(true)
+  mutedTypes NotificationType[] @map("muted_types")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  player Player @relation("PlayerNotificationPreference", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model PlayerAvailability {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  date      DateTime @db.Date
+  slot      AvailabilitySlot
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player @relation("PlayerAvailability", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, date, slot])
+  @@index([date])
+  @@map("player_availability")
+}
+
+model MatchScheduleProposal {
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  proposedById String  @map("proposed_by_id")
+  date        DateTime
+  slot        AvailabilitySlot
+  venueClubId String?  @map("venue_club_id")
+  message     String?
+  status      ProposalStatus @default(PENDING)
+  respondedAt DateTime? @map("responded_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  match      Match  @relation("MatchScheduleProposals", fields: [matchId], references: [id], onDelete: Cascade)
+  proposedBy Player @relation("ScheduleProposalsMade", fields: [proposedById], references: [id], onDelete: Cascade)
+
+  @@index([matchId, status])
+  @@map("match_schedule_proposals")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String
+  icon        String
+  tier        AchievementTier @default(BRONZE)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  playerAchievements PlayerAchievement[]
+
+  @@map("achievements")
+}
+
+model PlayerAchievement {
+  id            String   @id @default(uuid())
+  playerId      String   @map("player_id")
+  achievementId String   @map("achievement_id")
+  matchId       String?  @map("match_id")
+  awardedAt     DateTime @default(now()) @map("awarded_at")
+
+  player      Player      @relation("PlayerAchievements", fields: [playerId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, achievementId])
+  @@index([playerId])
+  @@map("player_achievements")
+}
+
+enum NotificationType {
+  DRAW_PUBLISHED
+  DRAW_SCHEDULED
+  MATCH_PROPOSAL
+  MATCH_SCHEDULED
+  MATCH_REMINDER
+  RESULT_SUBMITTED
+  RESULT_CONFIRMED
+  RESULT_DISPUTED
+  DEADLINE_WARNING
+  WALKOVER_APPLIED
+  STAGE_PROMOTION
+  ACHIEVEMENT_UNLOCKED
+  ANNOUNCEMENT
+}
+
+enum AvailabilitySlot {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum AchievementTier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum TeeTimeStatus {
+  OPEN
+  FILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
