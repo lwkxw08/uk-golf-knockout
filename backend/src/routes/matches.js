@@ -6,6 +6,9 @@ const { authenticate } = require('../middleware/auth');
 const prisma = require('../config/prisma');
 const { uploadScorecard, getScorecardUrl } = require('../services/uploadService');
 const { sendResultConfirmation } = require('../services/emailService');
+const { notify } = require('../services/notificationService');
+const { evaluateForMatch } = require('../services/achievementService');
+const { readScorecard, isConfigured: isOcrConfigured } = require('../services/ocrService');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -131,6 +134,14 @@ router.post('/:matchId/result',
       if (opponent) {
         sendResultConfirmation(opponent.user.email, opponent.firstName, { resultText }).catch(console.error);
       }
+
+      await notify(opponentId, {
+        type: 'RESULT_SUBMITTED',
+        title: 'Result awaiting your sign-off',
+        body: `${player.firstName} ${player.lastName} submitted "${resultText}". Confirm or dispute it.`,
+        link: `/matches/${matchId}`,
+        data: { matchId, resultText },
+      });
 
       res.json(result);
     } catch (err) {
@@ -276,6 +287,16 @@ router.post('/:matchId/confirm',
         }
       }
 
+      await notify(match.result.submittedById, {
+        type: 'RESULT_CONFIRMED',
+        title: 'Result confirmed',
+        body: `${player.firstName} ${player.lastName} signed off the result — it now counts towards the standings.`,
+        link: `/matches/${matchId}`,
+        data: { matchId },
+      });
+
+      evaluateForMatch(matchId).catch((e) => console.error('Achievement error (non-fatal):', e.message));
+
       // Auto-post match result to social feed
       try {
         const winner = await prisma.player.findUnique({ where: { id: match.winnerId }, include: { homeClub: true } });
@@ -345,6 +366,15 @@ router.post('/:matchId/dispute',
         data: { status: 'DISPUTED' },
       });
 
+      const otherId = match.playerAId === player.id ? match.playerBId : match.playerAId;
+      await notify(otherId, {
+        type: 'RESULT_DISPUTED',
+        title: 'Your result was disputed',
+        body: `${player.firstName} ${player.lastName} disputed the result. An admin will review it.`,
+        link: `/matches/${matchId}`,
+        data: { matchId, reason: req.body.reason },
+      });
+
       res.json({ message: 'Dispute submitted for admin review' });
     } catch (err) {
       res.status(500).json({ error: 'Failed to submit dispute' });
@@ -370,6 +400,42 @@ router.get('/:matchId/scorecard',
       res.json({ url });
     } catch (err) {
       res.status(500).json({ error: 'Failed to get scorecard' });
+    }
+  }
+);
+
+// Scan a photographed scorecard and return scores for review — nothing is saved
+router.post('/:matchId/scorecard/scan',
+  authenticate,
+  param('matchId').isUUID(),
+  validate,
+  upload.single('scorecard'),
+  async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No scorecard image uploaded' });
+      if (!isOcrConfigured()) {
+        return res.status(503).json({
+          error: 'Scorecard scanning is not configured on this environment — enter scores manually.',
+        });
+      }
+
+      const player = await prisma.player.findUnique({ where: { userId: req.user.id }, select: { id: true } });
+      if (!player) return res.status(400).json({ error: 'Player profile required' });
+
+      const match = await prisma.match.findUnique({
+        where: { id: req.params.matchId },
+        select: { id: true, playerAId: true, playerBId: true },
+      });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+      if (match.playerAId !== player.id && match.playerBId !== player.id) {
+        return res.status(403).json({ error: 'Only participants can scan this scorecard' });
+      }
+
+      const scan = await readScorecard(req.file.buffer, req.file.mimetype);
+      res.json({ ...scan, playerAId: match.playerAId, playerBId: match.playerBId });
+    } catch (err) {
+      console.error('Scorecard scan error:', err);
+      res.status(502).json({ error: 'Could not read the scorecard — try a clearer photo or enter scores manually' });
     }
   }
 );
@@ -408,6 +474,15 @@ router.post('/:matchId/schedule',
           playerB: { select: { id: true, firstName: true, lastName: true } },
           venueClub: { select: { id: true, name: true } },
         },
+      });
+
+      const opponentId = match.playerAId === player.id ? match.playerBId : match.playerAId;
+      await notify(opponentId, {
+        type: 'MATCH_SCHEDULED',
+        title: 'Match scheduled',
+        body: `${player.firstName} ${player.lastName} set your match for ${new Date(scheduledDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long' })}${updated.venueClub ? ` at ${updated.venueClub.name}` : ''}.`,
+        link: `/matches/${matchId}`,
+        data: { matchId, scheduledDate },
       });
 
       res.json(updated);

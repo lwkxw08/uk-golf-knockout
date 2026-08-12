@@ -10,6 +10,8 @@ const { validateEnv } = require('./config/validateEnv');
 const { startDrawScheduler } = require('./services/drawScheduler');
 const { startNotificationScheduler } = require('./services/notificationScheduler');
 const { startMembershipScheduler } = require('./services/membershipScheduler');
+const { startDeadlineScheduler } = require('./services/deadlineScheduler');
+const notificationService = require('./services/notificationService');
 
 // Validate environment variables
 const envStatus = validateEnv();
@@ -149,6 +151,10 @@ app.use('/api/audit-log', require('./routes/auditLog'));
 app.use('/api/social', require('./routes/social'));
 app.use('/api/news', require('./routes/news'));
 app.use('/api/stats', require('./routes/stats'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/availability', require('./routes/availability'));
+app.use('/api/achievements', require('./routes/achievements'));
+app.use('/api/spectate', require('./routes/spectate'));
 
 // Enhanced health check
 app.get('/api/health', async (req, res) => {
@@ -179,6 +185,19 @@ app.get('/api/health', async (req, res) => {
 // Socket.io connections
 io.on('connection', (socket) => {
   logger.debug({ socketId: socket.id }, 'Client connected');
+
+  // Authenticated clients join a private room so notifications arrive live
+  socket.on('player:join', async (token) => {
+    try {
+      const jwt = require('jsonwebtoken');
+      const prisma = require('./config/prisma');
+      const decoded = jwt.verify(token, config.jwtSecret);
+      const player = await prisma.player.findUnique({ where: { userId: decoded.id }, select: { id: true } });
+      if (player) socket.join(notificationService.playerRoom(player.id));
+    } catch {
+      logger.debug({ socketId: socket.id }, 'player:join rejected');
+    }
+  });
 
   socket.on('draw:join', (tournamentId) => {
     socket.join(`draw-${tournamentId}`);
@@ -229,7 +248,11 @@ process.on('SIGTERM', () => {
 server.listen(config.port, () => {
   logger.info({ port: config.port }, 'Server running');
   logger.info({ ...envStatus }, 'Service status');
+  notificationService.setIo(io);
+  require('./services/achievementService').syncDefinitions()
+    .catch(err => logger.warn({ err: err.message }, 'Achievement sync failed'));
   startDrawScheduler(io);
+  startDeadlineScheduler(io);
   startNotificationScheduler();
   startMembershipScheduler();
 });

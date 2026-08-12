@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import KnockoutBracket from '../../components/bracket/KnockoutBracket';
 import { Trophy, Calendar, Users, MapPin, Award, Eye, Clock, RefreshCw, Play, Shuffle, FileText, CalendarPlus, Camera, Pencil } from 'lucide-react';
 import SponsorBanner from '../../components/sponsors/SponsorBanner';
+import RouteToFinal from '../../components/tournament/RouteToFinal';
 
 export default function TournamentDetailPage() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function TournamentDetailPage() {
   const [leagueFixtureWeek, setLeagueFixtureWeek] = useState(1);
   const [weekDeadlines, setWeekDeadlines] = useState({});
   const [settingDeadline, setSettingDeadline] = useState(null);
+  const [myPlayerId, setMyPlayerId] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -40,6 +42,16 @@ export default function TournamentDetailPage() {
       if (t.stages?.[0]) setActiveStage(t.stages[0].stage);
     }).catch(console.error).finally(() => setLoading(false));
   }, [id]);
+
+  // Route to the final is only meaningful for a player who has entered
+  useEffect(() => {
+    if (!user || user.role === 'ADMIN') return undefined;
+    let active = true;
+    api.get('/players/me')
+      .then(p => { if (active) setMyPlayerId(p?.entries?.some(e => e.tournamentId === id) ? p.id : null); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [user, id]);
 
   const isLeague = tournament?.stages?.some(s => s.isLeague);
 
@@ -237,6 +249,14 @@ export default function TournamentDetailPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Your route to the final — only for players who have entered */}
+          {myPlayerId && (
+            <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-6">
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white mb-4">Your route to the final</h2>
+              <RouteToFinal tournamentId={id} playerId={myPlayerId} />
             </div>
           )}
 

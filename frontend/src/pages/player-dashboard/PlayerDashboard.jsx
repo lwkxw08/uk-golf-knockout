@@ -2,8 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun, Gift, CalendarPlus, ExternalLink } from 'lucide-react';
+import { Trophy, Calendar, User, Upload, CheckCircle, XCircle, AlertTriangle, ClipboardList, Play, Radio, BarChart3, Swords, Clock, MessageCircle, QrCode, CloudSun, Gift, CalendarPlus, ExternalLink, CalendarClock, Award, Flag } from 'lucide-react';
 import DigitalScorecard from '../../components/scoring/DigitalScorecard';
+import MatchScheduler from '../../components/scheduling/MatchScheduler';
+import AchievementsGrid from '../../components/achievements/AchievementsGrid';
+import RouteToFinal from '../../components/tournament/RouteToFinal';
 
 const WMO_CODES = {
   0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
@@ -85,6 +88,13 @@ export default function PlayerDashboard() {
     m.status === 'RESULT_SUBMITTED' && m.result && m.result.submittedById !== player.id
   );
   const completedMatches = matches.filter(m => ['COMPLETED', 'RESULT_CONFIRMED'].includes(m.status));
+  // Fixtures with a known opponent but no agreed date yet
+  const toArrange = matches.filter(m =>
+    m.status === 'PENDING' && m.playerA && m.playerB && !m.scheduledDate
+  );
+  const activeEntries = (player.entries || []).filter(e =>
+    e.tournament && !['COMPLETED', 'CANCELLED', 'DRAFT'].includes(e.tournament.status)
+  );
 
   const startGame = async (matchId) => {
     try {
@@ -177,15 +187,68 @@ export default function PlayerDashboard() {
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3 mb-8">
-        <a href="/api/calendar/my-matches" download
+        <button onClick={() => api.download('/calendar/my-matches', 'my-golf-matches.ics').catch(err => alert(err.message))}
           className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
           <CalendarPlus className="w-4 h-4" /> Export Calendar (.ics)
-        </a>
+        </button>
         <Link to="/referral"
           className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
           <Gift className="w-4 h-4" /> Refer a Friend — Get £5 Off
         </Link>
+        <Link to="/availability"
+          className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          <CalendarClock className="w-4 h-4" /> My Availability &amp; Fixtures
+        </Link>
+        <Link to="/achievements"
+          className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 hover:border-green-300 hover:text-green-700 transition">
+          <Award className="w-4 h-4" /> Achievements
+        </Link>
       </div>
+
+      {/* Fixtures still to arrange */}
+      {toArrange.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
+              <CalendarClock className="w-5 h-5 text-green-700 dark:text-green-400" /> Arrange your next match
+            </h2>
+            <Link to="/availability" className="text-sm text-green-700 dark:text-green-400 hover:underline">Set availability</Link>
+          </div>
+          <div className="space-y-4">
+            {toArrange.slice(0, 3).map(match => (
+              <MatchScheduler key={match.id} match={match} onScheduled={() => api.get('/players/me/matches').then(setMatches).catch(console.error)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements */}
+      <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
+            <Award className="w-5 h-5 text-yellow-500" /> Badges
+          </h2>
+          <Link to="/achievements" className="text-sm text-green-700 dark:text-green-400 hover:underline">See all</Link>
+        </div>
+        <AchievementsGrid />
+      </div>
+
+      {/* Route to the final, per tournament entered */}
+      {activeEntries.length > 0 && (
+        <div className="space-y-6 mb-8">
+          {activeEntries.map(entry => (
+            <div key={entry.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-lg flex items-center gap-2 text-gray-900 dark:text-white">
+                  <Flag className="w-5 h-5 text-green-700 dark:text-green-400" /> Route to the final — {entry.tournament.name}
+                </h2>
+                <Link to={`/tournaments/${entry.tournament.id}`} className="text-sm text-green-700 dark:text-green-400 hover:underline">Tournament</Link>
+              </div>
+              <RouteToFinal tournamentId={entry.tournament.id} playerId={player.id} />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* In Progress Matches */}
       {inProgressMatches.length > 0 && (

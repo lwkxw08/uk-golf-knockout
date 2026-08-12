@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
-import { TrendingUp, Target, Award, BarChart3, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { TrendingUp, Target, Award, BarChart3, ArrowUp, ArrowDown, Flame, Home, Plane, Swords } from 'lucide-react';
+import AchievementsGrid from '../../components/achievements/AchievementsGrid';
 
 export default function PlayerStatsPage() {
   const { playerId } = useParams();
@@ -12,7 +13,6 @@ export default function PlayerStatsPage() {
   const [tab, setTab] = useState('overview');
 
   useEffect(() => {
-    const id = playerId || 'resolve';
     // If no playerId param, get current user's player ID
     if (!playerId && user) {
       api.get('/players/me').then(p => {
@@ -28,7 +28,8 @@ export default function PlayerStatsPage() {
   if (!data) return <div className="text-center py-12 text-gray-500">No stats available</div>;
 
   const { player, summary, matchHistory, holeAverages, bestHoles, worstHoles, handicapTrend } = data;
-  const tabs = ['overview', 'matches', 'holes', 'trends'];
+  const tabs = ['overview', 'matches', 'holes', 'trends', 'badges'];
+  const isOwnPage = !playerId;
 
   return (
     <div>
@@ -65,6 +66,58 @@ export default function PlayerStatsPage() {
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
+      </div>
+
+      {/* Form and streak */}
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Recent form</p>
+          {summary.form?.length > 0 ? (
+            <div className="flex gap-1.5">
+              {summary.form.map((r, i) => (
+                <span key={i} title={r}
+                  className={`w-7 h-7 rounded-md text-xs font-bold flex items-center justify-center text-white ${r === 'WIN' ? 'bg-green-600' : r === 'LOSS' ? 'bg-red-500' : 'bg-gray-400'}`}>
+                  {r[0]}
+                </span>
+              ))}
+            </div>
+          ) : <p className="text-sm text-gray-400">No completed matches yet</p>}
+          {summary.currentStreak > 1 && (
+            <p className="text-xs text-gray-500 mt-2 inline-flex items-center gap-1">
+              <Flame className={`w-3.5 h-3.5 ${summary.streakType === 'WIN' ? 'text-orange-500' : 'text-gray-400'}`} />
+              {summary.currentStreak} {summary.streakType?.toLowerCase()} streak
+              {summary.longestWinStreak > 1 ? ` · best run ${summary.longestWinStreak}` : ''}
+            </p>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Home vs away</p>
+          <div className="space-y-1.5 text-sm">
+            <p className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><Home className="w-3.5 h-3.5" /> Home</span>
+              <span className="font-semibold">{summary.homeWins}/{summary.homePlayed} {summary.homeWinRate != null ? `· ${summary.homeWinRate}%` : ''}</span>
+            </p>
+            <p className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><Plane className="w-3.5 h-3.5" /> Away</span>
+              <span className="font-semibold">{summary.awayWins}/{summary.awayPlayed} {summary.awayWinRate != null ? `· ${summary.awayWinRate}%` : ''}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Matchplay edge</p>
+          <div className="space-y-1.5 text-sm">
+            <p className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-300">Biggest win</span>
+              <span className="font-semibold">{summary.biggestWinMargin ? `${summary.biggestWinMargin} up` : '–'}</span>
+            </p>
+            <p className="flex items-center justify-between">
+              <span className="text-gray-600 dark:text-gray-300">Went to the 18th</span>
+              <span className="font-semibold">{summary.reached18} time{summary.reached18 === 1 ? '' : 's'}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -143,6 +196,17 @@ export default function PlayerStatsPage() {
                       {m.result}
                     </span>
                     <span className="font-medium text-gray-900 dark:text-white">vs {m.opponent?.firstName} {m.opponent?.lastName}</span>
+                    {m.wasHome != null && (
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${m.wasHome ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+                        {m.wasHome ? 'HOME' : 'AWAY'}
+                      </span>
+                    )}
+                    {m.opponent?.id && player?.id && (
+                      <Link to={`/players/${player.id}/head-to-head/${m.opponent.id}`}
+                        className="text-xs text-green-700 dark:text-green-400 hover:underline inline-flex items-center gap-1">
+                        <Swords className="w-3 h-3" /> H2H
+                      </Link>
+                    )}
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
                     {m.tournament} {m.venue ? `• ${m.venue}` : ''}
@@ -189,6 +253,13 @@ export default function PlayerStatsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {tab === 'badges' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-6">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Achievements</h3>
+          <AchievementsGrid playerId={isOwnPage ? undefined : playerId} />
         </div>
       )}
 

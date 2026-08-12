@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { notify } = require('./notificationService');
 
 function shuffle(array) {
   const arr = [...array];
@@ -187,6 +188,20 @@ async function generateKnockoutDraw(tournamentId, stage, entries, io, options = 
       });
       // Stagger for dramatic effect
       await new Promise(r => setTimeout(r, 1500));
+    }
+
+    // Tell both players who they drew
+    for (const [me, them] of [[updated.playerA, updated.playerB], [updated.playerB, updated.playerA]]) {
+      if (!me) continue;
+      await notify(me.id, {
+        type: 'DRAW_PUBLISHED',
+        title: them ? 'You have been drawn' : 'You have a bye',
+        body: them
+          ? `Round ${updated.roundNumber}: you play ${them.firstName} ${them.lastName}. Set a date with them now.`
+          : `Round ${updated.roundNumber}: you receive a bye and progress automatically.`,
+        link: `/matches/${updated.id}`,
+        data: { matchId: updated.id, tournamentId, stage },
+      });
     }
 
     // Auto-advance byes to next round

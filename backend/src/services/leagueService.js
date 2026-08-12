@@ -373,6 +373,21 @@ function assignHomeAway(pA, pB, homePlayed, awayPlayed, homeCount, awayCount) {
 function calculateLeaguePoints(match, config = DEFAULT_LEAGUE_SCORING) {
   const { winnerId, playerAId, playerBId, isHomeForPlayerA, holesUpMargin, holesRemainingMargin } = match;
 
+  // Walkovers score base points only — no margin, 18th-hole or away-win bonuses
+  if (match.status === 'WALKOVER') {
+    if (!winnerId) {
+      return {
+        playerA: { points: 0, bonus: 0, detail: { base: 'Void (both players failed to play)' } },
+        playerB: { points: 0, bonus: 0, detail: { base: 'Void (both players failed to play)' } },
+      };
+    }
+    const aWonWalkover = winnerId === playerAId;
+    return {
+      playerA: { points: aWonWalkover ? config.win : config.loss, bonus: 0, detail: { base: aWonWalkover ? 'Win (walkover)' : 'Loss (walkover)' } },
+      playerB: { points: aWonWalkover ? config.loss : config.win, bonus: 0, detail: { base: aWonWalkover ? 'Loss (walkover)' : 'Win (walkover)' } },
+    };
+  }
+
   const aIsHome = isHomeForPlayerA;
   const bIsHome = !isHomeForPlayerA;
 
@@ -460,7 +475,7 @@ function calculateLeaguePoints(match, config = DEFAULT_LEAGUE_SCORING) {
  */
 function calculateHolesDifferential(match) {
   const { winnerId, playerAId, playerBId, holesUpMargin } = match;
-  if (!winnerId) return { playerA: 0, playerB: 0 };
+  if (!winnerId || match.status === 'WALKOVER') return { playerA: 0, playerB: 0 };
 
   const margin = holesUpMargin || 1;
   const aWon = winnerId === playerAId;
@@ -485,7 +500,7 @@ async function recalculateStandings(tournamentId, stageId, config = DEFAULT_LEAG
     where: {
       tournamentId,
       stage: 'REGIONAL_LEAGUE',
-      status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] },
+      status: { in: ['COMPLETED', 'RESULT_CONFIRMED', 'WALKOVER'] },
       gameWeek: { not: null },
     },
     include: {

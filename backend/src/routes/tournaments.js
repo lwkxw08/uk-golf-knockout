@@ -375,4 +375,113 @@ router.post('/:id/pricing',
   }
 );
 
+// Route to the final — a player's path across every stage of a tournament
+router.get('/:id/route/:playerId',
+  param('id').isUUID(),
+  param('playerId').isUUID(),
+  validate,
+  async (req, res) => {
+    try {
+      const { id: tournamentId, playerId } = req.params;
+
+      const [tournament, entries, matches] = await Promise.all([
+        prisma.tournament.findUnique({
+          where: { id: tournamentId },
+          include: { stages: { orderBy: { stageOrder: 'asc' } } },
+        }),
+        prisma.tournamentEntry.findMany({ where: { tournamentId, playerId } }),
+        prisma.match.findMany({
+          where: {
+            tournamentId,
+            OR: [{ playerAId: playerId }, { playerBId: playerId }],
+          },
+          include: {
+            playerA: { select: { id: true, firstName: true, lastName: true, homeClub: { select: { name: true } } } },
+            playerB: { select: { id: true, firstName: true, lastName: true, homeClub: { select: { name: true } } } },
+            result: { select: { resultText: true } },
+            venueClub: { select: { id: true, name: true } },
+          },
+          orderBy: [{ roundNumber: 'asc' }, { gameWeek: 'asc' }],
+        }),
+      ]);
+
+      if (!tournament) return res.status(404).json({ error: 'Tournament not found' });
+
+      const entryByStage = new Map(entries.map(e => [e.stage, e]));
+
+      const standings = await prisma.leagueStanding.findMany({
+        where: { tournamentId, playerId },
+        include: { stage: { select: { id: true, qualifyCount: true } } },
+      });
+      const standingByStageId = new Map(standings.map(s => [s.stageId, s]));
+
+      const route = tournament.stages.map((stage) => {
+        const stageMatches = matches
+          .filter(m => m.stage === stage.stage)
+          .map((m) => {
+            const isPlayerA = m.playerAId === playerId;
+            const opponent = isPlayerA ? m.playerB : m.playerA;
+            return {
+              matchId: m.id,
+              roundNumber: m.roundNumber,
+              gameWeek: m.gameWeek,
+              opponent,
+              isHome: isPlayerA ? m.isHomeForPlayerA : !m.isHomeForPlayerA,
+              venue: m.venueClub,
+              scheduledDate: m.scheduledDate,
+              roundDeadline: m.roundDeadline,
+              status: m.status,
+              resultText: m.result?.resultText || null,
+              outcome: m.status === 'COMPLETED' || m.status === 'WALKOVER'
+                ? (m.winnerId === playerId ? 'WIN' : (m.winnerId ? 'LOSS' : 'HALVED'))
+                : null,
+              walkoverReason: m.walkoverReason || null,
+            };
+          });
+
+        const entry = entryByStage.get(stage.stage);
+        const standing = standingByStageId.get(stage.id);
+
+        let status = 'NOT_REACHED';
+        if (entry) {
+          if (entry.status === 'ELIMINATED') status = 'ELIMINATED';
+          else if (stageMatches.some(m => ['PENDING', 'SCHEDULED', 'IN_PROGRESS', 'RESULT_SUBMITTED', 'DISPUTED'].includes(m.status))) status = 'IN_PROGRESS';
+          else if (stageMatches.length > 0 && stageMatches.every(m => m.outcome)) status = 'COMPLETE';
+          else status = 'ENTERED';
+        }
+
+        return {
+          stageId: stage.id,
+          stage: stage.stage,
+          name: stage.name,
+          stageOrder: stage.stageOrder,
+          isLeague: stage.isLeague,
+          totalRounds: stage.totalRounds,
+          qualifyCount: stage.qualifyCount,
+          status,
+          entryStatus: entry?.status || null,
+          matches: stageMatches,
+          leaguePosition: standing?.position || null,
+          leaguePoints: standing?.totalPoints ?? null,
+          qualified: standing?.qualified ?? null,
+          matchesPlayed: stageMatches.filter(m => m.outcome).length,
+          matchesRemaining: stageMatches.filter(m => !m.outcome).length,
+        };
+      });
+
+      const currentStage = route.find(s => s.status === 'IN_PROGRESS' || s.status === 'ENTERED') || null;
+
+      res.json({
+        tournament: { id: tournament.id, name: tournament.name, formatType: tournament.formatType },
+        route,
+        currentStage: currentStage?.stage || null,
+        eliminated: route.some(s => s.status === 'ELIMINATED'),
+      });
+    } catch (err) {
+      console.error('Route to final error:', err);
+      res.status(500).json({ error: 'Failed to build route to the final' });
+    }
+  }
+);
+
 module.exports = router;

@@ -26,6 +26,16 @@ module.exports = {
   sentry: {
     dsn: process.env.SENTRY_DSN,
   },
+  push: {
+    publicKey: process.env.VAPID_PUBLIC_KEY,
+    privateKey: process.env.VAPID_PRIVATE_KEY,
+    subject: process.env.VAPID_SUBJECT || 'mailto:support@lunagolf.co.uk',
+  },
+  ocr: {
+    provider: process.env.OCR_PROVIDER || 'openai',
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OCR_MODEL || 'gpt-4o-mini',
+  },
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   courseDataProvider: process.env.COURSE_DATA_PROVIDER || 'golfcourseapi',
   golfCourseApiKey: process.env.GOLF_COURSE_API_KEY,

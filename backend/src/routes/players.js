@@ -231,7 +231,7 @@ router.get('/:playerId/stats',
       const matches = await prisma.match.findMany({
         where: {
           OR: [{ playerAId: playerId }, { playerBId: playerId }],
-          status: { in: ['COMPLETED', 'RESULT_CONFIRMED'] },
+          status: { in: ['COMPLETED', 'RESULT_CONFIRMED', 'WALKOVER'] },
         },
         include: {
           playerA: { select: { id: true, firstName: true, lastName: true } },
@@ -251,6 +251,8 @@ router.get('/:playerId/stats',
 
       // Calculate stats
       let wins = 0, losses = 0, draws = 0;
+      let homeWins = 0, homePlayed = 0, awayWins = 0, awayPlayed = 0;
+      let reached18 = 0, biggestWinMargin = 0;
       const matchHistory = [];
 
       for (const m of matches) {
@@ -263,6 +265,13 @@ router.get('/:playerId/stats',
         else if (halved) draws++;
         else losses++;
 
+        const wasHome = isPlayerA ? m.isHomeForPlayerA : !m.isHomeForPlayerA;
+        if (wasHome) { homePlayed++; if (won) homeWins++; }
+        else { awayPlayed++; if (won) awayWins++; }
+
+        if (halved || m.holesRemainingMargin === 0) reached18++;
+        if (won && (m.holesUpMargin || 0) > biggestWinMargin) biggestWinMargin = m.holesUpMargin;
+
         matchHistory.push({
           matchId: m.id,
           opponent,
@@ -272,7 +281,27 @@ router.get('/:playerId/stats',
           date: m.playedAt,
           venue: m.venueClub?.name,
           leaguePointsEarned: isPlayerA ? m.leaguePointsA : m.leaguePointsB,
+          wasHome,
+          stage: m.stage,
+          gameWeek: m.gameWeek,
         });
+      }
+
+      // Form is most-recent-first; streak counts identical leading results
+      const form = matchHistory.slice(0, 5).map(h => h.result);
+      let currentStreak = 0;
+      let streakType = null;
+      for (const h of matchHistory) {
+        if (streakType === null) { streakType = h.result; currentStreak = 1; continue; }
+        if (h.result !== streakType) break;
+        currentStreak++;
+      }
+
+      let longestWinStreak = 0;
+      let running = 0;
+      for (const h of [...matchHistory].reverse()) {
+        running = h.result === 'WIN' ? running + 1 : 0;
+        if (running > longestWinStreak) longestWinStreak = running;
       }
 
       // Hole-by-hole analytics
@@ -325,6 +354,18 @@ router.get('/:playerId/stats',
           fairwayPct: fairwaysTotal > 0 ? ((fairwaysHit / fairwaysTotal) * 100).toFixed(1) : null,
           avgScore: uniqueRounds > 0 ? (totalScore / (uniqueRounds * 18) * 18).toFixed(1) : null,
           avgStableford: scoreRecords.length > 0 ? (scoreRecords.reduce((a, r) => a + (r.stablefordPoints || 0), 0) / scoreRecords.length).toFixed(1) : null,
+          homePlayed,
+          homeWins,
+          homeWinRate: homePlayed > 0 ? ((homeWins / homePlayed) * 100).toFixed(1) : null,
+          awayPlayed,
+          awayWins,
+          awayWinRate: awayPlayed > 0 ? ((awayWins / awayPlayed) * 100).toFixed(1) : null,
+          reached18,
+          biggestWinMargin,
+          form,
+          currentStreak,
+          streakType,
+          longestWinStreak,
         },
         matchHistory,
         holeAverages,

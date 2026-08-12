@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { api } from '../../api/client';
-import { Upload, Check, AlertTriangle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { saveDraft, loadDraft, clearDraft, queueSubmission, isQueued, flushQueue } from '../../lib/offlineScores';
+import { Upload, Check, AlertTriangle, X, ChevronLeft, ChevronRight, WifiOff, CloudOff, ScanLine } from 'lucide-react';
 
 // ── Utility functions ──────────────────────────────────────────────────────
 
@@ -192,6 +193,14 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
   const [mode, setMode] = useState('entry'); // entry | comparison | dispute
   const [disputeReason, setDisputeReason] = useState('');
   const [showUploadFallback, setShowUploadFallback] = useState(false);
+  const [offline, setOffline] = useState(!navigator.onLine);
+  const [pendingSync, setPendingSync] = useState(() => isQueued(match.id));
+  const [draftSavedAt, setDraftSavedAt] = useState(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const [ocrError, setOcrError] = useState('');
+  // Which scorecard column belongs to which player
+  const [ocrAssign, setOcrAssign] = useState({ playerA: match.playerAId, playerB: match.playerBId });
 
   // Current hole being viewed (1-18)
   const [currentHole, setCurrentHole] = useState(1);
@@ -202,6 +211,29 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
   useEffect(() => {
     loadScoreData();
+  }, [match.id]);
+
+  // Offline scoring: keep a local draft and replay submissions when the signal returns
+  useEffect(() => {
+    const goOnline = async () => {
+      setOffline(false);
+      if (!isQueued(match.id)) return;
+      const { synced } = await flushQueue();
+      if (synced.includes(match.id)) {
+        setPendingSync(false);
+        loadScoreData();
+      }
+    };
+    const goOffline = () => setOffline(true);
+
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    if (navigator.onLine) goOnline();
+
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
   }, [match.id]);
 
   async function loadScoreData() {
@@ -220,11 +252,25 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
         if (h.playerA && playerAId) existing[playerAId][h.holeNumber] = h.playerA.gross;
         if (h.playerB && playerBId) existing[playerBId][h.holeNumber] = h.playerB.gross;
       });
+      // A local draft holds anything entered while offline, so it wins per hole
+      const draft = loadDraft(match.id);
+      if (draft?.scores) {
+        for (const [pid, holeScores] of Object.entries(draft.scores)) {
+          existing[pid] = { ...(existing[pid] || {}), ...holeScores };
+        }
+        setDraftSavedAt(new Date(draft.savedAt));
+      }
       setAllScores(existing);
 
       const mySubmitted = isA ? data.playerA?.submitted : data.playerB?.submitted;
       if (mySubmitted && data.bothSubmitted) setMode('comparison');
     } catch (err) {
+      // Offline or server down: fall back to whatever is on this device
+      const draft = loadDraft(match.id);
+      if (draft?.scores) {
+        setAllScores(draft.scores);
+        setDraftSavedAt(new Date(draft.savedAt));
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -324,10 +370,14 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
   const showPickUp = true; // Always show pick-up for matchplay/stableford
 
   function setPlayerScore(playerId, holeNum, score) {
-    setAllScores(prev => ({
-      ...prev,
-      [playerId]: { ...(prev[playerId] || {}), [holeNum]: score },
-    }));
+    setAllScores(prev => {
+      const next = {
+        ...prev,
+        [playerId]: { ...(prev[playerId] || {}), [holeNum]: score },
+      };
+      if (saveDraft(match.id, next)) setDraftSavedAt(new Date());
+      return next;
+    });
   }
 
   function handleScoreSelect(score) {
@@ -386,17 +436,73 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
       if (opponentScores) payload.opponentScores = opponentScores;
 
       const alreadySubmitted = isPlayerA ? scoreData?.playerA?.submitted : scoreData?.playerB?.submitted;
-      if (alreadySubmitted) {
-        await api.put(`/scoring/${match.id}/scores`, payload);
-      } else {
-        await api.post(`/scoring/${match.id}/scores`, payload);
+      const method = alreadySubmitted ? 'PUT' : 'POST';
+
+      if (!navigator.onLine) {
+        queueSubmission({ matchId: match.id, method, payload });
+        setPendingSync(true);
+        return;
       }
+
+      try {
+        if (method === 'PUT') await api.put(`/scoring/${match.id}/scores`, payload);
+        else await api.post(`/scoring/${match.id}/scores`, payload);
+      } catch (err) {
+        if (err.message === 'Network error') {
+          queueSubmission({ matchId: match.id, method, payload });
+          setPendingSync(true);
+          return;
+        }
+        throw err;
+      }
+
+      clearDraft(match.id);
+      setPendingSync(false);
       await loadScoreData();
     } catch (err) {
       setError(err.message);
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Scorecard OCR — the transcription is always reviewed before it is used
+  async function handleScanScorecard(file) {
+    if (!file) return;
+    setOcrBusy(true);
+    setOcrError('');
+    setOcrResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('scorecard', file);
+      const result = await api.upload(`/matches/${match.id}/scorecard/scan`, formData);
+      setOcrResult(result);
+      setOcrAssign({ playerA: match.playerAId, playerB: match.playerBId });
+    } catch (err) {
+      setOcrError(err.message);
+    } finally {
+      setOcrBusy(false);
+    }
+  }
+
+  // Columns are applied to whichever player the marker says they belong to
+  function applyOcr() {
+    if (!ocrResult?.holes?.length) return;
+    setAllScores(prev => {
+      const next = { ...prev };
+      for (const [column, playerId] of Object.entries(ocrAssign)) {
+        if (!playerId) continue;
+        const merged = { ...(next[playerId] || {}) };
+        for (const row of ocrResult.holes) {
+          const value = row[column];
+          if (value) merged[row.hole] = value;
+        }
+        next[playerId] = merged;
+      }
+      if (saveDraft(match.id, next)) setDraftSavedAt(new Date());
+      return next;
+    });
+    setOcrResult(null);
   }
 
   async function handleAcceptScores() {
@@ -500,12 +606,99 @@ export default function DigitalScorecard({ match, player, onClose, onCompleted }
 
         {error && <div className="mx-4 mt-3 bg-red-50 text-red-700 px-3 py-2 rounded text-sm">{error}</div>}
 
+        {/* Offline / sync status */}
+        {(offline || pendingSync) && (
+          <div className="mx-4 mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 text-amber-800 dark:text-amber-300 px-3 py-2 rounded text-xs flex items-center gap-2">
+            {offline ? <WifiOff className="w-4 h-4 shrink-0" /> : <CloudOff className="w-4 h-4 shrink-0" />}
+            {offline
+              ? 'No signal — keep scoring. Everything is saved on this device and sent automatically when you reconnect.'
+              : 'Your card is saved on this device and waiting to sync. It will be sent as soon as you have a connection.'}
+          </div>
+        )}
+        {draftSavedAt && !offline && !pendingSync && (
+          <p className="mx-4 mt-2 text-[11px] text-gray-400">
+            Saved on this device at {draftSavedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
+
         {/* ── ENTRY MODE ── */}
         {mode === 'entry' && (
           <div className="p-4">
             {/* Info: mark all players */}
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 rounded-lg px-3 py-2 mb-3 text-xs text-blue-700">
               Enter scores for <strong>all players</strong> — your own and your opponent's. Both players' submissions will be cross-checked for confirmation.
+            </div>
+
+            {/* Scan a paper card */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 mb-3">
+              <label className={`inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${offline ? 'text-gray-400 cursor-not-allowed' : 'text-green-700 dark:text-green-400'}`}>
+                <ScanLine className="w-4 h-4" />
+                {ocrBusy ? 'Reading your card…' : 'Scan a paper scorecard'}
+                <input type="file" accept="image/*" capture="environment" className="hidden" disabled={offline || ocrBusy}
+                  onChange={(e) => { handleScanScorecard(e.target.files?.[0]); e.target.value = ''; }} />
+              </label>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Photograph the card and we'll read the gross scores. Nothing is saved until you check them.
+              </p>
+              {ocrError && <p className="text-[11px] text-red-500 mt-1">{ocrError}</p>}
+
+              {ocrResult?.holes?.length > 0 && (
+                <div className="mt-3 bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                  <p className="text-xs font-semibold mb-2">
+                    Check these scores before applying
+                    {ocrResult.confidence != null && <span className="text-gray-500 font-normal"> · confidence {Math.round(ocrResult.confidence * 100)}%</span>}
+                  </p>
+                  <div className="overflow-x-auto mb-3">
+                    <table className="text-[11px] w-full">
+                      <tbody>
+                        <tr className="text-gray-400">
+                          <td className="pr-2">Hole</td>
+                          {ocrResult.holes.map((h) => <td key={h.hole} className="text-center px-1">{h.hole}</td>)}
+                        </tr>
+                        {['playerA', 'playerB'].map((column) => (
+                          <tr key={column}>
+                            <td className="pr-2 whitespace-nowrap text-gray-500">
+                              {column === 'playerA' ? ocrResult.playerALabel || 'Column 1' : ocrResult.playerBLabel || 'Column 2'}
+                            </td>
+                            {ocrResult.holes.map((h) => (
+                              <td key={h.hole} className="text-center px-1 font-bold text-gray-800 dark:text-gray-100">{h[column] ?? '–'}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="space-y-1.5 mb-3">
+                    {['playerA', 'playerB'].map((column) => (
+                      <div key={column} className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-500 w-20 shrink-0">
+                          {column === 'playerA' ? ocrResult.playerALabel || 'Column 1' : ocrResult.playerBLabel || 'Column 2'}
+                        </span>
+                        <select value={ocrAssign[column] || ''} onChange={(e) => setOcrAssign(prev => ({ ...prev, [column]: e.target.value }))}
+                          className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded px-2 py-1">
+                          <option value="">Ignore</option>
+                          {players.map((p) => (
+                            <option key={p.id} value={p.id}>{p.firstName} {p.lastName?.[0]}.{p.isMe ? ' (You)' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={applyOcr}
+                      className="text-xs font-semibold bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition">
+                      Apply to card
+                    </button>
+                    <button onClick={() => setOcrResult(null)}
+                      className="text-xs font-semibold bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 px-3 py-1.5 rounded-lg transition">
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              )}
+              {ocrResult && !ocrResult.holes?.length && (
+                <p className="text-[11px] text-amber-600 mt-1">Couldn't read any scores from that photo — try again in better light, or enter them by hand.</p>
+              )}
             </div>
 
             {/* Hole Navigation */}

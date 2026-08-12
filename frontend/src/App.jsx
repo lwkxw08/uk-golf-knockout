@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsent from './components/CookieConsent';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -57,6 +58,11 @@ import NewsPage from './pages/news/NewsPage';
 import NewsArticlePage from './pages/news/NewsArticlePage';
 import AdminNewsPage from './pages/admin/AdminNewsPage';
 import NotFoundPage from './pages/errors/NotFoundPage';
+import NotificationsPage from './pages/notifications/NotificationsPage';
+import AvailabilityPage from './pages/availability/AvailabilityPage';
+import SpectatePage from './pages/spectate/SpectatePage';
+import AchievementsPage from './pages/achievements/AchievementsPage';
+import DeadlineManagementPage from './pages/admin/DeadlineManagementPage';
 
 function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
@@ -64,6 +70,11 @@ function ProtectedRoute({ children, roles }) {
   if (!user) return <Navigate to="/login" />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" />;
   return children;
+}
+
+function MatchRedirect() {
+  const { matchId } = useParams();
+  return <Navigate to={`/match/${matchId}/live`} replace />;
 }
 
 function DashboardRouter() {
@@ -136,6 +147,25 @@ function AppRoutes() {
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:id" element={<NewsArticlePage />} />
+            <Route path="/watch/:shareToken" element={<SpectatePage />} />
+            {/* Notification links use /matches/:id; the live view is the canonical match page */}
+            <Route path="/matches/:matchId" element={<MatchRedirect />} />
+
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/availability" element={
+              <ProtectedRoute>
+                <AvailabilityPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/achievements" element={
+              <ProtectedRoute>
+                <AchievementsPage />
+              </ProtectedRoute>
+            } />
 
             <Route path="/profile" element={
               <ProtectedRoute>
@@ -205,6 +235,11 @@ function AppRoutes() {
                 <MembershipTrackingPage />
               </ProtectedRoute>
             } />
+            <Route path="/admin/deadlines" element={
+              <ProtectedRoute roles={['ADMIN']}>
+                <DeadlineManagementPage />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/news" element={
               <ProtectedRoute roles={['ADMIN']}>
                 <AdminNewsPage />
@@ -228,7 +263,9 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AppRoutes />
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

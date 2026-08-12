@@ -11,6 +11,7 @@ export default function LiveMatchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liveUpdates, setLiveUpdates] = useState([]);
+  const [shareCopied, setShareCopied] = useState(false);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -76,8 +77,20 @@ export default function LiveMatchPage() {
     };
   }, [matchId]);
 
-  const copyShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+  // Participants get a tokenised public link anyone can open; everyone else shares this page
+  const copyShareLink = async () => {
+    let url = window.location.href;
+    if (localStorage.getItem('token')) {
+      try {
+        const { shareToken } = await api.post(`/spectate/match/${matchId}/share-link`);
+        url = `${window.location.origin}/watch/${shareToken}`;
+      } catch {
+        // Not a participant — the page URL is still shareable
+      }
+    }
+    await navigator.clipboard.writeText(url);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2500);
   };
 
   if (loading) return <div className="text-center py-12 text-gray-500">Loading match...</div>;
@@ -103,7 +116,7 @@ export default function LiveMatchPage() {
             {match.gameWeek && <span className="text-xs bg-white/20 px-2 py-0.5 rounded">Week {match.gameWeek}</span>}
           </div>
           <button onClick={copyShareLink} className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-sm transition">
-            <Share2 className="w-4 h-4" /> Share
+            <Share2 className="w-4 h-4" /> {shareCopied ? 'Link copied' : 'Share'}
           </button>
         </div>
 

@@ -4,6 +4,9 @@ const validate = require('../middleware/validate');
 const { authenticate, requireRole } = require('../middleware/auth');
 const prisma = require('../config/prisma');
 const { logAudit } = require('../services/auditService');
+const { notify } = require('../services/notificationService');
+const { applyWalkover } = require('../services/deadlineScheduler');
+const { recalculateStandings } = require('../services/leagueService');
 
 const router = express.Router();
 
@@ -734,6 +737,152 @@ router.delete('/users/:id',
       res.json({ message: 'User deactivated' });
     } catch (err) {
       res.status(500).json({ error: 'Failed to delete user' });
+    }
+  }
+);
+
+// ─── DEADLINE / WALKOVER OVERRIDES ──────────────────────────────────────────
+
+// Matches that are past their deadline, or already resolved by walkover
+router.get('/matches/deadlines', authenticate, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const now = new Date();
+    const include = {
+      playerA: { select: { id: true, firstName: true, lastName: true } },
+      playerB: { select: { id: true, firstName: true, lastName: true } },
+      tournament: { select: { id: true, name: true } },
+      venueClub: { select: { name: true } },
+      scheduleProposals: { select: { id: true, proposedById: true, status: true } },
+    };
+
+    const [overdue, walkovers] = await Promise.all([
+      prisma.match.findMany({
+        where: {
+          roundDeadline: { lt: now },
+          status: { in: ['PENDING', 'SCHEDULED', 'IN_PROGRESS'] },
+        },
+        include,
+        orderBy: { roundDeadline: 'asc' },
+        take: 100,
+      }),
+      prisma.match.findMany({
+        where: { status: 'WALKOVER' },
+        include,
+        orderBy: { walkoverAppliedAt: 'desc' },
+        take: 50,
+      }),
+    ]);
+
+    res.json({ overdue, walkovers });
+  } catch (err) {
+    console.error('Deadline list error:', err);
+    res.status(500).json({ error: 'Failed to load deadline queue' });
+  }
+});
+
+// Apply a walkover manually (e.g. a withdrawal reported off-platform)
+router.post('/matches/:matchId/walkover',
+  authenticate,
+  requireRole('ADMIN'),
+  param('matchId').isUUID(),
+  body('winnerId').optional().isUUID(),
+  body('reason').trim().notEmpty(),
+  validate,
+  async (req, res) => {
+    try {
+      const { winnerId, reason } = req.body;
+      const match = await prisma.match.findUnique({
+        where: { id: req.params.matchId },
+        include: { playerA: true, playerB: true, tournament: { select: { name: true } }, scheduleProposals: true },
+      });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+      if (winnerId && winnerId !== match.playerAId && winnerId !== match.playerBId) {
+        return res.status(400).json({ error: 'Winner must be a match participant' });
+      }
+
+      await applyWalkover({ ...match, scheduleProposals: [] }, { winnerId: winnerId || null, reason });
+
+      await logAudit({
+        userId: req.user.id,
+        userEmail: req.user.email,
+        action: 'MATCH_WALKOVER_MANUAL',
+        entity: 'Match',
+        entityId: match.id,
+        details: { winnerId: winnerId || null, reason },
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: 'Walkover applied' });
+    } catch (err) {
+      console.error('Manual walkover error:', err);
+      res.status(500).json({ error: 'Failed to apply walkover' });
+    }
+  }
+);
+
+// Reverse an automatic walkover and give the players a new deadline
+router.post('/matches/:matchId/reopen',
+  authenticate,
+  requireRole('ADMIN'),
+  param('matchId').isUUID(),
+  body('roundDeadline').isISO8601(),
+  body('reason').trim().notEmpty(),
+  validate,
+  async (req, res) => {
+    try {
+      const match = await prisma.match.findUnique({
+        where: { id: req.params.matchId },
+        include: { playerA: true, playerB: true, tournament: { select: { name: true } } },
+      });
+      if (!match) return res.status(404).json({ error: 'Match not found' });
+
+      const reopened = await prisma.match.update({
+        where: { id: match.id },
+        data: {
+          status: match.scheduledDate ? 'SCHEDULED' : 'PENDING',
+          winnerId: null,
+          walkoverReason: null,
+          walkoverAppliedAt: null,
+          playedAt: null,
+          deadlineRemindersSent: 0,
+          roundDeadline: new Date(req.body.roundDeadline),
+        },
+      });
+
+      if (match.stage === 'REGIONAL_LEAGUE') {
+        const stage = await prisma.tournamentStage_.findFirst({
+          where: { tournamentId: match.tournamentId, isLeague: true },
+          select: { id: true },
+        });
+        if (stage) await recalculateStandings(match.tournamentId, stage.id).catch(() => {});
+      }
+
+      const deadlineLabel = new Date(req.body.roundDeadline).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      for (const player of [match.playerA, match.playerB]) {
+        if (!player) continue;
+        await notify(player.id, {
+          type: 'DEADLINE_WARNING',
+          title: 'Match reopened by an admin',
+          body: `${match.tournament.name}: ${req.body.reason}. New deadline: ${deadlineLabel}.`,
+          link: `/matches/${match.id}`,
+          data: { matchId: match.id },
+        });
+      }
+
+      await logAudit({
+        userId: req.user.id,
+        userEmail: req.user.email,
+        action: 'MATCH_WALKOVER_REVERSED',
+        entity: 'Match',
+        entityId: match.id,
+        details: { reason: req.body.reason, roundDeadline: req.body.roundDeadline },
+        ipAddress: req.ip,
+      });
+
+      res.json({ message: 'Match reopened', match: reopened });
+    } catch (err) {
+      console.error('Reopen match error:', err);
+      res.status(500).json({ error: 'Failed to reopen match' });
     }
   }
 );

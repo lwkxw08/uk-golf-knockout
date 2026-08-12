@@ -202,6 +202,12 @@ model Player {
   followers          PlayerFollow[]   @relation("Followers")
   postedTeeTimes     OpenTeeTime[]    @relation("PostedTeeTimes")
   teeTimeInterests   TeeTimeInterest[] @relation("TeeTimeInterests")
+  notifications      Notification[]   @relation("PlayerNotifications")
+  pushSubscriptions  PushSubscription[] @relation("PlayerPushSubscriptions")
+  notificationPreference NotificationPreference? @relation("PlayerNotificationPreference")
+  availability       PlayerAvailability[] @relation("PlayerAvailability")
+  scheduleProposals  MatchScheduleProposal[] @relation("ScheduleProposalsMade")
+  achievements       PlayerAchievement[] @relation("PlayerAchievements")
 
   @@map("players")
 }
@@ -570,6 +576,16 @@ model Match {
   matchStartedAt     DateTime? @map("match_started_at")
   matchEndedAt       DateTime? @map("match_ended_at")
   currentHole        Int?      @map("current_hole")
+  scheduledSlot      AvailabilitySlot? @map("scheduled_slot")
+
+  // Deadline enforcement
+  walkoverReason     String?   @map("walkover_reason")
+  walkoverAppliedAt  DateTime? @map("walkover_applied_at")
+  deadlineRemindersSent Int    @default(0) @map("deadline_reminders_sent")
+
+  // Public spectator link
+  shareToken         String?   @unique @map("share_token")
+  spectatorViews     Int       @default(0) @map("spectator_views")
 
   tournament Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   playerA    Player?     @relation("PlayerA", fields: [playerAId], references: [id])
@@ -585,6 +601,7 @@ model Match {
   checkIns   MatchCheckIn[]
   adImpressions SponsorAdImpression[]
   videoHighlights VideoHighlight[]
+  scheduleProposals MatchScheduleProposal[] @relation("MatchScheduleProposals")
 
   @@map("matches")
 }
@@ -1165,6 +1182,149 @@ model TeeTimeInterest {
 
   @@unique([teeTimeId, playerId])
   @@map("tee_time_interests")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  playerId  String           @map("player_id")
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  data      Json?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  player Player @relation("PlayerNotifications", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, isRead, createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player @relation("PlayerPushSubscriptions", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@map("push_subscriptions")
+}
+
+model NotificationPreference {
+  id        String   @id @default(uuid())
+  playerId  String   @unique @map("player_id")
+  email     Boolean  @default(true)
+  push      Boolean  @default(true)
+  mutedTypes NotificationType[] @map("muted_types")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  player Player @relation("PlayerNotificationPreference", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model PlayerAvailability {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  date      DateTime @db.Date
+  slot      AvailabilitySlot
+  createdAt DateTime @default(now()) @map("created_at")
+
+  player Player @relation("PlayerAvailability", fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, date, slot])
+  @@index([date])
+  @@map("player_availability")
+}
+
+model MatchScheduleProposal {
+  id          String   @id @default(uuid())
+  matchId     String   @map("match_id")
+  proposedById String  @map("proposed_by_id")
+  date        DateTime
+  slot        AvailabilitySlot
+  venueClubId String?  @map("venue_club_id")
+  message     String?
+  status      ProposalStatus @default(PENDING)
+  respondedAt DateTime? @map("responded_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  match      Match  @relation("MatchScheduleProposals", fields: [matchId], references: [id], onDelete: Cascade)
+  proposedBy Player @relation("ScheduleProposalsMade", fields: [proposedById], references: [id], onDelete: Cascade)
+
+  @@index([matchId, status])
+  @@map("match_schedule_proposals")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String
+  icon        String
+  tier        AchievementTier @default(BRONZE)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  playerAchievements PlayerAchievement[]
+
+  @@map("achievements")
+}
+
+model PlayerAchievement {
+  id            String   @id @default(uuid())
+  playerId      String   @map("player_id")
+  achievementId String   @map("achievement_id")
+  matchId       String?  @map("match_id")
+  awardedAt     DateTime @default(now()) @map("awarded_at")
+
+  player      Player      @relation("PlayerAchievements", fields: [playerId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, achievementId])
+  @@index([playerId])
+  @@map("player_achievements")
+}
+
+enum NotificationType {
+  DRAW_PUBLISHED
+  DRAW_SCHEDULED
+  MATCH_PROPOSAL
+  MATCH_SCHEDULED
+  MATCH_REMINDER
+  RESULT_SUBMITTED
+  RESULT_CONFIRMED
+  RESULT_DISPUTED
+  DEADLINE_WARNING
+  WALKOVER_APPLIED
+  STAGE_PROMOTION
+  ACHIEVEMENT_UNLOCKED
+  ANNOUNCEMENT
+}
+
+enum AvailabilitySlot {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum AchievementTier {
+  BRONZE
+  SILVER
+  GOLD
 }
 
 enum TeeTimeStatus {

@@ -1,9 +1,10 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Trophy, Menu, X, User, Moon, Sun, ChevronDown, LogOut, Settings, Shield, Users, CreditCard, Megaphone, BarChart3, FileText, ClipboardList, Newspaper } from 'lucide-react';
+import { Trophy, Menu, X, User, Moon, Sun, ChevronDown, LogOut, Settings, Shield, Users, CreditCard, Megaphone, BarChart3, FileText, ClipboardList, Newspaper, CalendarClock, Award, Bell, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import SearchBar from './SearchBar';
+import NotificationBell from '../notifications/NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -59,6 +60,13 @@ export default function Navbar() {
     <Link to={to} className={`${textColor} ${linkHover} transition text-sm font-medium px-1`}>{children}</Link>
   );
 
+  const playerLinks = [
+    { to: '/availability', icon: CalendarClock, label: 'My Availability' },
+    { to: '/my-stats', icon: BarChart3, label: 'My Stats' },
+    { to: '/achievements', icon: Award, label: 'Achievements' },
+    { to: '/notifications', icon: Bell, label: 'Notifications' },
+  ];
+
   const adminLinks = [
     { to: '/admin', icon: BarChart3, label: 'Dashboard' },
     { to: '/admin/tournaments/new', icon: Trophy, label: 'New Tournament' },
@@ -68,6 +76,7 @@ export default function Navbar() {
     { to: '/admin/users', icon: Users, label: 'Users' },
     { to: '/admin/memberships', icon: ClipboardList, label: 'Memberships' },
     { to: '/admin/news', icon: Newspaper, label: 'News / Blog' },
+    { to: '/admin/deadlines', icon: AlertTriangle, label: 'Deadlines' },
     { to: '/admin/audit-log', icon: FileText, label: 'Audit Log' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
     { to: '/club-portal', icon: Shield, label: 'Club Portal' },
@@ -97,6 +106,7 @@ export default function Navbar() {
 
             {user ? (
               <>
+                <NotificationBell textColor={textColor} />
                 {user.role === 'ADMIN' && (
                   <div ref={adminRef} className="relative">
                     <button
@@ -132,10 +142,18 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-3 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 w-48 animate-in fade-in slide-in-from-top-2">
                       <p className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 truncate border-b dark:border-gray-700">{user.email}</p>
                       {user.role === 'PLAYER' && (
-                        <Link to="/profile" onClick={() => setProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-700 transition">
-                          <User className="w-4 h-4 text-gray-400" /> My Profile
-                        </Link>
+                        <>
+                          <Link to="/profile" onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-700 transition">
+                            <User className="w-4 h-4 text-gray-400" /> My Profile
+                          </Link>
+                          {playerLinks.map(({ to, icon: Icon, label }) => (
+                            <Link key={to} to={to} onClick={() => setProfileOpen(false)}
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-700 transition">
+                              <Icon className="w-4 h-4 text-gray-400" /> {label}
+                            </Link>
+                          ))}
+                        </>
                       )}
                       <button onClick={() => { handleLogout(); setProfileOpen(false); }}
                         className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 transition">
@@ -155,6 +173,7 @@ export default function Navbar() {
 
           {/* Mobile toggle */}
           <div className="flex items-center gap-3 lg:hidden">
+            {user && <NotificationBell textColor={textColor} />}
             <button onClick={toggle} className={`${textColor} p-2 rounded-lg transition`}>
               {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -194,7 +213,12 @@ export default function Navbar() {
                   <Link to="/dashboard" className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-800 transition">My Dashboard</Link>
                 )}
                 {user.role === 'PLAYER' && (
-                  <Link to="/profile" className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-800 transition">My Profile</Link>
+                  <>
+                    <Link to="/profile" className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-800 transition">My Profile</Link>
+                    {playerLinks.map(({ to, label }) => (
+                      <Link key={to} to={to} className="block py-2.5 px-3 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-green-50 dark:hover:bg-gray-800 transition">{label}</Link>
+                    ))}
+                  </>
                 )}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                   <button onClick={handleLogout} className="block w-full text-left py-2.5 px-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-gray-800 transition">Logout</button>
